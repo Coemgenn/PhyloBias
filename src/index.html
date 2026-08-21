@@ -1,0 +1,62 @@
+<title>AntArtifact</title>
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --surface: #ffffff;
+    --border: #e3ded6;
+    --text: #1c1a17;
+    --muted: #6b655c;
+    --accent: #b8501f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16150f;
+      --surface: #201e18;
+      --border: #35322a;
+      --text: #f2efe8;
+      --muted: #9c958a;
+      --accent: #e8814a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16150f;
+    --surface: #201e18;
+    --border: #35322a;
+    --text: #f2efe8;
+    --muted: #9c958a;
+    --accent: #e8814a;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+    margin: 0;
+    padding: 3rem 1.5rem;
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  h1 { font-size: 1.75rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+  p { color: var(--muted); margin: 0 0 1rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+  }
+  .tag {
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+</style>
+<main>
+  <span class="tag">Scaffold</span>
+  <h1>AntArtifact</h1>
+  <p>An interactive tool about biosafety. Nothing is built yet — this page exists so the
+     project has a publishable entry point with the theme and layout plumbing already correct.</p>
+  <div class="card">
+    <p style="margin:0">Next: decide the audience, the core interaction, and the source
+       authorities. See <strong>README.md</strong>.</p>
+  </div>
+</main>
