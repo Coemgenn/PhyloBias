@@ -1,14 +1,11 @@
-# Meridian — how sampling decisions write an outbreak's history
+# PgyloBias - how sampling decisions write an outbreak's history
 
 An interactive, single-page tool showing how early testing and sequencing decisions determine
 what can ever be known about an epidemic's origin and phylogenetics.
 
-Built as a self-contained Claude Artifact. Take-home portfolio piece for an Anthropic interview.
-
 ## The idea
 
-The phylogenetic tree is not the epidemic. It is a shadow the epidemic casts through your
-sampling scheme. Change the scheme and you change the history.
+The phylogenetic tree of a pathogen that is built a posteriori is not a perfect description of its history. It is a shadow the epidemic casts through sampling, discovery, detection and policy choices made. Change the scheme and you change the history.
 
 The tool simulates an outbreak of a fictional pathogen across a fictional landmass, then shows
 its **true** history beside the history you would have **inferred** from the genomes your
