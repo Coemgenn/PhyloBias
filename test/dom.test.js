@@ -202,3 +202,29 @@ test("touching a slider drops out of full-information mode", () => {
   assert.strictEqual(w.document.querySelector("#fullinfo-btn").getAttribute("aria-pressed"), "false",
     "the label still claims full information after a slider moved");
 });
+
+test("the root bar shows the root's own region, not a child's", () => {
+  /* The reconstruction placed the root in Brix with support 1.00 while the bar
+     rendered Fenmoor, because the renderer read the colour off whichever child
+     sorted first. A correct inference was being displayed as wrong on the one
+     panel whose job is to be compared against the truth. */
+  const w = page({ revealed: "1" });
+  w.document.querySelector("#fullinfo-btn").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+  const bar = sel => {
+    const g = w.document.querySelector(`${sel} svg g.branch line`);
+    return (g.getAttribute("stroke").match(/--reg-(\w+)/) || [])[1];
+  };
+  assert.strictEqual(bar("#truth-tree"), "brix", "truth root is not the index region");
+  assert.strictEqual(bar("#inferred-tree"), bar("#truth-tree"),
+    "root bars disagree even though the inference recovered the origin");
+});
+
+test("each panel's legend reports its own numbers", () => {
+  const w = page({ revealed: "1" });
+  assert.strictEqual(w.document.querySelectorAll("#truth-count").length, 1, "duplicate id");
+  const t = w.document.querySelector("#truth-count").textContent;
+  const i = w.document.querySelector("#inferred-count").textContent;
+  assert.match(t, /cases/, "truth legend should count cases");
+  assert.match(i, /genomes/, "inferred legend should count genomes");
+  assert.notStrictEqual(t, i, "the inferred panel is showing the truth's numbers");
+});

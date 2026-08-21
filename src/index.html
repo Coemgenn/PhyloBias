@@ -1910,7 +1910,11 @@ function renderTreeSVG(roots, opts) {
   if (roots.length > 1) {
     const rx = roots.map(r => r.x);
     const y0 = L.yOf(0);
-    const rootRegion = roots[0].path[0].region;
+    /* The root's own state, passed in. Reading it off the first child painted a
+       correct inference as wrong -- the reconstruction put the root in Brix with
+       support 1.00 while the bar showed Fenmoor, because Fenmoor happened to sort
+       first among the children. */
+    const rootRegion = opts.rootRegion || roots[0].path[0].region;
     out.push(`<g class="branch">`
       + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--reg-${rootRegion})" stroke-width="1.6" stroke-linecap="round"></line>`
       + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3.4" fill="var(--reg-${rootRegion})" stroke="var(--surface)" stroke-width="1.2"></circle>`
@@ -1953,6 +1957,7 @@ function renderTruthTree() {
   state.truthTree = t;
   $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
     tMax: Math.ceil(treeSpan(t.roots) / 15) * 15,
+    rootRegion: truth.cases.length ? truth.cases[0].region : null,
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
   });
   $("#truth-count").textContent =
@@ -2019,20 +2024,26 @@ function renderInferred() {
   const span = Math.max(treeSpan(r.tree.roots), treeSpan(autoTree(r.truth, 26, 46).roots));
   $("#inferred-tree").innerHTML = renderTreeSVG(r.tree.roots, {
     tMax: Math.ceil(span / 15) * 15,
+    rootRegion: r.fitch.region.get(r.phylo.root),
     aria: "Phylogeny reconstructed from the sampled genomes. Branches are coloured by the region inferred for them, which need not be the region they came from.",
   });
   $("#inf-note").textContent =
     r.s.samples.length.toLocaleString() + " genomes \u00b7 " + r.tree.tips + " tips";
-  $("#inferred-key").innerHTML = $("#region-key").innerHTML
-    || REGIONS.map(x => `<span class="key-item"><i style="background:var(--reg-${x.id})"></i>${esc(x.name)}</span>`).join("");
+  const ic = $("#inferred-count");
+  if (ic) ic.textContent = r.tree.tips + " tips \u00b7 " + r.s.samples.length.toLocaleString() + " genomes";
   renderVerdict();
+}
+
+function regionKeyHTML(countId) {
+  return REGIONS.map(r =>
+    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("")
+    + `<span class="key-item key-count" id="${countId}"></span>`;
 }
 
 function renderRegionKey() {
   if (!HAS_DOM) return;
-  $("#region-key").innerHTML = REGIONS.map(r =>
-    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("")
-    + `<span class="key-item key-count" id="truth-count"></span>`;
+  $("#region-key").innerHTML = regionKeyHTML("truth-count");
+  $("#inferred-key").innerHTML = regionKeyHTML("inferred-count");
 }
 
 /* ============================================================
