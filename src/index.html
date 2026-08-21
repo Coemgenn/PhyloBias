@@ -1507,8 +1507,17 @@ function renderTruthTree() {
     truth.stats.cases.toLocaleString() + " cases \u00b7 " + t.tips + " tips";
 }
 
+/* Remembering the reveal is a per-viewer convenience, so browser storage is the
+   right home for it. It can throw outright in a private window or a thumbnail
+   context, hence the guards. */
+const REVEAL_KEY = "phylobias.revealed";
+function readRevealed() {
+  try { return localStorage.getItem(REVEAL_KEY) === "1"; } catch (e) { return false; }
+}
+
 function setRevealed(on) {
   state.revealed = on;
+  try { localStorage.setItem(REVEAL_KEY, on ? "1" : "0"); } catch (e) { /* storage unavailable */ }
   $("#truth-curtain").hidden = on;
   $("#truth-tree").hidden = !on;
   $("#region-key").hidden = !on;
@@ -1572,5 +1581,9 @@ if (HAS_DOM) document.addEventListener("input", e => {
   }
 });
 
-if (HAS_DOM) { renderScenario(); render(); }
+if (HAS_DOM) {
+  renderScenario();
+  render();
+  if (readRevealed()) setRevealed(true);
+}
 </script>

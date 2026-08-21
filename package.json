@@ -1,0 +1,7 @@
+{
+  "name": "phylobias",
+  "private": true,
+  "description": "Dev tooling only. src/index.html ships as a single self-contained file with no build step and no runtime dependencies.",
+  "scripts": { "test": "node --test test/*.test.js" },
+  "devDependencies": { "jsdom": "^26.0.0" }
+}
