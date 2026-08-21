@@ -11,12 +11,14 @@ interview portfolio piece, so polish counts: this should look and feel finished,
 - **Self-contained.** A strict CSP blocks external hosts. Inline all CSS and JS, embed assets as
   `data:` URIs. The only exception is Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com`).
   No CDN scripts, no fetch/XHR, no remote images.
-- **Dark-committed, single theme.** The theme-aware rule was retired on 21 Aug 2026. Define the
-  complete palette once on bare `:root` with `color-scheme: dark`; no `prefers-color-scheme`
-  block, no `[data-theme]` block. Paint every colour explicitly — `body` included — so the page
-  holds whatever ground the host paints behind it. The reason is chromatic: a hue that must clear
-  contrast on `#ffffff` *and* read on near-black is trapped in a narrow middle band, and that tax
-  fell hardest on the six region hues the argument is encoded in.
+- **Theme-aware, with a visible switch.** Define the full light palette as tokens on bare
+  `:root`; override under `@media (prefers-color-scheme: dark)` guarded as
+  `:root:not([data-theme="light"])`; override again under `:root[data-theme="dark"]`. `body`
+  needs an explicit token background. The masthead switch stamps `data-theme` and persists it;
+  an unstamped root means "follow the OS", so all three states must resolve.
+  The two palettes are **not inversions of each other** — each region hue is validated on its own
+  ground, because a hue that reads on `#ffffff` and one that reads on near-black are rarely the
+  same hue. Keep the two sets independently checked.
 - **Chroma is data.** Colour means region, and nothing else. There is no accent hue; interaction
   is near-white (`--accent` is an ink, not a colour). Chrome is achromatic throughout.
 - **Type.** Chakra Petch for display and headings *only* — letting it into figures or labels tips
@@ -31,9 +33,9 @@ interview portfolio piece, so polish counts: this should look and feel finished,
 The world is fictitious; the mechanics are not.
 
 **Invented, and labelled as such:** the pathogen (Meridian virus, MRV-1), the landmass and its
-six regions (Aldane, Brix, Corvane, Doran, Esker, Fenmoor), the variant (Kestrel), and every
-number attributed to them. Inventing the setting is deliberate — no reader may mistake the tool
-for a claim about a real outbreak, variant, or country.
+six regions (Aldane, Brix, Corvane, Doran, Esker, Fenmoor), the six Greek-lettered variants
+(Alpha through Zeta), and every number attributed to them. Inventing the setting is deliberate —
+no reader may mistake the tool for a claim about a real outbreak, variant, or country.
 
 **Real, and cited visibly on the page:** substitution-rate ranges, serial-interval and
 dispersion parameters, the inference methods (neighbour-joining, root-to-tip regression, Fitch

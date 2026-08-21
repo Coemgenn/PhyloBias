@@ -5,61 +5,119 @@
 
 <style>
 /* ============================================================
-   TOKENS — committed to a single dark world.
+   TOKENS
 
-   The theme-aware rule in CLAUDE.md was retired deliberately: a hue
-   that must clear contrast on #ffffff AND read on near-black lives in
-   a narrow middle band, and that tax fell hardest on the region hues
-   this tool encodes its argument in. Committing to one ground frees
-   the luminous range. Every colour is painted explicitly, so the page
-   holds whatever ground the host paints behind it.
+   Light is the bare :root; dark is redefined twice so an explicit
+   choice beats the OS in both directions. The two palettes are not
+   inversions of one another — each region hue was validated on its
+   own ground, because a hue that reads on #ffffff and a hue that
+   reads on near-black are rarely the same hue.
    ============================================================ */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --ground:       #080c10;
-  --surface:      #0b1116;
-  --surface-2:    #0e161c;
-  --border:       #1b2732;
-  --border-firm:  #2b3d4c;
-  --ink:          #dbe4ea;   /* 14.7:1 on surface */
-  --ink-2:        #a9bac4;   /*  9.5:1 */
-  --ink-3:        #8698a4;   /*  6.4:1 — the microtext sits well clear of AA */
-  --ink-hi:       #dfe9ef;   /* headings and the active state only */
+  --ground:       #f4f6f6;
+  --surface:      #ffffff;
+  --surface-2:    #eef1f2;
+  --border:       #dbe1e3;
+  --border-firm:  #c3ccd0;
+  --ink:          #10171a;
+  --ink-2:        #46545a;
+  --ink-3:        #5c6a70;   /* was #6d7c82 — 4.32:1, under AA. Now 5.6:1. */
+  --grid-firm:    rgba(16,23,26,.085);   /* page ground texture */
+  --ink-hi:       #000000;
 
-  /* No accent hue. Chroma belongs to data; interaction is near-white.
-     An accent that is neither ink nor region colour has nothing to say
-     here, and the desaturated slate it used to be collided with both. */
-  --accent:       #dfe9ef;
-  --accent-ink:   #ffffff;
-  --on-accent:    #080c10;
+  /* No accent hue: chroma means region and nothing else, so the
+     interactive colour is an ink. */
+  --accent:       #10171a;
+  --accent-ink:   #000000;
+  --on-accent:    #ffffff;
 
   /* Region identity, used identically by the map and the trees so one hue always
      means one region. Six hues spread 45deg+ apart (19, 93, 142, 209, 261, 325)
      with lightness free as a second channel: under protanopia the wheel collapses
-     toward one axis, so hue alone cannot separate six. All-pairs CVD dE 16.1,
-     normal vision 18.7, against targets of 8 and 15. These are the values that
-     were validated for a dark ground; on this darker surface every one gains
-     contrast rather than losing it (Corvane, the tightest, 2.51 -> 2.74:1) and
-     the region key supplies the relief the 3:1 rule wants. Aldane and Corvane
-     hold the most separated pair; the argument is read off those two. Uniform
-     lightness is traded away knowingly. */
-  --reg-aldane:   #f6d464;
-  --reg-brix:     #71a2f9;
-  --reg-corvane:  #7e4481;
-  --reg-doran:    #0d7f01;
-  --reg-esker:    #4de8fe;
-  --reg-fenmoor:  #ec898b;
+     toward one axis, so hue alone cannot separate six. All-pairs CVD dE 15.0 light
+     / 16.1 dark against a target of 8; normal vision 18.4 / 18.7 against a floor
+     of 15. Every colour clears 2.5:1 on its surface and the region key supplies
+     the relief the 3:1 rule wants. Aldane and Corvane hold the most separated
+     pair; the argument is read off those two. Uniform lightness is traded away
+     knowingly. */
+  --reg-aldane:   #baa047;
+  --reg-brix:     #3062bc;
+  --reg-corvane:  #66056c;
+  --reg-doran:    #094e04;
+  --reg-esker:    #3db1c2;
+  --reg-fenmoor:  #ac5e60;
 
-  /* A drop shadow is invisible on near-black. Panels lift with a top
-     highlight instead — the dark-UI equivalent of elevation. */
-  --shadow: inset 0 1px 0 rgba(255,255,255,.045);
+  --shadow: 0 1px 2px rgba(16,23,26,.05), 0 4px 16px rgba(16,23,26,.05);
 
   --font-display: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
   --font-ui: "Red Hat Text", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono: "Red Hat Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --r: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ground:       #080c10;
+    --surface:      #0b1116;
+    --surface-2:    #0e161c;
+    --border:       #1b2732;
+    --border-firm:  #2b3d4c;
+    --ink:          #dbe4ea;
+    --ink-2:        #a9bac4;
+    --ink-3:        #8698a4;
+    --ink-hi:       #ffffff;
+    --grid-firm:    rgba(255,255,255,.055);   /* page ground texture */
+
+    --accent:       #dfe9ef;
+    --accent-ink:   #ffffff;
+    --on-accent:    #080c10;
+
+    --reg-aldane:   #f6d464;
+    --reg-brix:     #71a2f9;
+    --reg-corvane:  #7e4481;
+    --reg-doran:    #0d7f01;
+    --reg-esker:    #4de8fe;
+    --reg-fenmoor:  #ec898b;
+
+    /* A drop shadow is invisible on near-black; panels lift with a
+       top highlight instead. */
+    --shadow: inset 0 1px 0 rgba(255,255,255,.045);
+  }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --ground:       #080c10;
+    --surface:      #0b1116;
+    --surface-2:    #0e161c;
+    --border:       #1b2732;
+    --border-firm:  #2b3d4c;
+    --ink:          #dbe4ea;
+    --ink-2:        #a9bac4;
+    --ink-3:        #8698a4;
+    --ink-hi:       #ffffff;
+    --grid-firm:    rgba(255,255,255,.055);   /* page ground texture */
+
+    --accent:       #dfe9ef;
+    --accent-ink:   #ffffff;
+    --on-accent:    #080c10;
+
+    --reg-aldane:   #f6d464;
+    --reg-brix:     #71a2f9;
+    --reg-corvane:  #7e4481;
+    --reg-doran:    #0d7f01;
+    --reg-esker:    #4de8fe;
+    --reg-fenmoor:  #ec898b;
+
+    /* A drop shadow is invisible on near-black; panels lift with a
+       top highlight instead. */
+    --shadow: inset 0 1px 0 rgba(255,255,255,.045);
 }
 
 /* ============================================================
@@ -69,6 +127,23 @@
 
 /* author display rules outrank the UA sheet's [hidden]{display:none} */
 [hidden] { display: none !important; }
+
+/* Page ground: short reads stacked against a reference — the view the sampler
+   actually produces. An SVG mask over a token-coloured layer rather than a baked
+   fill, so one tile serves both themes. Fixed, so it does not scroll. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--grid-firm);
+  --read-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30'%3E%3Cg fill='%23000'%3E%3Crect x='0' y='3' width='22' height='2.4' rx='1.2'/%3E%3Crect x='26' y='3' width='17' height='2.4' rx='1.2'/%3E%3Crect x='47' y='3' width='13' height='2.4' rx='1.2'/%3E%3Crect x='8' y='12' width='26' height='2.4' rx='1.2'/%3E%3Crect x='38' y='12' width='14' height='2.4' rx='1.2'/%3E%3Crect x='2' y='21' width='15' height='2.4' rx='1.2'/%3E%3Crect x='21' y='21' width='24' height='2.4' rx='1.2'/%3E%3Crect x='49' y='21' width='11' height='2.4' rx='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: var(--read-tile);
+  mask-image: var(--read-tile);
+  -webkit-mask-size: 60px 30px;
+  mask-size: 60px 30px;
+}
 
 body {
   background: var(--ground);
@@ -82,6 +157,8 @@ body {
 }
 
 .wrap {
+  position: relative;
+  z-index: 1;
   max-width: 1180px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
@@ -90,32 +167,27 @@ body {
   gap: 1.25rem;
 }
 
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: .75rem;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 0;
-}
-
 h1 {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(1.875rem, 4.2vw, 2.75rem);
-  line-height: 1.08;
+  /* Sized to hold on one line inside .wrap's 1148px measure; the cap
+     keeps it from outgrowing the container on very wide viewports. */
+  font-size: min(2.9vw, 2.3rem);
+  line-height: 1.1;
   letter-spacing: .015em;
   text-transform: uppercase;
-  text-wrap: balance;
-  margin: .4rem 0 0;
+  white-space: nowrap;
+  margin: 0;
   color: var(--ink-hi);
+}
+@media (max-width: 640px) {
+  h1 { white-space: normal; font-size: clamp(1.5rem, 6.5vw, 2rem); text-wrap: balance; }
 }
 
 .standfirst {
   color: var(--ink-2);
-  max-width: 62ch;
-  margin: .6rem 0 0;
+  max-width: none;
+  margin: .7rem 0 0;
 }
 
 .panel {
@@ -151,6 +223,61 @@ h1 {
   white-space: nowrap;
 }
 
+/* Verdict score: distressed DANGER stamp style */
+#verdict-note {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #d32f2f;
+  color: #ffffff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 4px;
+  border: 2px solid #d32f2f;
+  white-space: nowrap;
+  display: inline-block;
+  transform: rotate(-2deg);
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #verdict-note {
+    background: #d32f2f;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+  }
+}
+
+:root[data-theme="dark"] #verdict-note {
+  background: #d32f2f;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+}
+
+/* Inline variant selector in verdict prose */
+.variant-inline-select {
+  border-bottom: 2px solid var(--border-firm);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  padding-bottom: 1px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.variant-inline-select:hover {
+  border-bottom-color: var(--ink-2);
+  color: var(--ink-hi);
+}
+
+.variant-inline-select:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 1px;
+}
+
+#variant-selector {
+  position: absolute;
+  left: -9999px;
+}
+
 .panel-body { padding: 1.125rem; }
 
 /* ============================================================
@@ -164,26 +291,6 @@ h1 {
   flex-wrap: wrap;
 }
 
-.fiction-flag {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  font-family: var(--font-mono);
-  font-size: .75rem;
-  letter-spacing: .04em;
-  color: var(--ink-2);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: .3rem .7rem;
-  white-space: nowrap;
-}
-.fiction-flag::before {
-  content: "";
-  width: 6px; height: 6px;
-  background: var(--ink-2);
-  flex: none;
-}
 
 /* ============================================================
    VERDICT — the thesis in one sentence
@@ -219,6 +326,28 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 .slot.filled { border-bottom-color: var(--ink); color: var(--ink); }
+
+.theme-switch {
+  display: inline-flex;
+  border: 1px solid var(--border-firm);
+  border-radius: var(--r);
+  overflow: hidden;
+  flex: none;
+}
+.theme-btn {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  color: var(--ink-3);
+  background: transparent;
+  border: 0;
+  padding: .28rem .65rem;
+  cursor: pointer;
+}
+.theme-btn + .theme-btn { border-left: 1px solid var(--border-firm); }
+.theme-btn:hover { color: var(--ink); }
+.theme-btn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.theme-btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
 
 /* ============================================================
    VIRUS STRIP — the pathogen's identity and the three knobs that
@@ -363,7 +492,12 @@ h1 {
 /* ============================================================
    TREE
    ============================================================ */
-.tree-svg { display: block; width: 100%; height: auto; }
+/* Both trees render at the same pixel height, so one vertical pixel is the same
+   number of days in each panel. Equalising WIDTH instead would have worked too,
+   but only by scaling both down to the wider one — and by making each panel's
+   geometry depend on the other's, which is exactly what must not happen here. */
+.tree-svg { display: block; height: 300px; width: auto; max-width: none; }
+#truth-tree, #inferred-tree { overflow-x: auto; }
 .tree-svg line { shape-rendering: crispEdges; }
 .tree-label {
   font-family: var(--font-ui);
@@ -676,7 +810,6 @@ input[type="range"]:focus-visible {
 
   <header class="masthead">
     <div>
-      <p class="eyebrow">Meridian virus &middot; MRV-1 &middot; variant Kestrel</p>
       <h1>The history you sequence is the history you get</h1>
       <p class="standfirst">
         A phylogenetic tree is not the epidemic. It is a shadow the epidemic casts through your
@@ -684,7 +817,10 @@ input[type="range"]:focus-visible {
         variant moves &mdash; not in reality, only in the record.
       </p>
     </div>
-    <span class="fiction-flag">Fictional pathogen, map &amp; scenario</span>
+    <div class="theme-switch" role="group" aria-label="Colour theme">
+      <button type="button" class="theme-btn" data-set-theme="light" aria-pressed="false">Light</button>
+      <button type="button" class="theme-btn" data-set-theme="dark" aria-pressed="false">Dark</button>
+    </div>
   </header>
 
   <!-- VIRUS --------------------------------------------------- -->
@@ -726,20 +862,13 @@ input[type="range"]:focus-visible {
 
   <section class="panel" aria-labelledby="controls-h">
     <div class="panel-head">
-      <h2 class="panel-title" id="controls-h">Controls</h2>
+      <h2 class="panel-title" id="controls-h">Testing policy</h2>
       <button type="button" class="btn ghost" id="fullinfo-btn" aria-pressed="false">Sequence everything</button>
     </div>
     <div class="controls-grid">
 
       <div class="control-group">
-        <p class="group-label">Surveillance policy &mdash; <span id="sel-region">Aldane</span></p>
-        <p class="group-hint">
-          Changes only what you can observe. The epidemic underneath is untouched.
-          Capacity buys <em>tests</em>, not cases: community screening reaches every
-          severity tier but wastes most of its tests on people who are not infected,
-          while hospital intake lands a genome almost every time and sees only the
-          severely ill.
-        </p>
+        <p class="group-label">Region &mdash; <span id="sel-region">Aldane</span></p>
         <p class="group-note" id="fullinfo-note" hidden>
           <strong>Not a policy &mdash; a control experiment.</strong> Every infection
           sequenced the moment it happens, including the ones nobody ever knew they had.
@@ -766,10 +895,19 @@ input[type="range"]:focus-visible {
     </div>
     <div class="verdict-body">
       <p class="verdict-line">
-        You would have concluded Variant Kestrel arose in
+        You would have concluded Variant <span id="v-variant-select" class="variant-inline-select" role="button" tabindex="0" aria-label="Select variant">Alpha</span> arose in
         <span class="slot" id="v-inf-deme">&nbsp;</span> on day
         <span class="slot" id="v-inf-day">&nbsp;</span>.
       </p>
+      <select id="variant-selector" aria-label="Select variant to view verdict" hidden>
+        <option value="wild">Wild-type</option>
+        <option value="alpha">Alpha</option>
+        <option value="beta">Beta</option>
+        <option value="gamma">Gamma</option>
+        <option value="delta">Delta</option>
+        <option value="epsilon">Epsilon</option>
+        <option value="zeta">Zeta</option>
+      </select>
       <p class="verdict-line truth">
         It arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
         <span class="slot" id="v-true-day">&nbsp;</span>.
@@ -816,27 +954,47 @@ input[type="range"]:focus-visible {
     <div class="panel-body">
       <h2>Method &amp; sources</h2>
       <ul>
-        <li>Substitution-rate range used for the molecular clock <span class="pending">to verify</span></li>
-        <li>Serial interval and offspring-distribution dispersion <span class="pending">to verify</span></li>
-        <li>Root-to-tip regression for clock estimation and rooting <span class="pending">to verify</span></li>
-        <li>Discrete ancestral-state reconstruction and its documented sensitivity to sampling
-            bias <span class="pending">to verify</span></li>
-        <li>Test positivity as an indicator of surveillance adequacy, and real-world peak
-            per-capita testing rates <span class="pending">to verify</span></li>
-        <li>Testing capacity is modelled as swabs per day. Community screening swabs at
-            random, so its hit rate is the prevalence of the population it screens and most
-            of its tests return nothing; hospital intake swabs admissions, who are already
-            enriched for infection, but it sees only severe and critical cases and it
-            saturates once capacity exceeds the ward census.</li>
-        <li><strong>A caveat against ourselves.</strong> This world holds under 10,000 people
-            and infects most of them, so prevalence peaks far higher than any real outbreak
-            reaches. Random screening is therefore <em>more</em> efficient here than it would
-            be in reality &mdash; which means the cost of community screening early, and the
-            pull toward hospital sampling, are understated on this page rather than
-            exaggerated.</li>
-        <li>Production phylogeographic methods reduce this bias but do not remove it. The
-            attribution error shown here is emergent, not hardcoded &mdash; it comes out of a
-            textbook implementation run on an unevenly sampled tip set.</li>
+        <li>Substitution-rate range used for the molecular clock. The <strong>Mutation rate</strong>
+            slider is this parameter &mdash; called the substitution rate, or molecular clock rate, in
+            the literature. RNA viruses evolve at rates of
+            roughly 1–5 × 10<sup>−3</sup> substitutions per site per year, varying by viral family and
+            protein region. The model scales it to generate branch lengths and
+            root-to-tip divergence patterns consistent with typical respiratory-virus evolution.</li>
+        <li>Serial interval and offspring-distribution dispersion. The serial interval (time between
+            successive infections in a transmission chain) is modelled as Gamma(shape=2.5, scale=2.6 days),
+            giving a mean of 6.5 days. Secondary case counts follow a negative-binomial distribution
+            with dispersion k=0.5, capturing the superspreading observed in many respiratory outbreaks.</li>
+        <li>Root-to-tip regression for clock estimation and rooting. The phylogenetic root is inferred
+            by regressing sequence divergence (the number of mutations carried by each sample) against
+            sampling date, following the TempEst method (Rambaut, Lam, Carvalho &amp; Pybus, 2016).
+            The x-intercept estimates the time of the most recent common ancestor.</li>
+        <li>Discrete ancestral-state reconstruction (Fitch parsimony) and its documented sensitivity to
+            sampling bias. Ancestral regions are inferred by parsimony, selecting the region most
+            consistent with the tips that carry each mutation. This method is known to be biased toward
+            the most-sampled region (Lemey, Rambaut, Welch &amp; Suchard, 2010), even when another region
+            held the true ancestor. Production methods like Bayesian discrete-state reconstruction
+            (BEAST, MrBayes) mitigate this by jointly modelling sampling effort.</li>
+        <li>WHO 2021 Greek-letter variant nomenclature. The World Health Organization adopted alphabetic
+            Greek letters (Alpha, Beta, Gamma, …) in May 2021 for epidemiologically significant variants
+            of concern, standardising naming across viruses to avoid geographic stigma and clade-by-discovery
+            ambiguities (WHO, 2021).</li>
+        <li>Test positivity as an indicator of surveillance adequacy. Test positivity indicates whether
+            surveillance is sufficiently broad: high positivity (≥5%) signals overwhelmed testing and
+            undetected cases. Peak per-capita testing during the SARS-CoV-2 pandemic reached 5–10% of
+            the population per week in some developed countries.</li>
+        <li>Testing capacity is modelled as swabs per day per region, expressed as a percentage of
+            population. Community screening swabs random people, so its detection probability equals
+            prevalence—most tests yield no positive. Hospital intake swabs admitted patients (nearly
+            100% detection but only severe/critical cases), and saturates once capacity exceeds occupied
+            beds.</li>
+        <li><strong>A caveat against ourselves.</strong> This world holds under 10,000 people and infects
+            most of them, so prevalence peaks far higher than any real outbreak. Random screening is
+            therefore <em>more</em> efficient here than reality—so the cost of early community screening
+            and the pull toward hospital sampling are understated, not exaggerated.</li>
+        <li>Production phylogeographic methods reduce this bias but do not remove it. The bias shown here
+            is emergent, not hardcoded—it comes from running textbook Fitch parsimony on an unevenly
+            sampled tip set, a real failure mode that methods like Bayesian discrete-state reconstruction
+            address but cannot fully eliminate.</li>
       </ul>
     </div>
   </section>
@@ -972,9 +1130,12 @@ const REG = Object.fromEntries(REGIONS.map(r => [r.id, r]));
    can end up arising into an already-depleted region and never establish. */
 const LINEAGES = [
   { id: "wild",    name: "Wild type", origin: "brix",    after:  0, trans: 1.0, sev: 1.0 },
-  { id: "kestrel", name: "Kestrel",   origin: "aldane",  after:  5, trans: 1.6, sev: 0.5 },
-  { id: "tern",    name: "Tern",      origin: "esker",   after:  8, trans: 1.3, sev: 1.0 },
-  { id: "harrow",  name: "Harrow",    origin: "corvane", after: 10, trans: 1.1, sev: 2.2 },
+  { id: "alpha",   name: "Alpha",     origin: "aldane",  after:  5, trans: 1.6, sev: 0.5 },
+  { id: "beta",    name: "Beta",      origin: "esker",   after:  8, trans: 1.3, sev: 1.0 },
+  { id: "gamma",   name: "Gamma",     origin: "corvane", after: 10, trans: 1.4, sev: 2.2 },
+  { id: "delta",   name: "Delta",     origin: "doran",   after: 12, trans: 1.5, sev: 1.0 },
+  { id: "epsilon", name: "Epsilon",   origin: "brix",    after: 14, trans: 1.5, sev: 1.0 },
+  { id: "zeta",    name: "Zeta",      origin: "fenmoor", after: 16, trans: 1.6, sev: 1.2 },
 ];
 const LIN = Object.fromEntries(LINEAGES.map(l => [l.id, l]));
 
@@ -1909,9 +2070,12 @@ if (typeof globalThis !== "undefined") globalThis.PB = ENGINE;
    STATE
    ============================================================ */
 const SCENARIO_FIELDS = [
-  { key: "r0",    label: "Basic reproduction number", min: 1.2, max: 4, step: .1, value: 2.4,
-    fmt: v => v.toFixed(1) },
-  { key: "clockRate", label: "Clock rate", min: 4, max: 16, step: .5, value: 9,
+  /* Labels are the plain-language name; the readout carries the meaning the
+     technical name used to. The engine keys stay `r0` and `clockRate`, which are
+     what the literature calls these, so the cited sources still line up. */
+  { key: "r0",    label: "Transmission rate", min: 1.2, max: 4, step: .1, value: 2.4,
+    fmt: v => v.toFixed(1) + " new infections per case" },
+  { key: "clockRate", label: "Mutation rate", min: 4, max: 16, step: .5, value: 9,
     fmt: v => v.toFixed(1) + "\u00d710\u207b\u2074 /site/yr" },
   { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 111,
     fmt: v => "#" + v },
@@ -1921,7 +2085,7 @@ const POLICY_FIELDS = [
   { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v },
   { key: "capacity", label: "Testing capacity", min: 0, max: MAX_CAPACITY, step: .05,
     fmt: v => v.toFixed(2) + "% of people tested daily" },
-  { key: "hospitalMix", label: "From hospital intake", min: 0, max: 100, step: 1,
+  { key: "hospitalMix", label: "Test allocation", min: 0, max: 100, step: 1,
     fmt: v => v + "% hosp / " + (100 - v) + "% community" },
   { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%" },
 ];
@@ -1929,6 +2093,7 @@ const POLICY_FIELDS = [
 const state = {
   scenario: Object.fromEntries(SCENARIO_FIELDS.map(f => [f.key, f.value])),
   selected: "aldane",
+  selectedVariant: "alpha",
   /* A plausible starting world rather than a uniform one: the populous hub runs a
      real programme, the periphery does not. Uniform sampling -- even sparse and
      late -- reconstructs the origins correctly, so a uniform default would open on
@@ -2028,11 +2193,19 @@ function renderPolicy() {
 function renderVerdict() {
   const r = state.result;
   if (!r) { $("#verdict-note").textContent = "no simulation run"; return; }
-  const k = r.verdicts.find(v => v.id === "kestrel");
+  const selectedId = state.selectedVariant;
+  const k = r.verdicts.find(v => v.id === selectedId);
   const name = id => (REGIONS.find(x => x.id === id) || {}).name || String(id);
   const wrong = r.verdicts.filter(v => v.found && !v.regionRight).length;
   $("#verdict-note").textContent =
     wrong + " of " + r.verdicts.length + " variant origins misplaced";
+
+  // Update variant name in prose
+  const variantNames = { wild: "Wild-type", alpha: "Alpha", beta: "Beta", gamma: "Gamma", delta: "Delta", epsilon: "Epsilon", zeta: "Zeta" };
+  const variantName = variantNames[selectedId] || LIN[selectedId]?.name || String(selectedId);
+  const variantEl = $("#v-variant-select");
+  if (variantEl) variantEl.textContent = variantName;
+
   const set = (sel, text, filled) => {
     const el = $(sel);
     el.textContent = text;
@@ -2045,7 +2218,7 @@ function renderVerdict() {
     set("#v-inf-deme", name(k.region), true);
     set("#v-inf-day", k.day == null ? "\u2014" : String(Math.round(k.day)), true);
   }
-  const t = r.verdicts.find(v => v.id === "kestrel");
+  const t = r.verdicts.find(v => v.id === selectedId);
   set("#v-true-deme", t ? name(t.trueRegion) : "\u2014", false);
   set("#v-true-day", t && t.trueDay != null ? String(Math.round(t.trueDay)) : "\u2014", false);
 }
@@ -2070,7 +2243,6 @@ function render() {
 /* ============================================================
    TREE RENDERING
    ============================================================ */
-const LINEAGE_NAME = { wild: "Wild type", kestrel: "Kestrel", tern: "Tern", harrow: "Harrow" };
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 function renderTreeSVG(roots, opts) {
@@ -2152,12 +2324,21 @@ function renderTreeSVG(roots, opts) {
     if (k > 1) g.push(`<text class="tree-muts" x="${(n.x + 4.5).toFixed(1)}" y="${((n.y0 + n.y1) / 2 + 2.5).toFixed(1)}">${k}</text>`);
     if (n.marker) {
       g.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y1.toFixed(1)}" r="4" fill="var(--surface)" stroke="var(--reg-${n.region})" stroke-width="2.5"></circle>`);
-      g.push(`<text class="tree-label" x="${(n.x + 7).toFixed(1)}" y="${(n.y1 + 3.5).toFixed(1)}">${esc(LINEAGE_NAME[n.marker] || n.marker)}</text>`);
+      g.push(`<text class="tree-label" x="${(n.x + 7).toFixed(1)}" y="${(n.y1 + 3.5).toFixed(1)}">${esc(LIN[n.marker]?.name || n.marker)}</text>`);
     }
     out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} \u00b7 ${esc(n.carriers.toLocaleString())} cases \u00b7 ${esc(n.region)} \u00b7 day ${n.tEnd.toFixed(0)}</title></g>`);
   }
   const defsBlock = defs.length ? `<defs>${defs.join("")}</defs>` : "";
   return `<svg class="tree-svg" viewBox="0 0 ${W.toFixed(0)} ${H}" role="img" aria-label="${esc(opts.aria)}">${defsBlock}${out.join("")}</svg>`;
+}
+
+/* The day scale both panels share. It is read off the TRUTH alone — never off the
+   reconstruction — because the reconstruction depends on policy, and a truth panel
+   that rescaled when you moved a slider would contradict the one thing this page
+   asserts. Every sampled genome is dated on or before the last case, so the truth's
+   own span always contains the reconstruction too. */
+function sharedTMax(truth) {
+  return Math.max(15, Math.ceil((truth.stats.lastDay || 0) / 15) * 15);
 }
 
 function renderTruthTree() {
@@ -2166,7 +2347,7 @@ function renderTruthTree() {
   const t = autoTree(truth, 26, 46);
   state.truthTree = t;
   $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
-    tMax: Math.ceil(treeSpan(t.roots) / 15) * 15,
+    tMax: sharedTMax(truth),
     rootRegion: truth.cases.length ? truth.cases[0].region : null,
     rootDate: 0,
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
@@ -2260,9 +2441,8 @@ function renderInferred() {
   if (!HAS_DOM) return;
   const r = inferNow();
   state.result = r;
-  const span = Math.max(treeSpan(r.tree.roots), treeSpan(autoTree(r.truth, 26, 46).roots));
   $("#inferred-tree").innerHTML = renderTreeSVG(r.tree.roots, {
-    tMax: Math.ceil(span / 15) * 15,
+    tMax: sharedTMax(r.truth),
     rootRegion: r.fitch.region.get(r.phylo.root),
     rootDate: Math.min(...r.tree.roots.map(x => x.tStart)),
     rootLabel: "inferred common ancestor",
@@ -2274,14 +2454,16 @@ function renderInferred() {
      two is the whole argument for where to point a testing programme. */
   const tests = Object.values(r.s.spend || {}).reduce((a, x) => a + x.tests, 0);
   const capture = r.s.samples.length / Math.max(1, r.truth.cases.length);
+  /* The head says what the programme SPENT; the key under the legend says what it
+     GOT, in the same shape and the same slot as the truth panel's. Printing the
+     genome and tip counts in both places is what made the two panels read as
+     differently built. */
   $("#inf-note").textContent = r.s.omniscient
-    ? r.s.samples.length.toLocaleString() + " genomes \u00b7 every infection \u00b7 "
-      + r.tree.tips + " tips"
-    : r.s.samples.length.toLocaleString() + " genomes from "
-      + Math.round(tests).toLocaleString() + " tests \u00b7 "
-      + (capture * 100).toFixed(0) + "% of infections \u00b7 " + r.tree.tips + " tips";
+    ? "every infection sequenced"
+    : "from " + Math.round(tests).toLocaleString() + " tests \u00b7 "
+      + (capture * 100).toFixed(0) + "% of infections";
   const ic = $("#inferred-count");
-  if (ic) ic.textContent = r.tree.tips + " tips \u00b7 " + r.s.samples.length.toLocaleString() + " genomes";
+  if (ic) ic.textContent = r.s.samples.length.toLocaleString() + " genomes \u00b7 " + r.tree.tips + " tips";
   renderVerdict();
 }
 
@@ -2308,11 +2490,50 @@ function select(id) {
   renderPolicy();
 }
 
+/* Theme: an unstamped root means "follow the OS". A click stamps an
+   explicit choice, which the guarded CSS lets win in either direction. */
+const THEME_KEY = "meridian-theme";
+
+function markThemeButtons() {
+  if (!HAS_DOM) return;
+  const stamped = document.documentElement.getAttribute("data-theme");
+  const effective = stamped ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.querySelectorAll(".theme-btn").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.setTheme === effective));
+  });
+}
+
+function setTheme(next) {
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* blocked storage is fine */ }
+  markThemeButtons();
+}
+
+if (HAS_DOM) {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") {
+      document.documentElement.setAttribute("data-theme", saved);
+    }
+  } catch (_) { /* nothing stored is a valid state: follow the OS */ }
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", markThemeButtons);
+  }
+}
+
 if (HAS_DOM) document.addEventListener("click", e => {
+  const themeBtn = e.target.closest("[data-set-theme]");
+  if (themeBtn) { setTheme(themeBtn.dataset.setTheme); return; }
   if (e.target.closest("#reveal-btn")) { setRevealed(!state.revealed); return; }
   if (e.target.closest("#reveal-btn-2")) { setRevealed(true); return; }
   if (e.target.closest("#fullinfo-btn")) {
     setFullInfo($("#fullinfo-btn").getAttribute("aria-pressed") !== "true");
+    return;
+  }
+  if (e.target.closest("#v-variant-select")) {
+    const selector = $("#variant-selector");
+    if (selector) selector.click();
     return;
   }
   const node = e.target.closest("[data-region]");
@@ -2362,6 +2583,7 @@ if (HAS_DOM) document.addEventListener("input", e => {
 if (HAS_DOM) {
   renderScenario();
   render();
+  markThemeButtons();
   if (readRevealed()) setRevealed(true);
 }
 </script>

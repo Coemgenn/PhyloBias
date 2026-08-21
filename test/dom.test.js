@@ -136,7 +136,7 @@ test("the inferred tree draws and the verdict reads off it", () => {
   const svg = w.document.querySelector("#inferred-tree svg");
   assert.ok(svg, "inferred tree not drawn");
   assert.ok(svg.querySelectorAll("g.branch").length > 15, "inferred tree is nearly empty");
-  assert.match(w.document.querySelector("#inf-note").textContent, /genomes/);
+  assert.match(w.document.querySelector("#inf-note").textContent, /tests|sequenced/);
   for (const id of ["#v-inf-deme", "#v-inf-day", "#v-true-deme", "#v-true-day"])
     assert.ok(w.document.querySelector(id).textContent.trim().length > 0, `${id} is blank`);
 });
