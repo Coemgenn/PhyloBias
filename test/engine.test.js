@@ -114,3 +114,53 @@ test("no lineage's true origin is referenced outside the truth layer", () => {
       `origin region "${region}" is hardcoded in the inference layer`);
   }
 });
+
+/* ---------- display tree ---------- */
+
+test("ladder collapsing preserves every mutation", () => {
+  const T = PB.runTruth(BASE);
+  const t = PB.autoTree(T, 26, 46);
+  let nodes = 0, muts = 0;
+  (function w(ns) { for (const n of ns) { nodes++; muts += n.segs.length; w(n.children); } })(t.roots);
+  assert.ok(muts > nodes, "collapsing should fold some mutations into shared branches");
+  /* a collapsed run must have identical carrier counts — that is what makes the
+     mutations indistinguishable and the collapse lossless */
+  (function w(ns) {
+    for (const n of ns) {
+      for (const seg of n.segs) assert.strictEqual(T.carriers[seg.id], n.carriers);
+      w(n.children);
+    }
+  })(t.roots);
+});
+
+test("tree lands in a drawable size", () => {
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  assert.ok(t.tips >= 20 && t.tips <= 60, `${t.tips} tips is outside the drawable band`);
+});
+
+test("layout puts every child to the right of its parent", () => {
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  const L = PB.layoutTree(t.roots, { rowH: 15, tMax: 150, width: 560, padL: 12, padR: 96 });
+  for (const n of L.nodes)
+    for (const c of n.children)
+      assert.ok(c.x0 >= n.x1 - 0.01, "child branch starts left of its parent");
+  assert.ok(L.rows > 0 && L.height > 0);
+});
+
+test("every branch carries a real region colour and a tooltip", () => {
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  const svg = PB.renderTreeSVG(t.roots, { tMax: 150, aria: "x" });
+  const groups = (svg.match(/<g class="branch">/g) || []).length;
+  assert.strictEqual(groups, (svg.match(/<title>/g) || []).length,
+    "each branch group needs its own title, or tooltips attach to the whole svg");
+  const ids = new Set(PB.REGIONS.map(r => r.id));
+  for (const m of svg.match(/var\(--reg-([a-z]+)\)/g) || [])
+    assert.ok(ids.has(m.slice(10, -1)), `unknown region token ${m}`);
+});
+
+test("variant markers are labelled on the tree", () => {
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  const svg = PB.renderTreeSVG(t.roots, { tMax: 150, aria: "x" });
+  for (const name of ["Kestrel", "Tern", "Harrow"])
+    assert.ok(svg.includes(">" + name + "<"), `${name} not labelled on the tree`);
+});

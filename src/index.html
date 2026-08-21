@@ -20,20 +20,37 @@
   --ink-2:       #46545a;
   --ink-3:       #6d7c82;
 
-  --accent:      #2a78d6;
-  --accent-ink:  #1c5cab;
+  --accent:      #4a5b63;
+  --accent-ink:  #2f3c43;
   --on-accent:   #ffffff;
 
-  /* Kestrel — reserved. Appears nowhere else. */
-  --kestrel:     #eb6834;
-  --kestrel-ink: #b8420f;
+  /* Lineage identity. Validated all-pairs for colourblind separation in both
+     themes (worst deutan dE 9.2 light / 9.4 dark). Aqua sits below 3:1 on the
+     light surface, so direct labels on the trees are required, not optional. */
 
-  /* sequential ramp: sequencing effort, none -> saturated */
+  /* Region identity. Six hues cannot be separated inside a fixed lightness band,
+     so lightness carries a second channel -- the atlas convention, and what makes
+     these readable under colour blindness. Worst-case dE 16.7 across normal,
+     protan, deutan and tritan vision in BOTH themes (target 8). The uniform-
+     lightness guideline is deliberately traded away to buy that. */
+  --reg-aldane:  #c06841;
+  --reg-doran:   #7f255b;
+  --reg-esker:   #deae65;
+  --reg-fenmoor: #78d0ea;
+  --reg-brix:    #448ec5;
+  --reg-corvane: #3a33bd;
+
+  --lin-wild:    #7c8a90;
+  --lin-kestrel: #eb6834;
+  --lin-harrow:  #2a78d6;
+  --lin-tern:    #1baf7a;
+
+  /* sequencing effort — single-hue slate, kept off the lineage hues */
   --ramp-0: #e6eaec;
-  --ramp-1: #cde2fb;
-  --ramp-2: #9ec5f4;
-  --ramp-3: #5598e7;
-  --ramp-4: #2a78d6;
+  --ramp-1: #c8d2d6;
+  --ramp-2: #a3b2b8;
+  --ramp-3: #7b8d95;
+  --ramp-4: #52646d;
 
   /* the unrecoverable past */
   --dark-zone:   #cfd6d9;
@@ -58,16 +75,30 @@
     --ink:         #e8eef0;
     --ink-2:       #a3b0b6;
     --ink-3:       #7d8b91;
-    --accent:      #3987e5;
-    --accent-ink:  #86b6ef;
-    --on-accent:   #080f13;
-    --kestrel:     #d95926;
-    --kestrel-ink: #f08a5d;
+    --accent:      #8fa3ac;
+    --accent-ink:  #b8c8cf;
+    --on-accent:   #0d1214;
+    --reg-aldane:  #d47a53;
+    --reg-doran:   #92376c;
+    --reg-esker:   #f2c178;
+    --reg-fenmoor: #87e0fa;
+    --reg-brix:    #57a0d9;
+    --reg-corvane: #4748d1;
+      --reg-aldane:  #d47a53;
+  --reg-doran:   #92376c;
+  --reg-esker:   #f2c178;
+  --reg-fenmoor: #87e0fa;
+  --reg-brix:    #57a0d9;
+  --reg-corvane: #4748d1;
+  --lin-wild:    #78868c;
+    --lin-kestrel: #d95926;
+    --lin-harrow:  #3987e5;
+    --lin-tern:    #199e70;
     --ramp-0: #1c2529;
-    --ramp-1: #184f95;
-    --ramp-2: #256abf;
-    --ramp-3: #3987e5;
-    --ramp-4: #86b6ef;
+    --ramp-1: #2c3a40;
+    --ramp-2: #435760;
+    --ramp-3: #5f7883;
+    --ramp-4: #86a1ad;
     --dark-zone:   #232d31;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
   }
@@ -83,16 +114,24 @@
   --ink:         #e8eef0;
   --ink-2:       #a3b0b6;
   --ink-3:       #7d8b91;
-  --accent:      #3987e5;
-  --accent-ink:  #86b6ef;
-  --on-accent:   #080f13;
-  --kestrel:     #d95926;
-  --kestrel-ink: #f08a5d;
+    --accent:      #8fa3ac;
+  --accent-ink:  #b8c8cf;
+  --on-accent:   #0d1214;
+    --reg-aldane:  #d47a53;
+  --reg-doran:   #92376c;
+  --reg-esker:   #f2c178;
+  --reg-fenmoor: #87e0fa;
+  --reg-brix:    #57a0d9;
+  --reg-corvane: #4748d1;
+  --lin-wild:    #78868c;
+  --lin-kestrel: #d95926;
+  --lin-harrow:  #3987e5;
+  --lin-tern:    #199e70;
   --ramp-0: #1c2529;
-  --ramp-1: #184f95;
-  --ramp-2: #256abf;
-  --ramp-3: #3987e5;
-  --ramp-4: #86b6ef;
+  --ramp-1: #2c3a40;
+  --ramp-2: #435760;
+  --ramp-3: #5f7883;
+  --ramp-4: #86a1ad;
   --dark-zone:   #232d31;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
 }
@@ -209,14 +248,14 @@ h1 {
   content: "";
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--kestrel);
+  background: var(--lin-kestrel);
   flex: none;
 }
 
 /* ============================================================
    VERDICT — the thesis in one sentence
    ============================================================ */
-.verdict { border-left: 3px solid var(--kestrel); }
+.verdict { border-left: 3px solid var(--lin-kestrel); }
 
 .verdict-body {
   padding: 1.375rem 1.5rem;
@@ -246,20 +285,25 @@ h1 {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.slot.filled { border-bottom-color: var(--kestrel); color: var(--ink); }
+.slot.filled { border-bottom-color: var(--lin-kestrel); color: var(--ink); }
 
 /* ============================================================
    MAIN GRID
    ============================================================ */
 .stage {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
 }
-
-@media (max-width: 880px) {
-  .stage { grid-template-columns: minmax(0, 1fr); }
+.lower {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (max-width: 940px) {
+  .stage, .lower { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ============================================================
@@ -329,7 +373,59 @@ h1 {
 .legend-ramp span { flex: 1; }
 
 /* ============================================================
-   TREE — designed empty state until the engine lands
+   TREE
+   ============================================================ */
+.tree-svg { display: block; width: 100%; height: auto; }
+.tree-svg line { shape-rendering: crispEdges; }
+.tree-label {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 600;
+  fill: var(--ink);
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.tree-muts {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  fill: var(--ink-3);
+  text-anchor: middle;
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 2.5px;
+}
+.tree-axis {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  fill: var(--ink-3);
+  text-anchor: middle;
+}
+
+.region-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .875rem;
+  padding: .75rem 1.125rem;
+  border-top: 1px solid var(--border);
+}
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .6875rem;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+}
+.key-item i {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+
+/* ============================================================
+   EMPTY STATE
    ============================================================ */
 .empty {
   display: flex;
@@ -495,7 +591,7 @@ input[type="range"]:focus-visible {
   font-size: .625rem;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: var(--kestrel-ink);
+  color: var(--lin-kestrel);
   border: 1px solid currentColor;
   border-radius: 3px;
   padding: 0 .3rem;
@@ -542,13 +638,46 @@ input[type="range"]:focus-visible {
     </div>
   </section>
 
-  <!-- STAGE -------------------------------------------------- -->
+  <!-- STAGE: the comparison ------------------------------- -->
   <div class="stage">
 
-    <section class="panel" aria-labelledby="map-h">
+    <section class="panel" aria-labelledby="truth-h">
+      <div class="panel-head">
+        <h2 class="panel-title" id="truth-h">What happened</h2>
+        <span class="panel-note" id="truth-note">&nbsp;</span>
+      </div>
+      <div class="panel-body">
+        <div id="truth-tree"></div>
+      </div>
+      <div class="region-key" id="region-key"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="inf-h">
+      <div class="panel-head">
+        <h2 class="panel-title" id="inf-h">What you would reconstruct</h2>
+        <span class="panel-note">perfect phylogeny &middot; Fitch</span>
+      </div>
+      <div class="panel-body">
+        <div class="empty">
+          <div class="empty-mark">&#9903;</div>
+          <p>
+            The sampler and inference land next. This panel draws the same tree rebuilt from
+            only the genomes your policy collected, with each branch coloured by the region
+            <em>inferred</em> for it &mdash; not the region it actually came from.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MAP + CONTROLS ----------------------------------------- -->
+  <div class="lower">
+
+  <section class="panel" aria-labelledby="map-h">
       <div class="panel-head">
         <h2 class="panel-title" id="map-h">Sequencing effort by region</h2>
-        <span class="panel-note">click a region to fund it</span>
+        <span class="panel-note">click to fund</span>
       </div>
       <div class="panel-body">
         <svg class="map-svg" viewBox="0 0 400 320" role="group"
@@ -569,26 +698,6 @@ input[type="range"]:focus-visible {
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="tree-h">
-      <div class="panel-head">
-        <h2 class="panel-title" id="tree-h">Inferred phylogeny</h2>
-        <span class="panel-note">neighbour-joining &middot; root-to-tip</span>
-      </div>
-      <div class="panel-body">
-        <div class="empty">
-          <div class="empty-mark">&#9903;</div>
-          <p>
-            The inference engine lands next. This panel will show the tree reconstructed from
-            sampled genomes only, with the pre-sequencing period hatched &mdash; diversity that no
-            later investment can recover.
-          </p>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-  <!-- CONTROLS ----------------------------------------------- -->
   <section class="panel" aria-labelledby="controls-h">
     <div class="panel-head">
       <h2 class="panel-title" id="controls-h">Controls</h2>
@@ -613,6 +722,8 @@ input[type="range"]:focus-visible {
 
     </div>
   </section>
+
+  </div>
 
   <!-- SOURCES ------------------------------------------------ -->
   <section class="panel sources">
@@ -988,6 +1099,88 @@ function genotypeOf(truth, caseId) {
   return out;
 }
 
+
+/* ============================================================
+   DISPLAY TREE — prune, collapse unbranched runs, lay out
+   ============================================================ */
+
+/* A run of mutations that nobody branches off carries identical information at
+   every step: same carrier count means they are always inherited together and
+   can never be told apart. Collapsing them into one branch is how phylogenies
+   are normally drawn — branch length IS the mutation count. */
+function buildDisplayTree(truth, minCarriers) {
+  const keep = new Set();
+  for (let i = 0; i < truth.mutations.length; i++)
+    if (truth.carriers[i] >= minCarriers) keep.add(i);
+
+  const kids = new Map([[-1, []]]);
+  for (const id of keep) {
+    let p = truth.mutations[id].parent;
+    while (p >= 0 && !keep.has(p)) p = truth.mutations[p].parent;
+    if (!kids.has(p)) kids.set(p, []);
+    kids.get(p).push(id);
+  }
+  for (const a of kids.values()) a.sort((x, y) => truth.carriers[y] - truth.carriers[x]);
+
+  const lineageOf = id => {
+    let m = truth.mutations[id];
+    while (m) { if (m.marker) return m.marker; if (m.parent < 0) break; m = truth.mutations[m.parent]; }
+    return "wild";
+  };
+
+  function make(id) {
+    const segs = [{ id, t: truth.mutations[id].t, region: truth.mutations[id].region }];
+    let marker = truth.mutations[id].marker;
+    let ch = kids.get(id) || [];
+    while (ch.length === 1 && truth.carriers[ch[0]] === truth.carriers[id]) {
+      const c = ch[0];
+      segs.push({ id: c, t: truth.mutations[c].t, region: truth.mutations[c].region });
+      marker = marker || truth.mutations[c].marker;
+      ch = kids.get(c) || [];
+    }
+    const last = segs[segs.length - 1];
+    return {
+      segs, marker, carriers: truth.carriers[id], tEnd: last.t, region: last.region,
+      lineage: lineageOf(last.id), children: ch.map(make),
+    };
+  }
+  return (kids.get(-1) || []).map(make);
+}
+
+/* pick a threshold that lands the tree in a drawable size */
+function autoTree(truth, minTips, maxTips) {
+  let lo = 1, best = null;
+  for (const th of [4000, 2500, 1600, 1000, 700, 500, 400, 300, 220, 160, 120, 90, 60, 40]) {
+    const roots = buildDisplayTree(truth, th);
+    let tips = 0;
+    (function count(ns) { for (const n of ns) n.children.length ? count(n.children) : tips++; })(roots);
+    best = { roots, threshold: th, tips };
+    if (tips >= minTips) break;
+  }
+  return best;
+}
+
+function layoutTree(roots, opts) {
+  const { rowH, tMax, width, padL, padR } = opts;
+  const xOf = t => padL + Math.max(0, Math.min(1, t / tMax)) * (width - padL - padR);
+  const flat = [];
+  let row = 0;
+  (function walk(ns, parentT) {
+    for (const n of ns) {
+      n.x0 = xOf(parentT);
+      n.x1 = xOf(n.tEnd);
+      if (n.children.length) {
+        walk(n.children, n.tEnd);
+        n.y = (n.children[0].y + n.children[n.children.length - 1].y) / 2;
+      } else {
+        n.y = (row++ + 0.5) * rowH;
+      }
+      flat.push(n);
+    }
+  })(roots, 0);
+  return { nodes: flat, height: row * rowH, xOf, rows: row };
+}
+
 /* memoised: truth depends only on the scenario, never on policy */
 let _cache = null;
 function truthFor(scenario) {
@@ -1002,6 +1195,7 @@ const ENGINE = {
   REGIONS, REG, LINEAGES, LIN, TIERS, TIER_CUTS,
   GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION,
   runTruth, truthFor, genotypeOf, tierOf,
+  buildDisplayTree, autoTree, layoutTree, renderTreeSVG,
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
@@ -1114,6 +1308,81 @@ function render() {
   renderChips();
   renderPolicy();
   renderVerdict();
+  renderRegionKey();
+  renderTruthTree();
+}
+
+
+/* ============================================================
+   TREE RENDERING
+   ============================================================ */
+const LINEAGE_NAME = { wild: "Wild type", kestrel: "Kestrel", tern: "Tern", harrow: "Harrow" };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+function renderTreeSVG(roots, opts) {
+  const W = 560, padL = 12, padR = 96, rowH = 15, axisH = 26;
+  const L = layoutTree(roots, { rowH, tMax: opts.tMax, width: W, padL, padR });
+  const H = L.height + axisH + 8;
+  const out = [];
+
+  for (const n of L.nodes) {
+    const g = [];
+    /* the branch is drawn in segments, one per mutation, coloured by the region
+       that mutation first appeared in — so migration along a branch is visible */
+    const span = n.x1 - n.x0;
+    const k = n.segs.length;
+    for (let i = 0; i < k; i++) {
+      const a = n.x0 + (span * i) / k, b = n.x0 + (span * (i + 1)) / k;
+      g.push(`<line x1="${a.toFixed(1)}" y1="${n.y.toFixed(1)}" x2="${b.toFixed(1)}" y2="${n.y.toFixed(1)}" `
+        + `stroke="var(--reg-${n.segs[i].region})" stroke-width="2.5" stroke-linecap="butt"></line>`);
+    }
+    if (n.children.length) {
+      const ys = n.children.map(c => c.y);
+      g.push(`<line x1="${n.x1.toFixed(1)}" y1="${Math.min(...ys).toFixed(1)}" x2="${n.x1.toFixed(1)}" `
+        + `y2="${Math.max(...ys).toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`);
+    }
+    if (k > 1) {
+      g.push(`<text class="tree-muts" x="${((n.x0 + n.x1) / 2).toFixed(1)}" y="${(n.y - 3.5).toFixed(1)}">${k}</text>`);
+    }
+    if (n.marker) {
+      g.push(`<circle cx="${n.x1.toFixed(1)}" cy="${n.y.toFixed(1)}" r="4" fill="var(--surface)" `
+        + `stroke="var(--reg-${n.region})" stroke-width="2.5"></circle>`);
+      g.push(`<text class="tree-label" x="${(n.x1 + 8).toFixed(1)}" y="${(n.y + 3.5).toFixed(1)}">`
+        + `${esc(LINEAGE_NAME[n.marker] || n.marker)}</text>`);
+    }
+    out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} · `
+      + `${esc(n.carriers.toLocaleString())} cases · ${esc(n.region)} · day ${n.tEnd.toFixed(0)}</title></g>`);
+  }
+
+  /* time axis */
+  const yA = L.height + 16;
+  out.push(`<line x1="${padL}" y1="${yA}" x2="${W - padR}" y2="${yA}" stroke="var(--border)" stroke-width="1"></line>`);
+  for (let d = 0; d <= opts.tMax; d += 30) {
+    const x = L.xOf(d);
+    out.push(`<line x1="${x.toFixed(1)}" y1="${yA}" x2="${x.toFixed(1)}" y2="${yA + 4}" stroke="var(--border-firm)" stroke-width="1"></line>`);
+    out.push(`<text class="tree-axis" x="${x.toFixed(1)}" y="${yA + 15}">${d}</text>`);
+  }
+  return `<svg class="tree-svg" viewBox="0 0 ${W} ${H.toFixed(0)}" role="img" aria-label="${esc(opts.aria)}">${out.join("")}</svg>`;
+}
+
+function renderTruthTree() {
+  if (!HAS_DOM) return;
+  const truth = truthFor(state.scenario);
+  const t = autoTree(truth, 26, 46);
+  const tMax = Math.ceil(truth.stats.lastDay / 30) * 30;
+  state.truthTree = t;
+  $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
+    tMax,
+    aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
+  });
+  $("#truth-note").textContent =
+    truth.stats.cases.toLocaleString() + " cases · " + t.tips + " tips · ≥" + t.threshold + " carriers";
+}
+
+function renderRegionKey() {
+  if (!HAS_DOM) return;
+  $("#region-key").innerHTML = REGIONS.map(r =>
+    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("");
 }
 
 /* ============================================================
@@ -1150,6 +1419,7 @@ if (HAS_DOM) document.addEventListener("input", e => {
   if (sf) {
     state.scenario[key] = val;
     $("#o-" + key).textContent = sf.fmt(val);
+    renderTruthTree();
     return;
   }
   const pf = POLICY_FIELDS.find(f => f.key === key);
