@@ -1226,18 +1226,34 @@ function buildDisplayTree(truth, minCarriers) {
   return (kids.get(-1) || []).map(r => make(r, -1));
 }
 
-/* pick a threshold that lands the tree in a drawable size */
+/* Both panels are cut at the same FRACTION of their own total, so they carry
+   comparable resolution. Cutting the truth at 0.66% of cases while the
+   reconstruction was cut at 0.56% of genomes gave 34 tips against 46 and made the
+   two look structurally unalike where they actually agreed. */
+const TREE_TARGET_TIPS = 38;
+
+function countTips(roots) {
+  let tips = 0;
+  (function count(ns) { for (const n of ns) n.children.length ? count(n.children) : tips++; })(roots);
+  return tips;
+}
+
 function autoTree(truth, minTips, maxTips) {
-  let lo = 1, best = null;
-  for (const th of [4000, 2500, 1600, 1000, 700, 500, 400, 300, 220, 160, 120, 90, 60, 40]) {
+  const total = truth.stats.cases;
+  let best = null;
+  for (const frac of FRACTIONS) {
+    const th = Math.max(2, Math.round(total * frac));
     const roots = buildDisplayTree(truth, th);
-    let tips = 0;
-    (function count(ns) { for (const n of ns) n.children.length ? count(n.children) : tips++; })(roots);
-    best = { roots, threshold: th, tips };
-    if (tips >= minTips) break;
+    const tips = countTips(roots);
+    if (!best || Math.abs(tips - (minTips || TREE_TARGET_TIPS)) < Math.abs(best.tips - (minTips || TREE_TARGET_TIPS)))
+      best = { roots, threshold: th, tips, frac };
+    if (tips > (maxTips || 60)) break;
   }
   return best;
 }
+
+const FRACTIONS = [0.08, 0.05, 0.035, 0.025, 0.018, 0.013, 0.0095, 0.007, 0.005,
+                   0.0037, 0.0027, 0.002, 0.0015, 0.0011, 0.0008, 0.0006];
 
 /* Time runs top to bottom and tips spread left to right. The tree is far wider
    than deep — mutations that survive pruning all arise early — so this is the
@@ -1521,12 +1537,13 @@ function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips, d
 
 function autoInferredTree(samples, phylo, fitch, clock, markerOfMut, date) {
   let best = null;
-  for (const th of [200, 120, 80, 50, 32, 20, 12, 8, 5, 3, 2]) {
+  for (const frac of FRACTIONS) {
+    const th = Math.max(2, Math.round(samples.length * frac));
     const roots = buildInferredTree(samples, phylo, fitch, clock, markerOfMut, th, date);
-    let tips = 0;
-    (function c(ns) { for (const n of ns) n.children.length ? c(n.children) : tips++; })(roots);
-    best = { roots, threshold: th, tips };
-    if (tips >= 26) break;
+    const tips = countTips(roots);
+    if (!best || Math.abs(tips - TREE_TARGET_TIPS) < Math.abs(best.tips - TREE_TARGET_TIPS))
+      best = { roots, threshold: th, tips, frac };
+    if (tips > 60) break;
   }
   return best;
 }
@@ -1723,7 +1740,7 @@ const ENGINE = {
   REGIONS, REG, LINEAGES, LIN, TIERS, TIER_CUTS,
   GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION,
   runTruth, truthFor, genotypeOf, tierOf,
-  buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan,
+  buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan, countTips,
   hashU, sampleGenomes, perfectPhylogeny, rootToTip, fitchRegions, lineageVerdicts,
   datePhylogeny, mkAncestralStates,
   buildInferredTree, autoInferredTree,

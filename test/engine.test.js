@@ -420,3 +420,27 @@ test("inferred branches begin in their ancestor's state, like the truth panel", 
     }
   })(tree.roots, rootRegion);
 });
+
+test("both panels are pruned at the same fraction of their own total", () => {
+  /* The truth was cut at 0.66% of cases while the reconstruction was cut at 0.56%
+     of genomes, giving 34 tips against 46. That made the panels look structurally
+     unalike in places where they actually agreed. */
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const pol = Object.fromEntries(REG.map(r =>
+    [r, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 }]));
+  const S = PB.sampleGenomes(T, pol);
+  const P = PB.perfectPhylogeny(S.samples);
+  const clock = PB.rootToTip(S.samples);
+  const date = PB.datePhylogeny(P.root, S.samples, clock);
+  const anc = PB.mkAncestralStates(P.root, S.samples, REG, date);
+  const markers = new Map();
+  for (const k of Object.keys(T.markerOf)) markers.set(T.markerOf[k], k);
+
+  const a = PB.autoTree(T, 26, 46);
+  const b = PB.autoInferredTree(S.samples, P, anc, clock, markers, date);
+  assert.ok(Math.abs(a.frac - b.frac) < 1e-9,
+    `panels cut at different fractions: ${a.frac} vs ${b.frac}`);
+  assert.ok(Math.abs(a.tips - b.tips) <= 12,
+    `tip counts too far apart to compare: ${a.tips} vs ${b.tips}`);
+});
