@@ -100,6 +100,23 @@ A single global sequencing slider cannot produce demonstration (2) — the mecha
 heterogeneity between regions. Clicking a region and funding its sequencing, then watching the
 inferred origin migrate toward it, is the core interaction.
 
+### Calibration findings
+
+Four things only showed up once the engine ran, and each changed the design:
+
+- **A single index case is not viable.** With R0 2.4 and dispersion 0.5 the branching process
+  has extinction probability ~0.57, so most seeds died before anything happened. The outbreak is
+  now seeded by `N_INDEX = 8` introductions, which drops the fizzle rate to ~2% and makes the
+  root a polytomy — which is what an early outbreak's phylogeny actually looks like.
+- **Founding a variant on one arbitrary host almost always fails**, for the same reason. Variants
+  are founded on a host that transmits, and attempts that die out are reverted so the lineage can
+  arise again later. Failed markers stay in the record as ordinary mutations that went extinct.
+- **Emergence must be keyed to regional seeding, not calendar days.** Regions are seeded at
+  seed-dependent times; a fixed day meant variants arose into already-depleted regions.
+- **Tern is neutral in *severity*, not in transmissibility** (×1.3). Fully neutral, it stayed
+  around 500 cases — too few to sample or to infer an origin for. Its job is isolating geographic
+  bias from the severity channel, which only requires severity parity with wild type.
+
 ### The permanently-dark zone
 Everything left of a region's sequencing start day is hatched on the tree's time axis: diversity
 no future spending can reach. Sliding the start date right and watching the dark zone swallow
@@ -148,11 +165,9 @@ No build step, so tests read `src/index.html`, extract the `<script>` block, eva
 assert against the engine. Key invariants: determinism under a fixed seed, monotonicity of
 recoverable history in sequencing start day, and that the attribution flip reproduces.
 
-⚠️ **This machine has no JavaScript runtime** — `node`, `deno`, and `bun` are all absent, as are
-`gh` and Homebrew. Until a runtime is installed the engine can only be exercised in a browser,
-which means no automated assertions. Installing Node is the cheapest unblock; the alternative is
-an in-page self-test panel that runs the invariants at load and reports pass/fail, which has the
-side benefit of being visible to a reviewer.
+Node 24 LTS is installed under `~/.local` (no Homebrew, no sudo). Run `node --test test/`.
+Twelve invariants pass, covering determinism, bounded final size, lineage emergence and origin,
+the severity ordering, perfect-phylogeny validity of the mutation record, and clock scaling.
 
 ## Open
 

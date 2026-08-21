@@ -637,25 +637,375 @@ input[type="range"]:focus-visible {
 "use strict";
 
 /* ============================================================
-   REGIONS — fictional landmass; vertices are shared so it tiles
+   PHYLOBIAS ENGINE — pure and DOM-free.
+   Truth never depends on policy. That is the thesis and the
+   performance strategy at once.
    ============================================================ */
-const REGIONS = [
-  { id: "aldane",  name: "Aldane",  pts: "170,25 300,45 330,110 185,105",              label: [246,  72] },
-  { id: "fenmoor", name: "Fenmoor", pts: "60,40 170,25 185,105 95,120 45,90",          label: [122,  76] },
-  { id: "brix",    name: "Brix",    pts: "45,90 95,120 185,105 190,190 80,200 35,150", label: [115, 152] },
-  { id: "corvane", name: "Corvane", pts: "185,105 330,110 345,190 190,190",            label: [263, 152] },
-  { id: "doran",   name: "Doran",   pts: "80,200 190,190 185,270 110,290 60,240",      label: [128, 240] },
-  { id: "esker",   name: "Esker",   pts: "190,190 345,190 330,255 250,290 185,270",    label: [263, 236] },
-];
 
-/* ============================================================
-   ENGINE — stubs; implemented next
-   ============================================================ */
-const rng     = {};                    // mulberry32; determinism is load-bearing
-const sim     = { run: () => null };   // truth: transmission tree, genomes, geography
-const sampler = { apply: () => null }; // truth + policy -> observed genomes
-const infer   = { run: () => null };   // NJ, root-to-tip, Fitch parsimony
-const metrics = { compare: () => null };
+/* ---------- seeded randomness ---------- */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function makeRandom(seed) {
+  const u = mulberry32(seed);
+  let spare = null;
+
+  function normal() {
+    if (spare !== null) { const s = spare; spare = null; return s; }
+    let a = 0, b = 0;
+    while (a === 0) a = u();
+    while (b === 0) b = u();
+    const r = Math.sqrt(-2 * Math.log(a));
+    const th = 2 * Math.PI * b;
+    spare = r * Math.sin(th);
+    return r * Math.cos(th);
+  }
+
+  /* Marsaglia–Tsang */
+  function gamma(shape, scale) {
+    if (shape < 1) return gamma(shape + 1, scale) * Math.pow(u(), 1 / shape);
+    const d = shape - 1 / 3;
+    const c = 1 / Math.sqrt(9 * d);
+    for (;;) {
+      let x, v;
+      do { x = normal(); v = 1 + c * x; } while (v <= 0);
+      v = v * v * v;
+      const uu = u();
+      if (uu < 1 - 0.0331 * x * x * x * x) return d * v * scale;
+      if (Math.log(uu) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v * scale;
+    }
+  }
+
+  function poisson(lambda) {
+    if (lambda <= 0) return 0;
+    if (lambda < 30) {
+      const L = Math.exp(-lambda);
+      let k = 0, p = 1;
+      do { k++; p *= u(); } while (p > L);
+      return k - 1;
+    }
+    return Math.max(0, Math.round(normal() * Math.sqrt(lambda) + lambda));
+  }
+
+  /* Gamma–Poisson mixture: dispersion k captures superspreading */
+  function negBinom(mean, k) {
+    if (mean <= 0) return 0;
+    return poisson(gamma(k, mean / k));
+  }
+
+  return { u, normal, gamma, poisson, negBinom };
+}
+
+/* ---------- min-heap keyed on infection time ---------- */
+class MinHeap {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  push(x) {
+    const a = this.a;
+    a.push(x);
+    let i = a.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (a[p].t <= a[i].t) break;
+      [a[p], a[i]] = [a[i], a[p]];
+      i = p;
+    }
+  }
+  pop() {
+    const a = this.a;
+    const top = a[0];
+    const last = a.pop();
+    if (a.length) {
+      a[0] = last;
+      let i = 0;
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1;
+        let s = i;
+        if (l < a.length && a[l].t < a[s].t) s = l;
+        if (r < a.length && a[r].t < a[s].t) s = r;
+        if (s === i) break;
+        [a[s], a[i]] = [a[i], a[s]];
+        i = s;
+      }
+    }
+    return top;
+  }
+}
+
+/* ---------- world ---------- */
+const REGIONS = [
+  { id: "aldane",  name: "Aldane",  pop:  5200, neighbours: ["fenmoor", "corvane"] ,
+    pts: "170,25 300,45 330,110 185,105", label: [246,  72] },
+  { id: "fenmoor", name: "Fenmoor", pop:  7400, neighbours: ["aldane", "brix"] ,
+    pts: "60,40 170,25 185,105 95,120 45,90", label: [122,  76] },
+  { id: "brix",    name: "Brix",    pop:  9800, neighbours: ["fenmoor", "corvane", "doran"] ,
+    pts: "45,90 95,120 185,105 190,190 80,200 35,150", label: [115, 152] },
+  { id: "corvane", name: "Corvane", pop: 15600, neighbours: ["aldane", "brix", "esker"] ,
+    pts: "185,105 330,110 345,190 190,190", label: [263, 152] },
+  { id: "doran",   name: "Doran",   pop:  8100, neighbours: ["brix", "esker"] ,
+    pts: "80,200 190,190 185,270 110,290 60,240", label: [128, 240] },
+  { id: "esker",   name: "Esker",   pop: 12300, neighbours: ["corvane", "doran"] ,
+    pts: "190,190 345,190 330,255 250,290 185,270", label: [263, 236] },
+];
+const REG = Object.fromEntries(REGIONS.map(r => [r.id, r]));
+
+/* `after` is days since that region's FIRST case, not a calendar day. Regions are
+   seeded at seed-dependent times, so absolute days make emergence brittle: a variant
+   can end up arising into an already-depleted region and never establish. */
+const LINEAGES = [
+  { id: "wild",    name: "Wild type", origin: "brix",    after:  0, trans: 1.0, sev: 1.0 },
+  { id: "kestrel", name: "Kestrel",   origin: "aldane",  after:  5, trans: 1.6, sev: 0.5 },
+  { id: "tern",    name: "Tern",      origin: "esker",   after:  8, trans: 1.3, sev: 1.0 },
+  { id: "harrow",  name: "Harrow",    origin: "corvane", after: 10, trans: 1.1, sev: 2.2 },
+];
+const LIN = Object.fromEntries(LINEAGES.map(l => [l.id, l]));
+
+const TIERS = ["asymptomatic", "mild", "moderate", "severe", "critical"];
+const TIER_CUTS = [0.35, 0.90, 1.70, 2.60];   /* on a wild-type mean-1.0 score */
+
+const GENOME_SITES  = 30000;
+const MAX_DAYS      = 180;
+const CASE_CAP      = 120000;
+const DISPERSION    = 0.5;    /* negative-binomial k — superspreading */
+const SI_SHAPE      = 2.5;    /* serial interval ~ Gamma(2.5, 2.6), mean 6.5 d */
+const SI_SCALE      = 2.6;
+const INC_SHAPE     = 4.0;    /* incubation ~ Gamma(4, 1.2), mean 4.8 d */
+const INC_SCALE     = 1.2;
+const MIGRATION     = 0.06;   /* per transmission event */
+const N_INDEX       = 8;      /* independent introductions — see note below */
+const INDEX_WINDOW  = 5;      /* days over which they arrive */
+const EMERGE_GRACE  = 12;     /* days to wait for a wild-type host before settling */
+const ESTABLISH_MIN = 20;     /* cases before a variant counts as established */
+const FOUNDER_OFFSPRING = 2;  /* a variant only takes hold in a host that transmits */
+
+function tierOf(score) {
+  let t = 0;
+  while (t < TIER_CUTS.length && score >= TIER_CUTS[t]) t++;
+  return t;
+}
+
+/* ---------- the truth layer ---------- */
+function runTruth(scenario) {
+  const R = makeRandom(scenario.seed);
+  const muPerDay = scenario.clockRate * 1e-4 * GENOME_SITES / 365;
+
+  const S = {};
+  for (const r of REGIONS) S[r.id] = r.pop;
+
+  const cases = [];
+  const mutations = [];
+  const markerOf = {};              /* lineage id -> marker mutation id */
+  const fired = new Set(["wild"]);
+  /* A variant founded on one case usually dies out: with dispersion k the modal
+     offspring count is zero. So variants arise repeatedly and we keep the attempt
+     that establishes — which is what happens in nature. Failed attempts are
+     reverted to their base lineage; their marker stays in the record as an
+     ordinary mutation that went extinct. */
+  const attempts = {};
+  const seeded = {};                /* region -> day of its first case */
+  const attemptLog = {};   /* lineage -> [attempts, reverted] */
+  const heap = new MinHeap();
+
+  function addMutation(c, t) {
+    const m = {
+      id: mutations.length, t, region: c.region, caseId: c.id,
+      parent: c.lastMut, marker: null,
+    };
+    mutations.push(m);
+    c.newMuts.push(m.id);
+    c.lastMut = m.id;
+    return m;
+  }
+
+  /* Promote an attempt that has grown enough, or revert one that has died out
+     so the lineage is free to arise again on a later host. */
+  function reapAttempts() {
+    for (const id of Object.keys(attempts)) {
+      const a = attempts[id];
+      if (a.cases.length >= ESTABLISH_MIN) { delete attempts[id]; continue; }
+      if (a.pending > 0) continue;
+      for (const cid of a.cases) cases[cid].lineage = a.base;
+      mutations[a.marker].marker = null;
+      delete markerOf[id];
+      delete attempts[id];
+      fired.delete(id);
+      (attemptLog[id] ||= [0,0])[1]++;
+    }
+  }
+
+  /* A single index case is not enough. For a branching process with R0 2.4 and
+     dispersion 0.5 the extinction probability is ~0.57, so most seeds would die out
+     before anything interesting happened. Real outbreaks are seeded by repeated
+     introductions; with N_INDEX of them the chance the whole thing fizzles is ~1%.
+     They share the ancestral genotype, so the root is a polytomy — which is also
+     what an early outbreak's phylogeny genuinely looks like. */
+  for (let i = 0; i < N_INDEX; i++) {
+    heap.push({ parent: -1, region: "brix", t: R.u() * INDEX_WINDOW,
+                lineage: "wild", parentLastMut: -1, branch: 0 });
+  }
+
+  while (heap.size && cases.length < CASE_CAP) {
+    const ev = heap.pop();
+    if (ev.t > MAX_DAYS) break;             /* heap is time-ordered */
+    if (ev.lineage in attempts) attempts[ev.lineage].pending--;
+    /* the contact lands on a susceptible with probability S/N; otherwise the
+       transmission simply fails. This is what bounds the final size. */
+    if (R.u() >= S[ev.region] / REG[ev.region].pop) { reapAttempts(); continue; }
+    S[ev.region]--;
+
+    if (seeded[ev.region] === undefined) seeded[ev.region] = ev.t;
+
+    const c = {
+      id: cases.length, parent: ev.parent, region: ev.region, t: ev.t,
+      lineage: ev.lineage, newMuts: [], lastMut: ev.parentLastMut,
+    };
+
+    /* mutations along the branch, times spread across it */
+    const n = R.poisson(muPerDay * ev.branch);
+    for (let i = 0; i < n; i++) {
+      addMutation(c, ev.t - ev.branch + ((i + 1) / (n + 1)) * ev.branch);
+    }
+
+    /* Offspring are drawn from the lineage the host was INFECTED with — a mutation
+       arising in this host cannot retroactively change the contacts it already made. */
+    const lin0 = LIN[c.lineage];
+    const rEff = scenario.r0 * lin0.trans;
+    const nOff = R.negBinom(rEff, DISPERSION);
+
+    /* Variant emergence. Founding on an arbitrary host almost always fails: with
+       dispersion k the modal offspring count is zero. Requiring the founder to
+       transmit is what "establishment" means, and it spends attempts on hosts that
+       can actually carry the lineage rather than burning the region's window. */
+    for (const L of LINEAGES) {
+      if (fired.has(L.id)) continue;
+      if (c.region !== L.origin || c.t < seeded[L.origin] + L.after) continue;
+      if (c.lineage !== "wild" && c.t < seeded[L.origin] + L.after + EMERGE_GRACE) continue;
+      if (nOff < FOUNDER_OFFSPRING) continue;
+      fired.add(L.id);
+      const base = c.lineage;
+      const m = addMutation(c, c.t);
+      m.marker = L.id;
+      markerOf[L.id] = m.id;
+      c.lineage = L.id;
+      attempts[L.id] = { marker: m.id, base, cases: [], pending: 0 };
+      (attemptLog[L.id] ||= [0,0])[0]++;
+      break;
+    }
+
+    const lin = LIN[c.lineage];
+
+    /* severity — latent score, wild-type mean 1.0, scaled by the lineage */
+    c.sevScore = R.gamma(2, 0.5) * lin.sev;
+    c.tier = tierOf(c.sevScore);
+    c.tOnset = c.t + R.gamma(INC_SHAPE, INC_SCALE);
+    const dur = c.tier >= 3 ? R.gamma(4, 2.6) : R.gamma(3, 1.8);
+    c.tRemoved = c.tOnset + dur;
+    /* severe and critical cases pass through a hospital, and only they can be
+       sampled by the hospital channel */
+    if (c.tier >= 3) {
+      c.tAdmit = c.tOnset + R.gamma(2, 1.5);
+      c.tDischarge = c.tRemoved;
+    } else {
+      c.tAdmit = null;
+      c.tDischarge = null;
+    }
+
+    cases.push(c);
+    if (c.lineage in attempts) attempts[c.lineage].cases.push(c.id);
+
+    for (let i = 0; i < nOff; i++) {
+      const gap = R.gamma(SI_SHAPE, SI_SCALE);
+      const tc = c.t + gap;
+      if (tc > MAX_DAYS) continue;
+      let reg = c.region;
+      if (R.u() < MIGRATION) {
+        const nb = REG[c.region].neighbours;
+        reg = nb[Math.floor(R.u() * nb.length)];
+      }
+      if (c.lineage in attempts) attempts[c.lineage].pending++;
+      heap.push({
+        parent: c.id, region: reg, t: tc, lineage: c.lineage,
+        parentLastMut: c.lastMut, branch: gap,
+      });
+    }
+    reapAttempts();
+  }
+
+  /* ---- carrier counts over the mutation tree ----
+     A case carries exactly the mutations on the path root -> case.lastMut, so
+     carriers[m] = sum over m and its descendants of cases ending there.
+     Parent ids are always lower than child ids, so one descending pass does it. */
+  const carriers = new Array(mutations.length).fill(0);
+  for (const c of cases) if (c.lastMut >= 0) carriers[c.lastMut]++;
+  for (let i = mutations.length - 1; i >= 0; i--) {
+    const p = mutations[i].parent;
+    if (p >= 0) carriers[p] += carriers[i];
+  }
+
+  /* ---- per-lineage truth ---- */
+  const lineageTruth = LINEAGES.map(L => {
+    const mine = cases.filter(c => c.lineage === L.id);
+    const first = mine.length ? mine.reduce((a, b) => (a.t <= b.t ? a : b)) : null;
+    return {
+      id: L.id, name: L.name,
+      emerged: fired.has(L.id),
+      originRegion: first ? first.region : null,
+      originDay: first ? first.t : null,
+      markerMutation: markerOf[L.id] ?? null,
+      cases: mine.length,
+      severeShare: mine.length ? mine.filter(c => c.tier >= 3).length / mine.length : 0,
+    };
+  });
+
+  const byRegion = Object.fromEntries(REGIONS.map(r => [r.id, 0]));
+  const byTier = new Array(TIERS.length).fill(0);
+  for (const c of cases) { byRegion[c.region]++; byTier[c.tier]++; }
+
+  return {
+    scenario, cases, mutations, carriers, markerOf,
+    lineages: lineageTruth,
+    attemptLog,
+    stats: { cases: cases.length, mutations: mutations.length, byRegion, byTier,
+             lastDay: cases.length ? cases[cases.length - 1].t : 0 },
+  };
+}
+
+/* full genotype = every mutation on the ancestral path */
+function genotypeOf(truth, caseId) {
+  const out = [];
+  let c = truth.cases[caseId];
+  while (c) {
+    for (let i = c.newMuts.length - 1; i >= 0; i--) out.push(c.newMuts[i]);
+    c = c.parent >= 0 ? truth.cases[c.parent] : null;
+  }
+  return out;
+}
+
+/* memoised: truth depends only on the scenario, never on policy */
+let _cache = null;
+function truthFor(scenario) {
+  const key = [scenario.seed, scenario.r0, scenario.clockRate].join("|");
+  if (_cache && _cache.key === key) return _cache.value;
+  _cache = { key, value: runTruth(scenario) };
+  return _cache.value;
+}
+
+const ENGINE = {
+  mulberry32, makeRandom, MinHeap,
+  REGIONS, REG, LINEAGES, LIN, TIERS, TIER_CUTS,
+  GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION,
+  runTruth, truthFor, genotypeOf, tierOf,
+};
+
+if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
+if (typeof globalThis !== "undefined") globalThis.PB = ENGINE;
 
 /* ============================================================
    STATE
@@ -665,7 +1015,7 @@ const SCENARIO_FIELDS = [
     fmt: v => v.toFixed(1) },
   { key: "clock", label: "Clock rate", min: 4, max: 16, step: .5, value: 9,
     fmt: v => v.toFixed(1) + "×10⁻⁴ /site/yr" },
-  { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 137,
+  { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 111,
     fmt: v => "#" + v },
 ];
 
@@ -698,6 +1048,11 @@ function rampToken(e) {
   const i = e <= 0.02 ? 0 : Math.min(4, 1 + Math.floor(e * 4));
   return "var(--ramp-" + i + ")";
 }
+
+/* ============================================================
+   VIEW — everything below touches the DOM
+   ============================================================ */
+const HAS_DOM = typeof document !== "undefined";
 
 /* ============================================================
    VIEWS
@@ -772,12 +1127,12 @@ function select(id) {
   renderPolicy();
 }
 
-document.addEventListener("click", e => {
+if (HAS_DOM) document.addEventListener("click", e => {
   const node = e.target.closest("[data-region]");
   if (node) select(node.dataset.region);
 });
 
-document.addEventListener("keydown", e => {
+if (HAS_DOM) document.addEventListener("keydown", e => {
   if (e.key !== "Enter" && e.key !== " ") return;
   const node = e.target.closest(".region[data-region]");
   if (!node) return;
@@ -785,7 +1140,7 @@ document.addEventListener("keydown", e => {
   select(node.dataset.region);
 });
 
-document.addEventListener("input", e => {
+if (HAS_DOM) document.addEventListener("input", e => {
   const el = e.target;
   if (el.type !== "range") return;
   const key = el.dataset.key;
@@ -805,6 +1160,5 @@ document.addEventListener("input", e => {
   }
 });
 
-renderScenario();
-render();
+if (HAS_DOM) { renderScenario(); render(); }
 </script>
