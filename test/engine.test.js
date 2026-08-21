@@ -387,3 +387,36 @@ test("uniform sampling stays right; imbalanced sampling does not", () => {
   assert.ok(verdict(lopsided).filter(v => v.found && !v.regionRight).length >= 1,
     "lopsided sampling should misplace at least one origin");
 });
+
+test("inferred branches begin in their ancestor's state, like the truth panel", () => {
+  /* The truth panel draws a lineage sitting in one region and then moving. The
+     reconstruction was painting each branch a single flat colour from its very
+     top, so a branch descending from a Brix root appeared to start in Fenmoor and
+     the two panels could not be read against each other. */
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const pol = Object.fromEntries(REG.map(r =>
+    [r, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 }]));
+  const S = PB.sampleGenomes(T, pol);
+  const P = PB.perfectPhylogeny(S.samples);
+  const clock = PB.rootToTip(S.samples);
+  const date = PB.datePhylogeny(P.root, S.samples, clock);
+  const anc = PB.mkAncestralStates(P.root, S.samples, REG, date);
+  const markers = new Map();
+  for (const k of Object.keys(T.markerOf)) markers.set(T.markerOf[k], k);
+  const tree = PB.autoInferredTree(S.samples, P, anc, clock, markers, date);
+
+  const rootRegion = anc.region.get(P.root);
+  (function walk(ns, parentRegion) {
+    for (const n of ns) {
+      assert.strictEqual(n.path[0].region, parentRegion,
+        `branch starts in ${n.path[0].region} but its ancestor is ${parentRegion}`);
+      assert.strictEqual(n.path[n.path.length - 1].region, n.region,
+        "branch must end in its own reconstructed state");
+      /* occupancy must still tile with no gaps */
+      for (let i = 1; i < n.path.length; i++)
+        assert.ok(Math.abs(n.path[i].t0 - n.path[i - 1].t1) < 1e-6, "gap in the branch");
+      walk(n.children, n.region);
+    }
+  })(tree.roots, rootRegion);
+});

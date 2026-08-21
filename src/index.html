@@ -1484,7 +1484,7 @@ function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips, d
     const my = tips.reduce((a, i) => a + samples[i].observed.size, 0) / tips.length;
     return mx + (ancestral(node) - my) / clock.slope;
   }
-  function make(n, parentDate) {
+  function make(n, parentDate, parentRegion) {
     let node = n, segs = [n.mut], marker = markerOfMut.get(n.mut) || null;
     let kids = node.children.filter(c => c.n >= minTips);
     while (kids.length === 1 && kids[0].n === node.n) {
@@ -1497,15 +1497,26 @@ function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips, d
        predate its parent */
     const tEnd = Math.max(parentDate + 0.4, Math.max(0, date ? date.get(node) : dateOf(node)));
     const region = fitch.region.get(node);
+    /* A branch begins in whatever state its ancestor was reconstructed in and
+       ends in its own, exactly as the truth panel shows a lineage sitting in one
+       region and then moving. Without this the reconstruction repainted a branch
+       from its very top and could not be read against the truth at all.
+       The reconstruction does NOT identify WHEN along the branch the move
+       happened -- only that it happened somewhere on it -- so the change is drawn
+       at the midpoint by convention. */
+    const path = (parentRegion && parentRegion !== region)
+      ? [{ t0: parentDate, t1: (parentDate + tEnd) / 2, region: parentRegion },
+         { t0: (parentDate + tEnd) / 2, t1: tEnd, region }]
+      : [{ t0: parentDate, t1: tEnd, region }];
     return {
       segs: segs.map(m => ({ id: m, t: tEnd, region })),
-      marker, carriers: node.n, tStart: parentDate, tEnd, region,
-      path: [{ t0: parentDate, t1: tEnd, region }],
-      children: kids.map(c => make(c, tEnd)),
+      marker, carriers: node.n, tStart: parentDate, tEnd, region, path,
+      children: kids.map(c => make(c, tEnd, region)),
     };
   }
   const start = Math.max(0, clock.tmrca == null ? 0 : clock.tmrca);
-  return phylo.root.children.filter(c => c.n >= minTips).map(c => make(c, start));
+  const rootRegion = fitch.region.get(phylo.root);
+  return phylo.root.children.filter(c => c.n >= minTips).map(c => make(c, start, rootRegion));
 }
 
 function autoInferredTree(samples, phylo, fitch, clock, markerOfMut, date) {
