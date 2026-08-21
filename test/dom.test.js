@@ -41,7 +41,7 @@ test("controls render with the shipped defaults", () => {
   assert.deepStrictEqual(ids, ["r0", "clockRate", "seed"]);
   assert.deepStrictEqual(
     [...w.document.querySelectorAll("#policy-fields input")].map(i => i.dataset.key),
-    ["startDay", "seqFraction", "hospitalMix", "depth", "delay"]);
+    ["startDay", "seqFraction", "hospitalMix", "depth"]);
 });
 
 test("the truth tree is hidden until revealed, then actually appears", () => {
@@ -146,9 +146,13 @@ test("moving a slider changes the reconstruction but never the truth", async () 
   const truthBefore = w.document.querySelector("#truth-tree svg").outerHTML;
   const infBefore = w.document.querySelector("#inferred-tree svg").outerHTML;
 
+  /* act on the region that dominates the sample set, so the change cannot be
+     absorbed: the default policy leaves Aldane barely sequencing at all */
+  w.document.querySelector('.chip[data-region="corvane"]')
+    .dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   const el = [...w.document.querySelectorAll("#policy-fields input")]
-    .find(i => i.dataset.key === "hospitalMix");
-  el.value = "100";
+    .find(i => i.dataset.key === "seqFraction");
+  el.value = "0";
   el.dispatchEvent(new w.Event("input", { bubbles: true }));
   /* the redraw is coalesced into an animation frame so a drag stays smooth */
   await new Promise(res => w.requestAnimationFrame(() => w.requestAnimationFrame(res)));

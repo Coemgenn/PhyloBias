@@ -42,7 +42,7 @@ test("truth ignores policy entirely", () => {
 });
 
 test("outbreak establishes at the default seed", () => {
-  assert.ok(PB.runTruth(BASE).stats.cases > 10000);
+  assert.ok(PB.runTruth(BASE).stats.cases > 3000);
 });
 
 test("final size is bounded — not everyone is infected", () => {
@@ -206,7 +206,7 @@ test("the UI's own scenario object drives the engine correctly", () => {
        .match(/key: "(\w+)"[\s\S]*?value: ([\d.]+)/g)
        .map(m => [m.match(/key: "(\w+)"/)[1], Number(m.match(/value: ([\d.]+)/)[1])]));
   const T = PB.runTruth(defaults);
-  assert.ok(T.mutations.length > 5000,
+  assert.ok(T.mutations.length > 1500,
     `UI defaults produced only ${T.mutations.length} mutations`);
   assert.ok(PB.autoTree(T, 26, 46).tips >= 20);
 });
@@ -334,4 +334,56 @@ test("and it stops being identical once coverage drops", () => {
   const P = PB.perfectPhylogeny(samples);
   assert.ok(P.conflicts > 0,
     "partial coverage should make mutation sets conflict — otherwise the identity test proves nothing");
+});
+
+test("at full information the ORIGINS come out right too", () => {
+  /* The topology test above proves the tree is exact at complete data. This is
+     the other half, and it is the one that makes the tool's claim honest: if the
+     reconstruction were wrong even with every case sequenced, the errors the
+     sliders produce could always be blamed on the method instead of on sampling.
+     It has failed twice — first under Fitch parsimony, then because a sample cap
+     thinned a 110-case variant down to three genomes. */
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const pol = Object.fromEntries(REG.map(r =>
+    [r, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 }]));
+  const S = PB.sampleGenomes(T, pol);
+  assert.strictEqual(S.dropped, 0, "the cap must not bind at full information");
+
+  const P = PB.perfectPhylogeny(S.samples);
+  const clock = PB.rootToTip(S.samples);
+  const date = PB.datePhylogeny(P.root, S.samples, clock);
+  const anc = PB.mkAncestralStates(P.root, S.samples, REG, date);
+
+  assert.strictEqual(anc.region.get(P.root), "brix", "root origin wrong at full information");
+  for (const v of PB.lineageVerdicts(T, S.samples, P, anc, clock)) {
+    assert.ok(v.found, `${v.name} not detected at full information`);
+    assert.strictEqual(v.region, v.trueRegion,
+      `${v.name} placed in ${v.region}, truth ${v.trueRegion}, with complete data`);
+  }
+});
+
+test("uniform sampling stays right; imbalanced sampling does not", () => {
+  /* The real claim: not how MUCH you sequence, but how evenly. */
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const verdict = pol => {
+    const S = PB.sampleGenomes(T, pol);
+    const P = PB.perfectPhylogeny(S.samples);
+    const clock = PB.rootToTip(S.samples);
+    const anc = PB.mkAncestralStates(P.root, S.samples, REG,
+      PB.datePhylogeny(P.root, S.samples, clock));
+    return PB.lineageVerdicts(T, S.samples, P, anc, clock);
+  };
+  const sparseEven = Object.fromEntries(REG.map(r =>
+    [r, { startDay: 35, seqFraction: 15, hospitalMix: 75, depth: 75 }]));
+  assert.strictEqual(verdict(sparseEven).filter(v => v.found && !v.regionRight).length, 0,
+    "sparse but even sampling should still recover the origins");
+
+  const lopsided = Object.fromEntries(REG.map(r =>
+    [r, { startDay: 35, seqFraction: 15, hospitalMix: 60, depth: 80 }]));
+  lopsided.corvane = { startDay: 5, seqFraction: 80, hospitalMix: 60, depth: 95 };
+  lopsided.aldane = { startDay: 70, seqFraction: 2, hospitalMix: 60, depth: 50 };
+  assert.ok(verdict(lopsided).filter(v => v.found && !v.regionRight).length >= 1,
+    "lopsided sampling should misplace at least one origin");
 });

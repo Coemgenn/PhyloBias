@@ -878,17 +878,17 @@ class MinHeap {
 /* ---------- world ---------- */
 const REGION_IDS = ["aldane","fenmoor","brix","corvane","doran","esker"];
 const REGIONS = [
-  { id: "aldane",  name: "Aldane",  pop:  5200, neighbours: ["fenmoor", "corvane"] ,
+  { id: "aldane",  name: "Aldane",  pop:   900, neighbours: ["fenmoor", "corvane"] ,
     pts: "170,25 300,45 330,110 185,105", label: [246,  72] },
-  { id: "fenmoor", name: "Fenmoor", pop:  7400, neighbours: ["aldane", "brix"] ,
+  { id: "fenmoor", name: "Fenmoor", pop:  1250, neighbours: ["aldane", "brix"] ,
     pts: "60,40 170,25 185,105 95,120 45,90", label: [122,  76] },
-  { id: "brix",    name: "Brix",    pop:  9800, neighbours: ["fenmoor", "corvane", "doran"] ,
+  { id: "brix",    name: "Brix",    pop:  1650, neighbours: ["fenmoor", "corvane", "doran"] ,
     pts: "45,90 95,120 185,105 190,190 80,200 35,150", label: [115, 152] },
-  { id: "corvane", name: "Corvane", pop: 15600, neighbours: ["aldane", "brix", "esker"] ,
+  { id: "corvane", name: "Corvane", pop:  2600, neighbours: ["aldane", "brix", "esker"] ,
     pts: "185,105 330,110 345,190 190,190", label: [263, 152] },
-  { id: "doran",   name: "Doran",   pop:  8100, neighbours: ["brix", "esker"] ,
+  { id: "doran",   name: "Doran",   pop:  1350, neighbours: ["brix", "esker"] ,
     pts: "80,200 190,190 185,270 110,290 60,240", label: [128, 240] },
-  { id: "esker",   name: "Esker",   pop: 12300, neighbours: ["corvane", "doran"] ,
+  { id: "esker",   name: "Esker",   pop:  2050, neighbours: ["corvane", "doran"] ,
     pts: "190,190 345,190 330,255 250,290 185,270", label: [263, 236] },
 ];
 const REG = Object.fromEntries(REGIONS.map(r => [r.id, r]));
@@ -1272,11 +1272,13 @@ function hashU(a, b) {
 
 /* Community screening still misses the people who feel fine. */
 const COMMUNITY_DETECT = [0.15, 0.55, 0.85, 1.0, 1.0];
-/* Inference runs on far more genomes than the tree draws -- the display collapses
-   to a few dozen branches regardless. The cap only exists to keep a slider drag
-   interactive, and thinning is uniform: subsampling evenly across time would be a
-   real mitigation for the bias we are trying to show, so it is not applied here. */
-const SAMPLE_CAP = 1500;
+/* A backstop, not a policy. It used to bind at every realistic setting: with the
+   old population the sampler collected 33,865 genomes at full sliders and thinned
+   them to 1,500, which left a 110-case variant represented by THREE genomes and
+   made the reconstruction wrong for reasons that had nothing to do with sampling
+   policy. The world is now sized so a fully funded programme fits under this,
+   meaning 100% on every slider really is full information. */
+const SAMPLE_CAP = 7000;
 
 function sampleGenomes(truth, policy) {
   const kept = [];
@@ -1310,8 +1312,7 @@ function sampleGenomes(truth, policy) {
        marker mutation in `observed`, which is exactly what makes it possible to
        lose the call when coverage drops. Carrying c.lineage here would hand the
        answer key to everything downstream. */
-    kept.push({ caseId: c.id, region: c.region, t: ts, available: ts + p.delay,
-                tier: c.tier, observed });
+    kept.push({ caseId: c.id, region: c.region, t: ts, tier: c.tier, observed });
   }
   /* keep the run interactive; thin deterministically and say so */
   let thinned = kept, dropped = 0;
@@ -1447,7 +1448,7 @@ function fitchRegions(root, samples, regionIds) {
    branch and no migration along it: inference cannot see WHEN a lineage moved,
    only what state best explains the tips. That flatness against the truth panel's
    multi-coloured branches is itself part of the comparison. */
-function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips) {
+function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips, date) {
   const ancCache = new Map();
   function ancestral(node) {
     if (ancCache.has(node)) return ancCache.get(node);
@@ -1476,7 +1477,7 @@ function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips) {
     }
     /* the estimator is noisy enough to invert occasionally; a child cannot
        predate its parent */
-    const tEnd = Math.max(parentDate + 0.4, Math.max(0, dateOf(node)));
+    const tEnd = Math.max(parentDate + 0.4, Math.max(0, date ? date.get(node) : dateOf(node)));
     const region = fitch.region.get(node);
     return {
       segs: segs.map(m => ({ id: m, t: tEnd, region })),
@@ -1489,16 +1490,146 @@ function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips) {
   return phylo.root.children.filter(c => c.n >= minTips).map(c => make(c, start));
 }
 
-function autoInferredTree(samples, phylo, fitch, clock, markerOfMut) {
+function autoInferredTree(samples, phylo, fitch, clock, markerOfMut, date) {
   let best = null;
   for (const th of [200, 120, 80, 50, 32, 20, 12, 8, 5, 3, 2]) {
-    const roots = buildInferredTree(samples, phylo, fitch, clock, markerOfMut, th);
+    const roots = buildInferredTree(samples, phylo, fitch, clock, markerOfMut, th, date);
     let tips = 0;
     (function c(ns) { for (const n of ns) n.children.length ? c(n.children) : tips++; })(roots);
     best = { roots, threshold: th, tips };
     if (tips >= 26) break;
   }
   return best;
+}
+
+/* Date every node once, so both the reconstruction and the drawing share them.
+   A node's ancestor carries the mutations a majority of its descendants share;
+   the clock converts that divergence into a date. */
+function datePhylogeny(root, samples, clock) {
+  const date = new Map();
+  (function walk(n, parentDate) {
+    const tips = [...n.tips];
+    let d = parentDate;
+    if (tips.length && clock.slope > 1e-9) {
+      const freq = new Map();
+      for (const i of tips) for (const m of samples[i].observed) freq.set(m, (freq.get(m) || 0) + 1);
+      let anc = 0;
+      for (const c of freq.values()) if (c * 2 >= tips.length) anc++;
+      const mx = tips.reduce((a, i) => a + samples[i].t, 0) / tips.length;
+      const my = tips.reduce((a, i) => a + samples[i].observed.size, 0) / tips.length;
+      d = mx + (anc - my) / clock.slope;
+    }
+    d = Math.max(parentDate + 0.25, d);
+    date.set(n, d);
+    for (const c of n.children) walk(c, d);
+  })(root, Math.max(0, clock.tmrca == null ? 0 : clock.tmrca));
+  return date;
+}
+
+/* Ancestral regions by maximum likelihood under an Mk model with real branch
+   lengths (Lewis 2001), replacing Fitch parsimony.
+
+   Parsimony minimises state changes by construction. On this outbreak it admitted
+   132 migrations where 3,127 happened, so almost every node came out ambiguous and
+   the tie-break handed them all to whichever region held the most tips -- wrong
+   even with every case sequenced at full coverage. A rate model has no such
+   preference: it lets a long branch move and a short one stay, and it estimates
+   how often movement happens instead of assuming as rarely as possible. */
+function mkAncestralStates(root, samples, regionIds, date) {
+  const K = regionIds.length;
+  const idx = {}; regionIds.forEach((r, i) => idx[r] = i);
+
+  /* tips hanging directly off each node, with the branch that reaches them */
+  const ownTips = new Map();
+  (function walk(n) {
+    const own = new Set(n.tips);
+    for (const c of n.children) { for (const t of c.tips) own.delete(t); walk(c); }
+    ownTips.set(n, [...own]);
+  })(root);
+
+  const P = (mu, t) => {
+    const e = Math.exp(-K * mu * Math.max(t, 0));
+    return [1 / K + (1 - 1 / K) * e, 1 / K - e / K];      /* [same, different] */
+  };
+
+  /* Felsenstein pruning; conditional likelihoods normalised per node */
+  function prune(mu) {
+    const L = new Map();
+    let logL = 0;
+    (function post(n) {
+      for (const c of n.children) post(c);
+      const v = new Array(K).fill(1);
+      const push = (childL, t) => {
+        const [ps, pd] = P(mu, t);
+        let tot = 0;
+        for (let j = 0; j < K; j++) tot += childL[j];
+        for (let i = 0; i < K; i++) v[i] *= pd * tot + (ps - pd) * childL[i];
+      };
+      for (const c of n.children) push(L.get(c), date.get(c) - date.get(n));
+      for (const ti of ownTips.get(n)) {
+        const leaf = new Array(K).fill(0);
+        leaf[idx[samples[ti].region]] = 1;
+        push(leaf, Math.max(0.25, samples[ti].t - date.get(n)));
+      }
+      let s = 0; for (let i = 0; i < K; i++) s += v[i];
+      if (s > 0) { for (let i = 0; i < K; i++) v[i] /= s; logL += Math.log(s); }
+      L.set(n, v);
+    })(root);
+    let r = 0; for (let i = 0; i < K; i++) r += L.get(root)[i] / K;
+    return { L, logL: logL + Math.log(r) };
+  }
+
+  /* fit the migration rate rather than assuming one */
+  let best = null;
+  for (let e = -4.2; e <= -0.4; e += 0.2) {
+    const mu = Math.pow(10, e);
+    const r = prune(mu);
+    if (!best || r.logL > best.logL) best = { mu, ...r };
+  }
+  const { mu, L } = best;
+
+  /* up-pass for marginal posteriors */
+  const Up = new Map();
+  Up.set(root, new Array(K).fill(1 / K));
+  (function down(n) {
+    for (const c of n.children) {
+      const u = new Array(K).fill(0);
+      const sib = new Array(K).fill(1);
+      for (const o of n.children) if (o !== c) {
+        const oc = L.get(o), [ps, pd] = P(mu, date.get(o) - date.get(n));
+        let tot = 0; for (let j = 0; j < K; j++) tot += oc[j];
+        for (let i = 0; i < K; i++) sib[i] *= pd * tot + (ps - pd) * oc[i];
+      }
+      for (const ti of ownTips.get(n)) {
+        const leaf = new Array(K).fill(0); leaf[idx[samples[ti].region]] = 1;
+        const [ps, pd] = P(mu, Math.max(0.25, samples[ti].t - date.get(n)));
+        for (let i = 0; i < K; i++) sib[i] *= pd + (ps - pd) * leaf[i];
+      }
+      const up = Up.get(n), [ps, pd] = P(mu, date.get(c) - date.get(n));
+      let tot = 0; for (let i = 0; i < K; i++) tot += up[i] * sib[i];
+      for (let j = 0; j < K; j++) {
+        u[j] = pd * tot + (ps - pd) * up[j] * sib[j];
+      }
+      let s = 0; for (let j = 0; j < K; j++) s += u[j];
+      if (s > 0) for (let j = 0; j < K; j++) u[j] /= s;
+      Up.set(c, u);
+      down(c);
+    }
+  })(root);
+
+  const region = new Map(), ambiguous = new Map(), support = new Map();
+  for (const [n, l] of L) {
+    const post = new Array(K);
+    let s = 0;
+    const u = Up.get(n) || new Array(K).fill(1 / K);
+    for (let i = 0; i < K; i++) { post[i] = l[i] * u[i]; s += post[i]; }
+    if (s > 0) for (let i = 0; i < K; i++) post[i] /= s;
+    let bi = 0; for (let i = 1; i < K; i++) if (post[i] > post[bi]) bi = i;
+    region.set(n, regionIds[bi]);
+    support.set(n, post[bi]);
+    ambiguous.set(n, post[bi] < 0.6);
+  }
+  return { region, ambiguous, support, mu };
 }
 
 /* What you would conclude about each variant, read off the reconstruction alone.
@@ -1565,6 +1696,7 @@ const ENGINE = {
   runTruth, truthFor, genotypeOf, tierOf,
   buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan,
   hashU, sampleGenomes, perfectPhylogeny, rootToTip, fitchRegions, lineageVerdicts,
+  datePhylogeny, mkAncestralStates,
   buildInferredTree, autoInferredTree,
 };
 
@@ -1589,15 +1721,23 @@ const POLICY_FIELDS = [
   { key: "hospitalMix", label: "From hospital intake", min: 0, max: 100, step: 1,
     fmt: v => v + "% hosp / " + (100 - v) + "% community" },
   { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%" },
-  { key: "delay",       label: "Reporting delay",   min: 0,  max: 28,  step: 1, fmt: v => v + " d" },
 ];
 
 const state = {
   scenario: Object.fromEntries(SCENARIO_FIELDS.map(f => [f.key, f.value])),
   selected: "aldane",
+  /* A plausible starting world rather than a uniform one: the populous hub runs a
+     real programme, the periphery does not. Uniform sampling -- even sparse and
+     late -- reconstructs the origins correctly, so a uniform default would open on
+     a tool that appears to do nothing. */
   policy: Object.fromEntries(REGIONS.map(r => [r.id, {
-    startDay: 30, seqFraction: 12, hospitalMix: 70, depth: 70, delay: 7,
-  }])),
+    corvane: { startDay: 8,  seqFraction: 70, hospitalMix: 55, depth: 92 },
+    esker:   { startDay: 22, seqFraction: 30, hospitalMix: 65, depth: 85 },
+    brix:    { startDay: 26, seqFraction: 22, hospitalMix: 70, depth: 80 },
+    doran:   { startDay: 40, seqFraction: 10, hospitalMix: 80, depth: 70 },
+    fenmoor: { startDay: 48, seqFraction: 8,  hospitalMix: 85, depth: 62 },
+    aldane:  { startDay: 62, seqFraction: 4,  hospitalMix: 85, depth: 55 },
+  }[r.id]])),
   result: null,
   revealed: false,
 };
@@ -1817,12 +1957,13 @@ function inferNow() {
   const s = sampleGenomes(truth, state.policy);
   const phylo = perfectPhylogeny(s.samples);
   const clock = rootToTip(s.samples);
-  const fitch = fitchRegions(phylo.root, s.samples, REGION_IDS);
+  const date = datePhylogeny(phylo.root, s.samples, clock);
+  const fitch = mkAncestralStates(phylo.root, s.samples, REGION_IDS, date);
   const markerOfMut = new Map();
   for (const k of Object.keys(truth.markerOf)) markerOfMut.set(truth.markerOf[k], k);
-  const tree = autoInferredTree(s.samples, phylo, fitch, clock, markerOfMut);
+  const tree = autoInferredTree(s.samples, phylo, fitch, clock, markerOfMut, date);
   const verdicts = lineageVerdicts(truth, s.samples, phylo, fitch, clock);
-  return { truth, s, phylo, clock, fitch, tree, verdicts };
+  return { truth, s, phylo, clock, fitch, tree, verdicts, date };
 }
 
 function renderInferred() {
