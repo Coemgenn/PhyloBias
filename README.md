@@ -1,32 +1,72 @@
-# AntArtifact
+# Meridian — how sampling decisions write an outbreak's history
 
-An online, interactive tool about **biosafety**, built as a shippable Claude Artifact
-(portfolio piece for an Anthropic interview).
+An interactive, single-page tool showing how early testing and sequencing decisions determine
+what can ever be known about an epidemic's origin and phylogenetics.
 
-## What it is
+Built as a self-contained Claude Artifact. Take-home portfolio piece for an Anthropic interview.
 
-A single self-contained web page — no build step, no server, no external dependencies —
-published as an Artifact so it can be opened and shared by URL.
+## The idea
 
-## Status
+The phylogenetic tree is not the epidemic. It is a shadow the epidemic casts through your
+sampling scheme. Change the scheme and you change the history.
 
-Scaffold only. The subject matter and interaction design are not yet decided.
+The tool simulates an outbreak of a fictional pathogen across a fictional landmass, then shows
+its **true** history beside the history you would have **inferred** from the genomes your
+sequencing policy actually collected. Reality never offers that comparison — you only ever get
+the reconstruction. A simulation can.
 
-Open questions to settle before building:
-- **Audience** — working bench scientists, policy readers, or a general/technical-lay audience?
-- **Core interaction** — what does the user actually *do*? (classify an agent by BSL, walk a
-  risk-assessment decision tree, explore a containment-practice matrix, compare real incidents…)
-- **Sources** — which authorities to cite (CDC/NIH *BMBL* 6th ed., WHO Laboratory Biosafety
-  Manual 4th ed., NIH Guidelines for rDNA)?
+Set each region's sequencing policy — when it starts, how much, how deep — and watch the
+conclusions move:
+
+> You would have concluded Variant Kestrel arose in **Corvane** on **day 41**.
+> It arose in **Aldane** on **day 11**.
+
+## What it demonstrates
+
+1. **Early sequencing is irreplaceable.** Cases that come and go before sequencing begins leave
+   no sample. That diversity is destroyed, not merely unmeasured. Low volume starting early
+   beats high volume starting late.
+2. **Variant origin attribution follows sequencing effort, not biology.** The region that
+   sequences first and deepest becomes the region the variant is named after.
+3. **The bias punishes the well-prepared.** Invest in genomic surveillance, get named as the
+   source, get closed off. A live disincentive in global health.
+4. **Depth changes topology, not just resolution.** Unobserved mutations collapse distinct
+   lineages, so five introductions are inferred as one.
+
+The attribution error is **emergent, not hardcoded** — we implement textbook discrete
+ancestral-state reconstruction and the bias appears on its own, because that is a real
+documented sensitivity of the method. The page says so, and says that production methods
+mitigate it without eliminating it.
+
+## Fiction policy
+
+**The world is invented; the mechanics are real.**
+
+Invented: the pathogen (Meridian virus, MRV-1), the landmass and its six regions (Aldane, Brix,
+Corvane, Doran, Esker, Fenmoor), the variant (Kestrel), and every number attributed to them.
+The setting is fictional so that no reader can mistake the tool for a claim about a real
+outbreak, variant, or country.
+
+Real and cited visibly on the page: substitution-rate ranges, serial-interval and dispersion
+parameters, the inference methods (neighbour-joining, root-to-tip regression, Fitch parsimony),
+and the documented phenomenon of sampling-driven phylogeographic bias.
+
+## Running it
+
+No build step, no dependencies, no server required.
+
+```
+open src/index.html
+```
+
+The deployed version is published as a Claude Artifact — see the link in the submission.
 
 ## Layout
 
 ```
-src/index.html   the artifact — the whole deliverable lives here
-notes/           research, source excerpts, design decisions
+src/index.html    the artifact — the entire deliverable
+ARCHITECTURE.md   pipeline, modules, data model, inference chain
+Overview.md       assignment requirements and deliverable checklist
+CLAUDE.md         working constraints for AI-assisted development
+notes/            source excerpts and verification records
 ```
-
-## Publishing
-
-The page is published with the Artifact tool pointed at `src/index.html`. Re-publishing the
-same path updates the same URL.

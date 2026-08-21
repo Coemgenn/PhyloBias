@@ -20,7 +20,25 @@ interview portfolio piece, so polish counts: this should look and feel finished,
   drawing SVG diagrams.
 
 ## Content standard
-Biosafety is a domain where being subtly wrong is worse than being vague. Every factual claim
-(BSL assignments, containment requirements, agent risk groups) must trace to a named source —
-BMBL 6th ed., WHO LBM 4th ed., or the NIH Guidelines — and cite it visibly in the page.
-Keep source excerpts in `notes/` as they're gathered.
+The world is fictitious; the mechanics are not.
+
+**Invented, and labelled as such:** the pathogen (Meridian virus, MRV-1), the landmass and its
+six regions (Aldane, Brix, Corvane, Doran, Esker, Fenmoor), the variant (Kestrel), and every
+number attributed to them. Inventing the setting is deliberate — no reader may mistake the tool
+for a claim about a real outbreak, variant, or country.
+
+**Real, and cited visibly on the page:** substitution-rate ranges, serial-interval and
+dispersion parameters, the inference methods (neighbour-joining, root-to-tip regression, Fitch
+parsimony), and the documented phenomenon of sampling-driven phylogeographic bias. Candidate
+authorities — all still UNVERIFIED, check before any derived number ships: TempEst/root-to-tip
+methodology, Lemey et al. discrete phylogeography, Nextstrain/Augur, published RNA-virus clock
+rates, WHO's 2021 move to Greek-letter variant naming.
+
+Being subtly wrong is worse than being vague. Two hard rules follow:
+- The attribution bias must **emerge from an honest implementation of standard method**, never
+  be hardcoded. We implement textbook Fitch parsimony and let the artifact appear.
+- The page must state that production phylogeographic methods mitigate this bias without
+  eliminating it. We show a real failure mode, not a strawman.
+
+Keep source excerpts in `notes/` as they are gathered. See `ARCHITECTURE.md` for the design and
+`Overview.md` for the assignment requirements.
