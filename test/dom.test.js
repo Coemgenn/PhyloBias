@@ -89,6 +89,37 @@ test("region colours resolve to the six distinct tokens", () => {
   assert.strictEqual(used.size, 6, `only ${used.size} regions coloured: ${[...used]}`);
 });
 
+test("the map and the tree speak the same colour language", () => {
+  /* One hue must mean one region everywhere. The map originally encoded
+     sequencing effort as fill hue, which left it with no colour in common with
+     the tree at all. */
+  const w = page({ revealed: "1" });
+  const mapColours = new Set([...w.document.querySelectorAll("#map-regions polygon")]
+    .map(p => (p.getAttribute("fill").match(/--reg-([a-z]+)/) || [])[1]));
+  assert.strictEqual(mapColours.size, 6, "map is not painted by region identity");
+
+  const treeColours = new Set([...w.document.querySelector("#truth-tree svg").outerHTML
+    .matchAll(/var\(--reg-([a-z]+)\)/g)].map(m => m[1]));
+  assert.deepStrictEqual([...mapColours].sort(), [...treeColours].sort(),
+    "map and tree use different region colour sets");
+
+  /* effort rides on fill strength, so it must still vary with policy */
+  const before = w.document.querySelector('#map-regions [data-region="corvane"] polygon')
+    .getAttribute("fill-opacity");
+  const slider = [...w.document.querySelectorAll("#policy-fields input")]
+    .find(i => i.dataset.key === "seqFraction");
+  w.document.querySelector('.chip[data-region="corvane"]').dispatchEvent(
+    new w.MouseEvent("click", { bubbles: true }));
+  const s2 = [...w.document.querySelectorAll("#policy-fields input")]
+    .find(i => i.dataset.key === "seqFraction");
+  s2.value = "95";
+  s2.dispatchEvent(new w.Event("input", { bubbles: true }));
+  const after = w.document.querySelector('#map-regions [data-region="corvane"] polygon')
+    .getAttribute("fill-opacity");
+  assert.ok(Number(after) > Number(before),
+    `funding Corvane did not strengthen its fill (${before} -> ${after})`);
+});
+
 test("clicking a region on the map selects it", () => {
   const w = page();
   const target = w.document.querySelector('#map-regions .region[data-region="corvane"]');

@@ -10,53 +10,34 @@
 :root {
   color-scheme: light;
 
-  --ground:      #f4f6f6;
-  --surface:     #ffffff;
-  --surface-2:   #eef1f2;
-  --border:      #dbe1e3;
-  --border-firm: #c3ccd0;
+  --ground:       #f4f6f6;
+  --surface:      #ffffff;
+  --surface-2:    #eef1f2;
+  --border:       #dbe1e3;
+  --border-firm:  #c3ccd0;
+  --ink:          #10171a;
+  --ink-2:        #46545a;
+  --ink-3:        #6d7c82;
 
-  --ink:         #10171a;
-  --ink-2:       #46545a;
-  --ink-3:       #6d7c82;
+  --accent:       #4a5b63;
+  --accent-ink:   #2f3c43;
+  --on-accent:    #ffffff;
 
-  --accent:      #4a5b63;
-  --accent-ink:  #2f3c43;
-  --on-accent:   #ffffff;
-
-  /* Lineage identity. Validated all-pairs for colourblind separation in both
-     themes (worst deutan dE 9.2 light / 9.4 dark). Aqua sits below 3:1 on the
-     light surface, so direct labels on the trees are required, not optional. */
-
-  /* Region identity. Six hues spread 45deg+ apart around the wheel (19, 93, 142,
-     209, 261, 325) with lightness free as a second channel -- under protanopia the
-     wheel collapses toward one axis, so hue alone cannot separate six. Passes
-     all-pairs in BOTH themes: CVD dE 15.0 light / 16.1 dark against a target of 8,
-     normal-vision 18.4 / 18.7 against a floor of 15. Every colour clears 2.5:1 on
-     its surface; the region key supplies the relief the 3:1 rule asks for.
-     Aldane and Corvane hold the most separated pair (dE 35.7) because the whole
-     argument is read off those two. Uniform lightness is traded away knowingly. */
-  --reg-aldane:  #baa047;
-  --reg-brix:    #3062bc;
-  --reg-corvane: #66056c;
-  --reg-doran:   #094e04;
-  --reg-esker:   #3db1c2;
-  --reg-fenmoor: #ac5e60;
-
-  --lin-wild:    #7c8a90;
-  --lin-kestrel: #eb6834;
-  --lin-harrow:  #2a78d6;
-  --lin-tern:    #1baf7a;
-
-  /* sequencing effort — single-hue slate, kept off the lineage hues */
-  --ramp-0: #e6eaec;
-  --ramp-1: #c8d2d6;
-  --ramp-2: #a3b2b8;
-  --ramp-3: #7b8d95;
-  --ramp-4: #52646d;
-
-  /* the unrecoverable past */
-  --dark-zone:   #cfd6d9;
+  /* Region identity, used identically by the map and the trees so one hue always
+     means one region. Six hues spread 45deg+ apart (19, 93, 142, 209, 261, 325)
+     with lightness free as a second channel: under protanopia the wheel collapses
+     toward one axis, so hue alone cannot separate six. All-pairs in BOTH themes --
+     CVD dE 15.0 light / 16.1 dark against a target of 8; normal vision 18.4 / 18.7
+     against a floor of 15. Every colour clears 2.5:1 on its surface and the region
+     key supplies the relief the 3:1 rule wants. Aldane and Corvane hold the most
+     separated pair (dE 35.7); the argument is read off those two. Uniform
+     lightness is traded away knowingly. */
+  --reg-aldane:   #baa047;
+  --reg-brix:     #3062bc;
+  --reg-corvane:  #66056c;
+  --reg-doran:    #094e04;
+  --reg-esker:    #3db1c2;
+  --reg-fenmoor:  #ac5e60;
 
   --shadow: 0 1px 2px rgba(16,23,26,.05), 0 4px 16px rgba(16,23,26,.05);
 
@@ -70,72 +51,54 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --ground:      #0d1214;
-    --surface:     #141b1e;
-    --surface-2:   #1b2427;
-    --border:      #262f33;
-    --border-firm: #3a464b;
-    --ink:         #e8eef0;
-    --ink-2:       #a3b0b6;
-    --ink-3:       #7d8b91;
-    --accent:      #8fa3ac;
-    --accent-ink:  #b8c8cf;
-    --on-accent:   #0d1214;
-    --reg-aldane:  #f6d464;
-    --reg-brix:    #71a2f9;
-    --reg-corvane: #7e4481;
-    --reg-doran:   #0d7f01;
-    --reg-esker:   #4de8fe;
-    --reg-fenmoor: #ec898b;
-        --reg-aldane:  #f6d464;
-  --reg-brix:    #71a2f9;
-  --reg-corvane: #7e4481;
-  --reg-doran:   #0d7f01;
-  --reg-esker:   #4de8fe;
-  --reg-fenmoor: #ec898b;
-  --lin-wild:    #78868c;
-    --lin-kestrel: #d95926;
-    --lin-harrow:  #3987e5;
-    --lin-tern:    #199e70;
-    --ramp-0: #1c2529;
-    --ramp-1: #2c3a40;
-    --ramp-2: #435760;
-    --ramp-3: #5f7883;
-    --ramp-4: #86a1ad;
-    --dark-zone:   #232d31;
+
+    --ground:       #0d1214;
+    --surface:      #141b1e;
+    --surface-2:    #1b2427;
+    --border:       #262f33;
+    --border-firm:  #3a464b;
+    --ink:          #e8eef0;
+    --ink-2:        #a3b0b6;
+    --ink-3:        #7d8b91;
+
+    --accent:       #8fa3ac;
+    --accent-ink:   #b8c8cf;
+    --on-accent:    #0d1214;
+
+    --reg-aldane:   #f6d464;
+    --reg-brix:     #71a2f9;
+    --reg-corvane:  #7e4481;
+    --reg-doran:    #0d7f01;
+    --reg-esker:    #4de8fe;
+    --reg-fenmoor:  #ec898b;
+
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ground:      #0d1214;
-  --surface:     #141b1e;
-  --surface-2:   #1b2427;
-  --border:      #262f33;
-  --border-firm: #3a464b;
-  --ink:         #e8eef0;
-  --ink-2:       #a3b0b6;
-  --ink-3:       #7d8b91;
-    --accent:      #8fa3ac;
-  --accent-ink:  #b8c8cf;
-  --on-accent:   #0d1214;
-      --reg-aldane:  #f6d464;
-  --reg-brix:    #71a2f9;
-  --reg-corvane: #7e4481;
-  --reg-doran:   #0d7f01;
-  --reg-esker:   #4de8fe;
-  --reg-fenmoor: #ec898b;
-  --lin-wild:    #78868c;
-  --lin-kestrel: #d95926;
-  --lin-harrow:  #3987e5;
-  --lin-tern:    #199e70;
-  --ramp-0: #1c2529;
-  --ramp-1: #2c3a40;
-  --ramp-2: #435760;
-  --ramp-3: #5f7883;
-  --ramp-4: #86a1ad;
-  --dark-zone:   #232d31;
+
+  --ground:       #0d1214;
+  --surface:      #141b1e;
+  --surface-2:    #1b2427;
+  --border:       #262f33;
+  --border-firm:  #3a464b;
+  --ink:          #e8eef0;
+  --ink-2:        #a3b0b6;
+  --ink-3:        #7d8b91;
+
+  --accent:       #8fa3ac;
+  --accent-ink:   #b8c8cf;
+  --on-accent:    #0d1214;
+
+  --reg-aldane:   #f6d464;
+  --reg-brix:     #71a2f9;
+  --reg-corvane:  #7e4481;
+  --reg-doran:    #0d7f01;
+  --reg-esker:    #4de8fe;
+  --reg-fenmoor:  #ec898b;
+
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
 }
 
@@ -254,14 +217,14 @@ h1 {
   content: "";
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--lin-kestrel);
+  background: var(--ink-2);
   flex: none;
 }
 
 /* ============================================================
    VERDICT — the thesis in one sentence
    ============================================================ */
-.verdict { border-left: 3px solid var(--lin-kestrel); }
+.verdict { border-left: 3px solid var(--ink); }
 
 .verdict-body {
   padding: 1.375rem 1.5rem;
@@ -291,7 +254,7 @@ h1 {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.slot.filled { border-bottom-color: var(--lin-kestrel); color: var(--ink); }
+.slot.filled { border-bottom-color: var(--ink); color: var(--ink); }
 
 /* ============================================================
    MAIN GRID
@@ -379,7 +342,7 @@ h1 {
   overflow: hidden;
   gap: 2px;
 }
-.legend-ramp span { flex: 1; }
+.legend-ramp span { flex: 1; background: var(--ink); }
 
 /* ============================================================
    TREE
@@ -654,7 +617,7 @@ input[type="range"]:focus-visible {
   font-size: .625rem;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: var(--lin-kestrel);
+  color: var(--ink-2);
   border: 1px solid currentColor;
   border-radius: 3px;
   padding: 0 .3rem;
@@ -715,15 +678,13 @@ input[type="range"]:focus-visible {
           <g id="map-regions"></g>
         </svg>
         <div class="legend">
-          <span>none</span>
+          <span>colour&nbsp;=&nbsp;region &middot; strength&nbsp;=&nbsp;sequencing</span>
           <div class="legend-ramp" aria-hidden="true">
-            <span style="background:var(--ramp-0)"></span>
-            <span style="background:var(--ramp-1)"></span>
-            <span style="background:var(--ramp-2)"></span>
-            <span style="background:var(--ramp-3)"></span>
-            <span style="background:var(--ramp-4)"></span>
+            <span style="opacity:.12"></span><span style="opacity:.26"></span>
+            <span style="opacity:.40"></span><span style="opacity:.55"></span>
+            <span style="opacity:.70"></span>
           </div>
-          <span>saturating</span>
+          <span>none&nbsp;&rarr;&nbsp;high</span>
         </div>
       </div>
     </section>
@@ -1355,9 +1316,10 @@ function effort(p) {
   return Math.max(0, Math.min(1, raw));
 }
 
-function rampToken(e) {
-  const i = e <= 0.02 ? 0 : Math.min(4, 1 + Math.floor(e * 4));
-  return "var(--ramp-" + i + ")";
+/* The map and the tree must say the same thing with the same colour, so hue is
+   region identity in both. Sequencing effort rides on fill strength instead. */
+function effortAlpha(e) {
+  return (0.12 + 0.58 * Math.max(0, Math.min(1, e))).toFixed(3);
 }
 
 /* ============================================================
@@ -1377,7 +1339,8 @@ function renderMap() {
     return '<g class="region' + (on ? " selected" : "") + '" data-region="' + r.id + '"' +
            ' tabindex="0" role="button" aria-pressed="' + on + '"' +
            ' aria-label="' + r.name + ', sequencing effort ' + Math.round(e * 100) + ' percent">' +
-           '<polygon class="region-shape" points="' + r.pts + '" fill="' + rampToken(e) + '"></polygon>' +
+           '<polygon class="region-shape" points="' + r.pts + '" fill="var(--reg-' + r.id + ')"' +
+           ' fill-opacity="' + effortAlpha(e) + '"></polygon>' +
            '<text class="region-label" x="' + r.label[0] + '" y="' + r.label[1] + '">' + r.name + '</text>' +
            '<text class="region-value" x="' + r.label[0] + '" y="' + (r.label[1] + 14) + '">' +
            Math.round(e * 100) + '%</text>' +
