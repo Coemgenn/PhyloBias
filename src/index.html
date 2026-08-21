@@ -141,6 +141,9 @@
    ============================================================ */
 * { box-sizing: border-box; }
 
+/* author display rules outrank the UA sheet's [hidden]{display:none} */
+[hidden] { display: none !important; }
+
 body {
   background: var(--ground);
   color: var(--ink);
@@ -403,8 +406,10 @@ h1 {
   font-family: var(--font-mono);
   font-size: 8px;
   fill: var(--ink-3);
-  text-anchor: middle;
+  text-anchor: end;
 }
+.tree-axis-cap { fill: var(--ink-3); letter-spacing: .05em; }
+.tree-muts { text-anchor: start; }
 
 .btn {
   font-family: var(--font-ui);
@@ -1221,25 +1226,36 @@ function autoTree(truth, minTips, maxTips) {
   return best;
 }
 
+/* Time runs top to bottom and tips spread left to right. The tree is far wider
+   than deep — mutations that survive pruning all arise early — so this is the
+   orientation that fits the space. */
 function layoutTree(roots, opts) {
-  const { rowH, tMax, width, padL, padR } = opts;
-  const xOf = t => padL + Math.max(0, Math.min(1, t / tMax)) * (width - padL - padR);
+  const { colW, tMax, depth, padT, padB, padL } = opts;
+  const yOf = t => padT + Math.max(0, Math.min(1, t / tMax)) * (depth - padT - padB);
   const flat = [];
-  let row = 0;
+  let col = 0;
   (function walk(ns, parentT) {
     for (const n of ns) {
-      n.x0 = xOf(parentT);
-      n.x1 = xOf(n.tEnd);
+      n.y0 = yOf(parentT);
+      n.y1 = yOf(n.tEnd);
       if (n.children.length) {
         walk(n.children, n.tEnd);
-        n.y = (n.children[0].y + n.children[n.children.length - 1].y) / 2;
+        n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
       } else {
-        n.y = (row++ + 0.5) * rowH;
+        n.x = padL + (col++ + 0.5) * colW;
       }
       flat.push(n);
     }
   })(roots, 0);
-  return { nodes: flat, height: row * rowH, xOf, rows: row };
+  return { nodes: flat, width: padL + col * colW, yOf, cols: col };
+}
+
+/* the latest mutation actually drawn — not the epidemic's last case, which
+   would leave most of the axis empty */
+function treeSpan(roots) {
+  let t = 0;
+  (function w(ns) { for (const n of ns) { if (n.tEnd > t) t = n.tEnd; w(n.children); } })(roots);
+  return t;
 }
 
 /* memoised: truth depends only on the scenario, never on policy */
@@ -1256,7 +1272,7 @@ const ENGINE = {
   REGIONS, REG, LINEAGES, LIN, TIERS, TIER_CUTS,
   GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION,
   runTruth, truthFor, genotypeOf, tierOf,
-  buildDisplayTree, autoTree, layoutTree, renderTreeSVG,
+  buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan,
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
@@ -1382,49 +1398,41 @@ const LINEAGE_NAME = { wild: "Wild type", kestrel: "Kestrel", tern: "Tern", harr
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 function renderTreeSVG(roots, opts) {
-  const W = 560, padL = 12, padR = 96, rowH = 15, axisH = 26;
-  const L = layoutTree(roots, { rowH, tMax: opts.tMax, width: W, padL, padR });
-  const H = L.height + axisH + 8;
+  const colW = 14, padL = 34, padT = 14, padB = 10, depth = 300;
+  const L = layoutTree(roots, { colW, tMax: opts.tMax, depth, padT, padB, padL });
+  const W = Math.max(L.width + 56, 240), H = depth + 6;
   const out = [];
+
+  /* time axis, down the left edge */
+  const step = opts.tMax <= 60 ? 15 : opts.tMax <= 120 ? 30 : 60;
+  for (let d = 0; d <= opts.tMax; d += step) {
+    const y = L.yOf(d);
+    out.push(`<line x1="${padL - 6}" y1="${y.toFixed(1)}" x2="${(L.width + 10).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 3"></line>`);
+    out.push(`<text class="tree-axis" x="${padL - 10}" y="${(y + 3).toFixed(1)}">${d}</text>`);
+  }
+  out.push(`<text class="tree-axis tree-axis-cap" x="${padL - 10}" y="${(padT - 6).toFixed(1)}">day</text>`);
 
   for (const n of L.nodes) {
     const g = [];
-    /* the branch is drawn in segments, one per mutation, coloured by the region
-       that mutation first appeared in — so migration along a branch is visible */
-    const span = n.x1 - n.x0;
-    const k = n.segs.length;
+    /* one segment per mutation, coloured by the region it first appeared in,
+       so migration along an unbranched run stays visible */
+    const span = n.y1 - n.y0, k = n.segs.length;
     for (let i = 0; i < k; i++) {
-      const a = n.x0 + (span * i) / k, b = n.x0 + (span * (i + 1)) / k;
-      g.push(`<line x1="${a.toFixed(1)}" y1="${n.y.toFixed(1)}" x2="${b.toFixed(1)}" y2="${n.y.toFixed(1)}" `
-        + `stroke="var(--reg-${n.segs[i].region})" stroke-width="2.5" stroke-linecap="butt"></line>`);
+      const a = n.y0 + (span * i) / k, b = n.y0 + (span * (i + 1)) / k;
+      g.push(`<line x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}" stroke="var(--reg-${n.segs[i].region})" stroke-width="2.5"></line>`);
     }
     if (n.children.length) {
-      const ys = n.children.map(c => c.y);
-      g.push(`<line x1="${n.x1.toFixed(1)}" y1="${Math.min(...ys).toFixed(1)}" x2="${n.x1.toFixed(1)}" `
-        + `y2="${Math.max(...ys).toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`);
+      const xs = n.children.map(c => c.x);
+      g.push(`<line x1="${Math.min(...xs).toFixed(1)}" y1="${n.y1.toFixed(1)}" x2="${Math.max(...xs).toFixed(1)}" y2="${n.y1.toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`);
     }
-    if (k > 1) {
-      g.push(`<text class="tree-muts" x="${((n.x0 + n.x1) / 2).toFixed(1)}" y="${(n.y - 3.5).toFixed(1)}">${k}</text>`);
-    }
+    if (k > 1) g.push(`<text class="tree-muts" x="${(n.x + 4.5).toFixed(1)}" y="${((n.y0 + n.y1) / 2 + 2.5).toFixed(1)}">${k}</text>`);
     if (n.marker) {
-      g.push(`<circle cx="${n.x1.toFixed(1)}" cy="${n.y.toFixed(1)}" r="4" fill="var(--surface)" `
-        + `stroke="var(--reg-${n.region})" stroke-width="2.5"></circle>`);
-      g.push(`<text class="tree-label" x="${(n.x1 + 8).toFixed(1)}" y="${(n.y + 3.5).toFixed(1)}">`
-        + `${esc(LINEAGE_NAME[n.marker] || n.marker)}</text>`);
+      g.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y1.toFixed(1)}" r="4" fill="var(--surface)" stroke="var(--reg-${n.region})" stroke-width="2.5"></circle>`);
+      g.push(`<text class="tree-label" x="${(n.x + 7).toFixed(1)}" y="${(n.y1 + 3.5).toFixed(1)}">${esc(LINEAGE_NAME[n.marker] || n.marker)}</text>`);
     }
-    out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} · `
-      + `${esc(n.carriers.toLocaleString())} cases · ${esc(n.region)} · day ${n.tEnd.toFixed(0)}</title></g>`);
+    out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} \u00b7 ${esc(n.carriers.toLocaleString())} cases \u00b7 ${esc(n.region)} \u00b7 day ${n.tEnd.toFixed(0)}</title></g>`);
   }
-
-  /* time axis */
-  const yA = L.height + 16;
-  out.push(`<line x1="${padL}" y1="${yA}" x2="${W - padR}" y2="${yA}" stroke="var(--border)" stroke-width="1"></line>`);
-  for (let d = 0; d <= opts.tMax; d += 30) {
-    const x = L.xOf(d);
-    out.push(`<line x1="${x.toFixed(1)}" y1="${yA}" x2="${x.toFixed(1)}" y2="${yA + 4}" stroke="var(--border-firm)" stroke-width="1"></line>`);
-    out.push(`<text class="tree-axis" x="${x.toFixed(1)}" y="${yA + 15}">${d}</text>`);
-  }
-  return `<svg class="tree-svg" viewBox="0 0 ${W} ${H.toFixed(0)}" role="img" aria-label="${esc(opts.aria)}">${out.join("")}</svg>`;
+  return `<svg class="tree-svg" viewBox="0 0 ${W.toFixed(0)} ${H}" role="img" aria-label="${esc(opts.aria)}">${out.join("")}</svg>`;
 }
 
 function renderTruthTree() {
@@ -1433,7 +1441,7 @@ function renderTruthTree() {
   const t = autoTree(truth, 26, 46);
   state.truthTree = t;
   $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
-    tMax: Math.ceil(truth.stats.lastDay / 30) * 30,
+    tMax: Math.ceil(treeSpan(t.roots) / 15) * 15,
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
   });
   $("#truth-count").textContent =

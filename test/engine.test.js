@@ -138,18 +138,31 @@ test("tree lands in a drawable size", () => {
   assert.ok(t.tips >= 20 && t.tips <= 60, `${t.tips} tips is outside the drawable band`);
 });
 
-test("layout puts every child to the right of its parent", () => {
+test("layout puts every child below its parent in time", () => {
   const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
-  const L = PB.layoutTree(t.roots, { rowH: 15, tMax: 150, width: 560, padL: 12, padR: 96 });
+  const L = PB.layoutTree(t.roots, { colW: 14, tMax: 60, depth: 300, padT: 14, padB: 10, padL: 34 });
   for (const n of L.nodes)
     for (const c of n.children)
-      assert.ok(c.x0 >= n.x1 - 0.01, "child branch starts left of its parent");
-  assert.ok(L.rows > 0 && L.height > 0);
+      assert.ok(c.y0 >= n.y1 - 0.01, "child branch starts above its parent");
+  assert.ok(L.cols > 0 && L.width > 0);
+});
+
+test("the time axis is trimmed to the drawn tree, not the epidemic", () => {
+  /* pruning leaves only mutations that arose early, so scaling the axis to the
+     last case would leave most of the width empty */
+  const T = PB.runTruth(BASE);
+  const t = PB.autoTree(T, 26, 46);
+  const span = PB.treeSpan(t.roots);
+  assert.ok(span > 0 && span < T.stats.lastDay,
+    "tree span should be shorter than the whole epidemic");
+  let deepest = 0;
+  (function w(ns) { for (const n of ns) { deepest = Math.max(deepest, n.tEnd); w(n.children); } })(t.roots);
+  assert.strictEqual(span, deepest);
 });
 
 test("every branch carries a real region colour and a tooltip", () => {
   const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
-  const svg = PB.renderTreeSVG(t.roots, { tMax: 150, aria: "x" });
+  const svg = PB.renderTreeSVG(t.roots, { tMax: 60, aria: "x" });
   const groups = (svg.match(/<g class="branch">/g) || []).length;
   assert.strictEqual(groups, (svg.match(/<title>/g) || []).length,
     "each branch group needs its own title, or tooltips attach to the whole svg");
@@ -160,7 +173,7 @@ test("every branch carries a real region colour and a tooltip", () => {
 
 test("variant markers are labelled on the tree", () => {
   const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
-  const svg = PB.renderTreeSVG(t.roots, { tMax: 150, aria: "x" });
+  const svg = PB.renderTreeSVG(t.roots, { tMax: 60, aria: "x" });
   for (const name of ["Kestrel", "Tern", "Harrow"])
     assert.ok(svg.includes(">" + name + "<"), `${name} not labelled on the tree`);
 });
