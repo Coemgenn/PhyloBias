@@ -1201,7 +1201,34 @@ function buildDisplayTree(truth, minCarriers) {
     return "wild";
   };
 
-  function make(id) {
+  /* Where the lineage actually WAS, over the length of the branch. Colouring a
+     whole branch by the region of the mutation that ends it is wrong: a lineage
+     that sat in Brix for 26 days and then migrated to Doran, mutating on arrival,
+     is Brix for almost all of that branch. The transmission path gives the truth. */
+  function occupancy(lastMutId, parentMutId, tStart, tEnd) {
+    const chain = [];
+    const stop = parentMutId >= 0 ? truth.mutations[parentMutId].caseId : -1;
+    let c = truth.cases[truth.mutations[lastMutId].caseId];
+    while (c) {
+      chain.push(c);
+      if (c.id === stop || c.parent < 0) break;
+      c = truth.cases[c.parent];
+    }
+    chain.reverse();
+    const out = [];
+    for (const cs of chain) {
+      const t = Math.max(tStart, Math.min(tEnd, cs.t));
+      if (out.length && out[out.length - 1].region === cs.region) continue;
+      out.push({ t, region: cs.region });
+    }
+    if (!out.length) out.push({ t: tStart, region: truth.mutations[lastMutId].region });
+    out[0].t = tStart;
+    return out.map((seg, i) => ({
+      region: seg.region, t0: seg.t, t1: i + 1 < out.length ? out[i + 1].t : tEnd,
+    })).filter(seg => seg.t1 > seg.t0 - 1e-9);
+  }
+
+  function make(id, parentMutId) {
     const segs = [{ id, t: truth.mutations[id].t, region: truth.mutations[id].region }];
     let marker = truth.mutations[id].marker;
     let ch = kids.get(id) || [];
@@ -1212,12 +1239,14 @@ function buildDisplayTree(truth, minCarriers) {
       ch = kids.get(c) || [];
     }
     const last = segs[segs.length - 1];
+    const tStart = parentMutId >= 0 ? truth.mutations[parentMutId].t : 0;
     return {
-      segs, marker, carriers: truth.carriers[id], tEnd: last.t, region: last.region,
-      lineage: lineageOf(last.id), children: ch.map(make),
+      segs, marker, carriers: truth.carriers[id], tStart, tEnd: last.t, region: last.region,
+      path: occupancy(last.id, parentMutId, tStart, last.t),
+      lineage: lineageOf(last.id), children: ch.map(k => make(k, last.id)),
     };
   }
-  return (kids.get(-1) || []).map(make);
+  return (kids.get(-1) || []).map(r => make(r, -1));
 }
 
 /* pick a threshold that lands the tree in a drawable size */
@@ -1437,10 +1466,11 @@ function renderTreeSVG(roots, opts) {
     const g = [];
     /* one segment per mutation, coloured by the region it first appeared in,
        so migration along an unbranched run stays visible */
-    const span = n.y1 - n.y0, k = n.segs.length;
-    for (let i = 0; i < k; i++) {
-      const a = n.y0 + (span * i) / k, b = n.y0 + (span * (i + 1)) / k;
-      g.push(`<line x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}" stroke="var(--reg-${n.segs[i].region})" stroke-width="2.5"></line>`);
+    const k = n.segs.length;
+    for (const seg of n.path) {
+      const a = L.yOf(seg.t0), b = L.yOf(seg.t1);
+      if (b - a < 0.05) continue;
+      g.push(`<line x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}" stroke="var(--reg-${seg.region})" stroke-width="2.5"></line>`);
     }
     if (n.children.length) {
       const xs = n.children.map(c => c.x);

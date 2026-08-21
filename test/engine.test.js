@@ -214,3 +214,34 @@ test("no non-ASCII in executable code: the page cannot declare a charset", () =>
   const bad = [...new Set([...noComments].filter(c => c.charCodeAt(0) > 127))];
   assert.deepStrictEqual(bad, [], `non-ASCII in code: ${bad.join(" ")}`);
 });
+
+test("branches are coloured by where the lineage was, not where it ended up", () => {
+  /* Every lineage descends from the Brix introductions, so the top of every root
+     branch must be Brix. Colouring a branch by the region of the mutation that
+     ends it painted a lineage's whole 26 days in Brix with its destination's
+     colour. */
+  const T = PB.runTruth(BASE);
+  const t = PB.autoTree(T, 26, 46);
+  for (const r of t.roots)
+    assert.strictEqual(r.path[0].region, "brix",
+      "a root branch starts somewhere other than the index region");
+
+  /* occupancy must tile the branch with no gaps or overlaps */
+  (function walk(ns) {
+    for (const n of ns) {
+      assert.ok(n.path.length >= 1);
+      assert.ok(Math.abs(n.path[0].t0 - n.tStart) < 1e-6, "path must start at the branch start");
+      assert.ok(Math.abs(n.path[n.path.length - 1].t1 - n.tEnd) < 1e-6, "path must reach the mutation");
+      for (let i = 1; i < n.path.length; i++)
+        assert.ok(Math.abs(n.path[i].t0 - n.path[i - 1].t1) < 1e-6, "gap in occupancy");
+      walk(n.children);
+    }
+  })(t.roots);
+});
+
+test("at least one branch records a migration", () => {
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  let multi = 0;
+  (function w(ns) { for (const n of ns) { if (n.path.length > 1) multi++; w(n.children); } })(t.roots);
+  assert.ok(multi > 0, "no branch shows a region change — occupancy is not being tracked");
+});
