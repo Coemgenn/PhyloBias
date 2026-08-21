@@ -1285,7 +1285,7 @@ const SCENARIO_FIELDS = [
   { key: "r0",    label: "Basic reproduction number", min: 1.2, max: 4, step: .1, value: 2.4,
     fmt: v => v.toFixed(1) },
   { key: "clockRate", label: "Clock rate", min: 4, max: 16, step: .5, value: 9,
-    fmt: v => v.toFixed(1) + "×10⁻⁴ /site/yr" },
+    fmt: v => v.toFixed(1) + "\u00d710\u207b\u2074 /site/yr" },
   { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 111,
     fmt: v => "#" + v },
 ];
@@ -1412,6 +1412,19 @@ function renderTreeSVG(roots, opts) {
   }
   out.push(`<text class="tree-axis tree-axis-cap" x="${padL - 10}" y="${(padT - 6).toFixed(1)}">day</text>`);
 
+  /* The root is virtual — the ancestral genotype, carried by every introduction.
+     Without this bar the root lineages read as unrelated stubs. It is deliberately
+     flat and wide: an early outbreak's root is a polytomy, and drawing it as a
+     resolved fork would invent structure the data does not contain. */
+  if (roots.length > 1) {
+    const rx = roots.map(r => r.x);
+    const y0 = L.yOf(0);
+    out.push(`<g class="branch">`
+      + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`
+      + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3" fill="var(--ink-3)"></circle>`
+      + `<title>Ancestral genotype \u00b7 ${roots.length} lineages descend from it, in no resolved order</title></g>`);
+  }
+
   for (const n of L.nodes) {
     const g = [];
     /* one segment per mutation, coloured by the region it first appeared in,
@@ -1445,7 +1458,7 @@ function renderTruthTree() {
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
   });
   $("#truth-count").textContent =
-    truth.stats.cases.toLocaleString() + " cases · " + t.tips + " tips";
+    truth.stats.cases.toLocaleString() + " cases \u00b7 " + t.tips + " tips";
 }
 
 function setRevealed(on) {

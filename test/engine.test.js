@@ -197,3 +197,20 @@ test("a malformed scenario throws instead of degrading quietly", () => {
   assert.throws(() => PB.runTruth({ seed: 111, r0: 2.4 }), /clockRate/);
   assert.throws(() => PB.runTruth({ seed: 111, r0: 2.4, clockRate: NaN }), /clockRate/);
 });
+
+test("the tree draws its root, so lineages are not orphan stubs", () => {
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  assert.ok(t.roots.length > 1, "this scenario should have a root polytomy");
+  const svg = PB.renderTreeSVG(t.roots, { tMax: 60, aria: "x" });
+  assert.match(svg, /Ancestral genotype/,
+    "root connector missing — root lineages would read as unrelated");
+});
+
+test("no non-ASCII in executable code: the page cannot declare a charset", () => {
+  /* <head> is supplied by the artifact runtime, so a meta charset cannot be added
+     here. A literal '·' in a string renders as 'Â·' whenever the file is decoded
+     as latin-1. Comments are exempt; strings and identifiers are not. */
+  const noComments = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  const bad = [...new Set([...noComments].filter(c => c.charCodeAt(0) > 127))];
+  assert.deepStrictEqual(bad, [], `non-ASCII in code: ${bad.join(" ")}`);
+});
