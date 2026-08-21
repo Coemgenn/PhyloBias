@@ -245,3 +245,20 @@ test("at least one branch records a migration", () => {
   (function w(ns) { for (const n of ns) { if (n.path.length > 1) multi++; w(n.children); } })(t.roots);
   assert.ok(multi > 0, "no branch shows a region change — occupancy is not being tracked");
 });
+
+test("connectors are continuous with the branches they join", () => {
+  /* A joint drawn in a neutral colour breaks the line visually. It is only safe
+     to colour it by the parent's endpoint region because every child provably
+     starts there — assert that rather than assuming it. */
+  const t = PB.autoTree(PB.runTruth(BASE), 26, 46);
+  (function walk(ns) {
+    for (const n of ns) {
+      for (const c of n.children)
+        assert.strictEqual(c.path[0].region, n.region,
+          "child starts in a different region than its parent's connector colour");
+      walk(n.children);
+    }
+  })(t.roots);
+  const svg = PB.renderTreeSVG(t.roots, { tMax: 60, aria: "x" });
+  assert.ok(!/stroke="var\(--border-firm\)"/.test(svg), "a connector is still drawn neutral");
+});

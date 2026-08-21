@@ -1455,9 +1455,10 @@ function renderTreeSVG(roots, opts) {
   if (roots.length > 1) {
     const rx = roots.map(r => r.x);
     const y0 = L.yOf(0);
+    const rootRegion = roots[0].path[0].region;
     out.push(`<g class="branch">`
-      + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`
-      + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3" fill="var(--ink-3)"></circle>`
+      + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--reg-${rootRegion})" stroke-width="1.6" stroke-linecap="round"></line>`
+      + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3.4" fill="var(--reg-${rootRegion})" stroke="var(--surface)" stroke-width="1.2"></circle>`
       + `<text class="tree-root-label" x="${(Math.min(...rx) - 4).toFixed(1)}" y="${(y0 - 5).toFixed(1)}">ancestral genotype</text>`
       + `<title>Ancestral genotype \u00b7 ${roots.length} lineages descend from it, in no resolved order</title></g>`);
   }
@@ -1474,7 +1475,7 @@ function renderTreeSVG(roots, opts) {
     }
     if (n.children.length) {
       const xs = n.children.map(c => c.x);
-      g.push(`<line x1="${Math.min(...xs).toFixed(1)}" y1="${n.y1.toFixed(1)}" x2="${Math.max(...xs).toFixed(1)}" y2="${n.y1.toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`);
+      g.push(`<line x1="${Math.min(...xs).toFixed(1)}" y1="${n.y1.toFixed(1)}" x2="${Math.max(...xs).toFixed(1)}" y2="${n.y1.toFixed(1)}" stroke="var(--reg-${n.region})" stroke-width="1.6" stroke-linecap="round"></line>`);
     }
     /* The mutation happens at the far END of a branch; the near end is only
        where its ancestor sat. Without a node mark the eye reads the start of a
