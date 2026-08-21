@@ -740,18 +740,12 @@ input[type="range"]:focus-visible {
     <section class="panel" aria-labelledby="inf-h">
       <div class="panel-head">
         <h2 class="panel-title" id="inf-h">What you would reconstruct</h2>
-        <span class="panel-note">perfect phylogeny &middot; Fitch</span>
+        <span class="panel-note" id="inf-note">&nbsp;</span>
       </div>
       <div class="panel-body">
-        <div class="empty">
-          <div class="empty-mark">&#9903;</div>
-          <p>
-            The sampler and inference land next. This panel draws the same tree rebuilt from
-            only the genomes your policy collected, with each branch coloured by the region
-            <em>inferred</em> for it &mdash; not the region it actually came from.
-          </p>
-        </div>
+        <div id="inferred-tree"></div>
       </div>
+      <div class="region-key" id="inferred-key"></div>
     </section>
 
   </div>
@@ -882,6 +876,7 @@ class MinHeap {
 }
 
 /* ---------- world ---------- */
+const REGION_IDS = ["aldane","fenmoor","brix","corvane","doran","esker"];
 const REGIONS = [
   { id: "aldane",  name: "Aldane",  pop:  5200, neighbours: ["fenmoor", "corvane"] ,
     pts: "170,25 300,45 330,110 185,105", label: [246,  72] },
@@ -1258,6 +1253,302 @@ function treeSpan(roots) {
   return t;
 }
 
+/* ============================================================
+   SAMPLER — truth + policy -> the genomes you actually hold
+   ============================================================ */
+
+/* Every draw is keyed to the thing it decides, not to a running stream. If the
+   sampler pulled from one sequence, moving Corvane's slider would re-randomise
+   Aldane's samples too and every comparison would be noise. It also makes the
+   sliders monotone: raising depth can only ADD mutations, never swap them. */
+function hashU(a, b) {
+  let h = Math.imul((a + 0x9e3779b9) | 0, 0x85ebca6b);
+  h = Math.imul(h ^ (b + 0x165667b1), 0xc2b2ae35);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x27d4eb2f);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+/* Community screening still misses the people who feel fine. */
+const COMMUNITY_DETECT = [0.15, 0.55, 0.85, 1.0, 1.0];
+/* Inference runs on far more genomes than the tree draws -- the display collapses
+   to a few dozen branches regardless. The cap only exists to keep a slider drag
+   interactive, and thinning is uniform: subsampling evenly across time would be a
+   real mitigation for the bias we are trying to show, so it is not applied here. */
+const SAMPLE_CAP = 1500;
+
+function sampleGenomes(truth, policy) {
+  const kept = [];
+  for (const c of truth.cases) {
+    const p = policy[c.region];
+    if (!p || p.seqFraction <= 0) continue;
+
+    /* which channel this slot draws from */
+    const viaHospital = hashU(c.id, 1) < p.hospitalMix / 100;
+    /* the hospital channel can only ever see a case that reached a hospital */
+    const t0 = viaHospital ? c.tAdmit : c.tOnset;
+    if (t0 == null) continue;
+    if (!viaHospital && hashU(c.id, 2) >= COMMUNITY_DETECT[c.tier]) continue;
+
+    /* A sample can only be taken while there is material to take. A case that
+       came and went before the programme started leaves nothing, and no later
+       spending recovers it. This is the irreversibility, implemented.
+       The reporting delay governs when the RESULT lands, not when the swab is
+       taken -- charging it against the illness window made a 7-day delay wipe out
+       almost every case, since most illnesses are shorter than that. */
+    const ts = Math.max(t0, p.startDay);
+    if (ts > c.tRemoved) continue;
+
+    if (hashU(c.id, 3) >= p.seqFraction / 100) continue;
+
+    const observed = new Set();
+    for (const m of genotypeOf(truth, c.id))
+      if (hashU(c.id, m + 977) < p.depth / 100) observed.add(m);
+
+    /* No lineage label travels with the sample. A lab reads lineage off the
+       marker mutation in `observed`, which is exactly what makes it possible to
+       lose the call when coverage drops. Carrying c.lineage here would hand the
+       answer key to everything downstream. */
+    kept.push({ caseId: c.id, region: c.region, t: ts, available: ts + p.delay,
+                tier: c.tier, observed });
+  }
+  /* keep the run interactive; thin deterministically and say so */
+  let thinned = kept, dropped = 0;
+  if (kept.length > SAMPLE_CAP) {
+    thinned = kept.filter(s => hashU(s.caseId, 7) < SAMPLE_CAP / kept.length);
+    dropped = kept.length - thinned.length;
+  }
+  return { samples: thinned, collected: kept.length, dropped };
+}
+
+/* INFERENCE */
+/* ============================================================
+   INFERENCE
+   ============================================================ */
+
+/* Under infinite sites with no recombination the genealogy is exactly recoverable
+   from the mutations you can see -- so any difference from the truth is the
+   sampling policy's doing, not the method's. Missing mutations show up honestly:
+   clades collapse, and mutation sets start to CONFLICT (overlapping without
+   nesting), which is the data telling you no tree explains it. */
+function perfectPhylogeny(samples) {
+  const S = new Map();
+  samples.forEach((s, i) => {
+    for (const m of s.observed) {
+      if (!S.has(m)) S.set(m, new Set());
+      S.get(m).add(i);
+    }
+  });
+  const muts = [...S.entries()]
+    .map(([mut, tips]) => ({ mut, tips, n: tips.size }))
+    .filter(x => x.n >= 2)                       /* a singleton resolves nothing */
+    .sort((a, b) => b.n - a.n || a.mut - b.mut);
+
+  const all = new Set(samples.map((_, i) => i));
+  const root = { mut: null, tips: all, n: all.size, children: [], depth: 0 };
+  let conflicts = 0;
+
+  for (const m of muts) {
+    let cur = root, clash = false;
+    for (;;) {
+      let next = null;
+      for (const ch of cur.children) {
+        let inter = 0;
+        for (const t of m.tips) if (ch.tips.has(t)) inter++;
+        if (inter === m.tips.size) { next = ch; break; }
+        if (inter > 0) clash = true;             /* overlaps but does not nest */
+      }
+      if (!next) break;
+      cur = next;
+    }
+    if (clash) conflicts++;
+    cur.children.push({ mut: m.mut, tips: m.tips, n: m.n, children: [], depth: cur.depth + 1 });
+  }
+  return { root, conflicts, informative: muts.length };
+}
+
+/* least squares of divergence against sample date: slope is the clock, the
+   x-intercept is the time of the most recent common ancestor. TempEst's method. */
+function rootToTip(samples, subset) {
+  if (subset) samples = subset.map(i => samples[i]);
+  /* Divergence is how many mutations a genome carries, not its depth in the
+     collapsed tree -- depth counts only mutations shared by two or more tips, so
+     it undercounts badly and the regression collapses (R2 0.02 in testing). */
+  const xs = [], ys = [];
+  for (const s of samples) { xs.push(s.t); ys.push(s.observed.size); }
+  const n = xs.length;
+  if (n < 3) return { slope: 0, tmrca: null, r2: 0, n };
+  const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { sxy += (xs[i]-mx)*(ys[i]-my); sxx += (xs[i]-mx)**2; syy += (ys[i]-my)**2; }
+  const slope = sxx ? sxy / sxx : 0;
+  const tmrca = slope > 1e-9 ? mx - my / slope : null;
+  const r2 = (sxx && syy) ? (sxy*sxy)/(sxx*syy) : 0;
+  return { slope, tmrca, r2, n };
+}
+
+/* Fitch parsimony over the sampled tip regions. Nothing here knows where anything
+   actually arose -- it sees only the tips the policy handed it. */
+function fitchRegions(root, samples, regionIds) {
+  const bit = {}; regionIds.forEach((r, i) => bit[r] = 1 << i);
+  const ALL = (1 << regionIds.length) - 1;
+  const down = new Map(), tally = new Map();
+
+  (function up(n) {
+    const counts = new Array(regionIds.length).fill(0);
+    if (!n.children.length) {
+      let s = 0;
+      for (const i of n.tips) { s |= bit[samples[i].region]; counts[regionIds.indexOf(samples[i].region)]++; }
+      down.set(n, s || ALL); tally.set(n, counts); return;
+    }
+    for (const ch of n.children) up(ch);
+    /* tips sitting directly on an internal node are that node's own evidence */
+    const own = new Set(n.tips);
+    for (const ch of n.children) for (const t of ch.tips) own.delete(t);
+    let acc = 0, inter = ALL, any = false;
+    for (const ch of n.children) { acc |= down.get(ch); inter &= down.get(ch); any = true;
+      const cc = tally.get(ch); for (let i = 0; i < counts.length; i++) counts[i] += cc[i]; }
+    let ownBits = 0;
+    for (const t of own) { ownBits |= bit[samples[t].region]; counts[regionIds.indexOf(samples[t].region)]++; }
+    let s = any ? (inter || acc) : ALL;
+    if (ownBits) s = (s & ownBits) || s;
+    down.set(n, s); tally.set(n, counts);
+  })(root);
+
+  /* Fitch leaves genuine ties. Breaking them by how many descendant tips carry
+     each state is the standard majority convention -- and it is precisely where
+     an unevenly sampled tip set decides the answer. */
+  const state = new Map();
+  function pick(bits, counts, inherited) {
+    if (inherited && (bits & inherited)) return inherited;
+    let best = -1, bestN = -1;
+    for (let i = 0; i < regionIds.length; i++)
+      if ((bits >> i) & 1) { if (counts[i] > bestN) { bestN = counts[i]; best = i; } }
+    return best < 0 ? 0 : 1 << best;
+  }
+  (function downAssign(n, inherited) {
+    const s = pick(down.get(n), tally.get(n), inherited);
+    state.set(n, s);
+    for (const ch of n.children) downAssign(ch, s);
+  })(root, 0);
+
+  const name = new Map();
+  for (const [n, s] of state) name.set(n, regionIds[Math.log2(s) | 0]);
+  const ambiguous = new Map();
+  for (const [n, s] of down) {
+    let c = 0; for (let i = 0; i < regionIds.length; i++) if ((s >> i) & 1) c++;
+    ambiguous.set(n, c > 1);
+  }
+  return { region: name, ambiguous };
+}
+
+/* The inferred tree, in the same shape the renderer already draws. One region per
+   branch and no migration along it: inference cannot see WHEN a lineage moved,
+   only what state best explains the tips. That flatness against the truth panel's
+   multi-coloured branches is itself part of the comparison. */
+function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips) {
+  const ancCache = new Map();
+  function ancestral(node) {
+    if (ancCache.has(node)) return ancCache.get(node);
+    const tips = [...node.tips], freq = new Map();
+    for (const i of tips) for (const m of samples[i].observed) freq.set(m, (freq.get(m) || 0) + 1);
+    let k = 0;
+    for (const c of freq.values()) if (c * 2 >= tips.length) k++;
+    ancCache.set(node, k);
+    return k;
+  }
+  function dateOf(node) {
+    const tips = [...node.tips];
+    if (!tips.length || clock.slope <= 1e-9) return 0;
+    const mx = tips.reduce((a, i) => a + samples[i].t, 0) / tips.length;
+    const my = tips.reduce((a, i) => a + samples[i].observed.size, 0) / tips.length;
+    return mx + (ancestral(node) - my) / clock.slope;
+  }
+  function make(n, parentDate) {
+    let node = n, segs = [n.mut], marker = markerOfMut.get(n.mut) || null;
+    let kids = node.children.filter(c => c.n >= minTips);
+    while (kids.length === 1 && kids[0].n === node.n) {
+      node = kids[0];
+      segs.push(node.mut);
+      marker = marker || markerOfMut.get(node.mut) || null;
+      kids = node.children.filter(c => c.n >= minTips);
+    }
+    /* the estimator is noisy enough to invert occasionally; a child cannot
+       predate its parent */
+    const tEnd = Math.max(parentDate + 0.4, Math.max(0, dateOf(node)));
+    const region = fitch.region.get(node);
+    return {
+      segs: segs.map(m => ({ id: m, t: tEnd, region })),
+      marker, carriers: node.n, tStart: parentDate, tEnd, region,
+      path: [{ t0: parentDate, t1: tEnd, region }],
+      children: kids.map(c => make(c, tEnd)),
+    };
+  }
+  const start = Math.max(0, clock.tmrca == null ? 0 : clock.tmrca);
+  return phylo.root.children.filter(c => c.n >= minTips).map(c => make(c, start));
+}
+
+function autoInferredTree(samples, phylo, fitch, clock, markerOfMut) {
+  let best = null;
+  for (const th of [200, 120, 80, 50, 32, 20, 12, 8, 5, 3, 2]) {
+    const roots = buildInferredTree(samples, phylo, fitch, clock, markerOfMut, th);
+    let tips = 0;
+    (function c(ns) { for (const n of ns) n.children.length ? c(n.children) : tips++; })(roots);
+    best = { roots, threshold: th, tips };
+    if (tips >= 26) break;
+  }
+  return best;
+}
+
+/* What you would conclude about each variant, read off the reconstruction alone.
+   Nothing here consults the truth except to name the marker mutation -- which a
+   real lab also knows, once a variant has been designated. */
+function lineageVerdicts(truth, samples, phylo, fitch, clock) {
+  const byMut = new Map();
+  (function walk(n) { if (n.mut !== null) byMut.set(n.mut, n); for (const c of n.children) walk(c); })(phylo.root);
+
+  return truth.lineages.filter(L => L.markerMutation != null).map(L => {
+    const node = byMut.get(L.markerMutation);
+    let seen = 0;
+    for (const s of samples) if (s.observed.has(L.markerMutation)) seen++;
+    if (!node) {
+      return { id: L.id, name: L.name, seen, found: false,
+               trueRegion: L.originRegion, trueDay: L.originDay };
+    }
+    const region = fitch.region.get(node);
+    /* Dating the clade. Depth in the collapsed tree is far too coarse -- every
+       high-frequency marker sits at depth 1 and they all come out on the same day.
+       Regressing inside the clade is worse still: extrapolating to zero divergence
+       lands on the whole tree's root, not this clade's ancestor, which put Kestrel
+       at day -254. The ancestor carries exactly the mutations ALL its descendants
+       share, so that is the divergence to solve the clock for. */
+    const tipIdx = [...node.tips];
+    /* Which mutations did the ancestor carry? A strict intersection is useless
+       here: with 80% coverage a genuinely ancestral mutation survives all 108 tips
+       with probability 0.8^108, so the intersection empties out and every large
+       clade dates to before the outbreak began. A majority rule recovers it --
+       ancestral mutations sit near the coverage rate, everything else well below. */
+    const freq = new Map();
+    for (const i of tipIdx) for (const m of samples[i].observed) freq.set(m, (freq.get(m) || 0) + 1);
+    const shared = new Set();
+    for (const [m, k] of freq) if (k * 2 >= tipIdx.length) shared.add(m);
+    let day = null;
+    if (clock.slope > 1e-9 && tipIdx.length) {
+      const mxL = tipIdx.reduce((a, i) => a + samples[i].t, 0) / tipIdx.length;
+      const myL = tipIdx.reduce((a, i) => a + samples[i].observed.size, 0) / tipIdx.length;
+      day = mxL + (shared.size - myL) / clock.slope;
+    }
+    return {
+      id: L.id, name: L.name, seen, found: true,
+      region, ambiguous: fitch.ambiguous.get(node), day, tips: node.n,
+      sharedMuts: shared ? shared.size : 0,
+      trueRegion: L.originRegion, trueDay: L.originDay,
+      regionRight: region === L.originRegion,
+    };
+  });
+}
+
 /* memoised: truth depends only on the scenario, never on policy */
 let _cache = null;
 function truthFor(scenario) {
@@ -1273,6 +1564,8 @@ const ENGINE = {
   GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION,
   runTruth, truthFor, genotypeOf, tierOf,
   buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan,
+  hashU, sampleGenomes, perfectPhylogeny, rootToTip, fitchRegions, lineageVerdicts,
+  buildInferredTree, autoInferredTree,
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
@@ -1293,6 +1586,8 @@ const SCENARIO_FIELDS = [
 const POLICY_FIELDS = [
   { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v },
   { key: "seqFraction", label: "Cases sequenced",   min: 0,  max: 100, step: 1, fmt: v => v + "%" },
+  { key: "hospitalMix", label: "From hospital intake", min: 0, max: 100, step: 1,
+    fmt: v => v + "% hosp / " + (100 - v) + "% community" },
   { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%" },
   { key: "delay",       label: "Reporting delay",   min: 0,  max: 28,  step: 1, fmt: v => v + " d" },
 ];
@@ -1301,7 +1596,7 @@ const state = {
   scenario: Object.fromEntries(SCENARIO_FIELDS.map(f => [f.key, f.value])),
   selected: "aldane",
   policy: Object.fromEntries(REGIONS.map(r => [r.id, {
-    startDay: 30, seqFraction: 12, depth: 70, delay: 7,
+    startDay: 30, seqFraction: 12, hospitalMix: 70, depth: 70, delay: 7,
   }])),
   result: null,
   revealed: false,
@@ -1378,18 +1673,45 @@ function renderPolicy() {
   $("#policy-fields").innerHTML = POLICY_FIELDS.map(f => slider(f, p[f.key])).join("");
 }
 
-/* No fabricated numbers: verdict slots stay empty until the engine returns. */
 function renderVerdict() {
-  $("#verdict-note").textContent = state.result ? "" : "no simulation run";
+  const r = state.result;
+  if (!r) { $("#verdict-note").textContent = "no simulation run"; return; }
+  const k = r.verdicts.find(v => v.id === "kestrel");
+  const name = id => (REGIONS.find(x => x.id === id) || {}).name || String(id);
+  const wrong = r.verdicts.filter(v => v.found && !v.regionRight).length;
+  $("#verdict-note").textContent =
+    wrong + " of " + r.verdicts.length + " variant origins misplaced";
+  const set = (sel, text, filled) => {
+    const el = $(sel);
+    el.textContent = text;
+    el.classList.toggle("filled", !!filled);
+  };
+  if (!k || !k.found) {
+    set("#v-inf-deme", "not seen", false);
+    set("#v-inf-day", "\u2014", false);
+  } else {
+    set("#v-inf-deme", name(k.region), true);
+    set("#v-inf-day", k.day == null ? "\u2014" : String(Math.round(k.day)), true);
+  }
+  const t = r.verdicts.find(v => v.id === "kestrel");
+  set("#v-true-deme", t ? name(t.trueRegion) : "\u2014", false);
+  set("#v-true-day", t && t.trueDay != null ? String(Math.round(t.trueDay)) : "\u2014", false);
+}
+
+let pending = 0;
+function scheduleInfer() {
+  if (!HAS_DOM) return;
+  if (pending) return;
+  pending = requestAnimationFrame(() => { pending = 0; renderInferred(); });
 }
 
 function render() {
   renderMap();
   renderChips();
   renderPolicy();
-  renderVerdict();
   renderRegionKey();
   renderTruthTree();
+  renderInferred();
 }
 
 
@@ -1490,6 +1812,35 @@ function setRevealed(on) {
   if (on) renderTruthTree();
 }
 
+function inferNow() {
+  const truth = truthFor(state.scenario);
+  const s = sampleGenomes(truth, state.policy);
+  const phylo = perfectPhylogeny(s.samples);
+  const clock = rootToTip(s.samples);
+  const fitch = fitchRegions(phylo.root, s.samples, REGION_IDS);
+  const markerOfMut = new Map();
+  for (const k of Object.keys(truth.markerOf)) markerOfMut.set(truth.markerOf[k], k);
+  const tree = autoInferredTree(s.samples, phylo, fitch, clock, markerOfMut);
+  const verdicts = lineageVerdicts(truth, s.samples, phylo, fitch, clock);
+  return { truth, s, phylo, clock, fitch, tree, verdicts };
+}
+
+function renderInferred() {
+  if (!HAS_DOM) return;
+  const r = inferNow();
+  state.result = r;
+  const span = Math.max(treeSpan(r.tree.roots), treeSpan(autoTree(r.truth, 26, 46).roots));
+  $("#inferred-tree").innerHTML = renderTreeSVG(r.tree.roots, {
+    tMax: Math.ceil(span / 15) * 15,
+    aria: "Phylogeny reconstructed from the sampled genomes. Branches are coloured by the region inferred for them, which need not be the region they came from.",
+  });
+  $("#inf-note").textContent =
+    r.s.samples.length.toLocaleString() + " genomes \u00b7 " + r.tree.tips + " tips";
+  $("#inferred-key").innerHTML = $("#region-key").innerHTML
+    || REGIONS.map(x => `<span class="key-item"><i style="background:var(--reg-${x.id})"></i>${esc(x.name)}</span>`).join("");
+  renderVerdict();
+}
+
 function renderRegionKey() {
   if (!HAS_DOM) return;
   $("#region-key").innerHTML = REGIONS.map(r =>
@@ -1534,6 +1885,7 @@ if (HAS_DOM) document.addEventListener("input", e => {
     state.scenario[key] = val;
     $("#o-" + key).textContent = sf.fmt(val);
     renderTruthTree();
+    scheduleInfer();
     return;
   }
   const pf = POLICY_FIELDS.find(f => f.key === key);
@@ -1541,6 +1893,7 @@ if (HAS_DOM) document.addEventListener("input", e => {
     state.policy[state.selected][key] = val;
     $("#o-" + key).textContent = pf.fmt(val);
     renderMap();
+    scheduleInfer();
   }
 });
 

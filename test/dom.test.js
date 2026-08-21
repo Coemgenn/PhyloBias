@@ -39,7 +39,9 @@ test("controls render with the shipped defaults", () => {
   const w = page();
   const ids = [...w.document.querySelectorAll("#scenario-fields input")].map(i => i.dataset.key);
   assert.deepStrictEqual(ids, ["r0", "clockRate", "seed"]);
-  assert.strictEqual(w.document.querySelectorAll("#policy-fields input").length, 4);
+  assert.deepStrictEqual(
+    [...w.document.querySelectorAll("#policy-fields input")].map(i => i.dataset.key),
+    ["startDay", "seqFraction", "hospitalMix", "depth", "delay"]);
 });
 
 test("the truth tree is hidden until revealed, then actually appears", () => {
@@ -127,4 +129,32 @@ test("clicking a region on the map selects it", () => {
   assert.strictEqual(w.document.querySelector("#sel-region").textContent, "Corvane");
   assert.strictEqual(
     w.document.querySelector('.chip[data-region="corvane"]').getAttribute("aria-pressed"), "true");
+});
+
+test("the inferred tree draws and the verdict reads off it", () => {
+  const w = page();
+  const svg = w.document.querySelector("#inferred-tree svg");
+  assert.ok(svg, "inferred tree not drawn");
+  assert.ok(svg.querySelectorAll("g.branch").length > 15, "inferred tree is nearly empty");
+  assert.match(w.document.querySelector("#inf-note").textContent, /genomes/);
+  for (const id of ["#v-inf-deme", "#v-inf-day", "#v-true-deme", "#v-true-day"])
+    assert.ok(w.document.querySelector(id).textContent.trim().length > 0, `${id} is blank`);
+});
+
+test("moving a slider changes the reconstruction but never the truth", async () => {
+  const w = page({ revealed: "1" });
+  const truthBefore = w.document.querySelector("#truth-tree svg").outerHTML;
+  const infBefore = w.document.querySelector("#inferred-tree svg").outerHTML;
+
+  const el = [...w.document.querySelectorAll("#policy-fields input")]
+    .find(i => i.dataset.key === "hospitalMix");
+  el.value = "100";
+  el.dispatchEvent(new w.Event("input", { bubbles: true }));
+  /* the redraw is coalesced into an animation frame so a drag stays smooth */
+  await new Promise(res => w.requestAnimationFrame(() => w.requestAnimationFrame(res)));
+
+  assert.strictEqual(w.document.querySelector("#truth-tree svg").outerHTML, truthBefore,
+    "policy changed the truth panel — the whole premise is that it cannot");
+  assert.notStrictEqual(w.document.querySelector("#inferred-tree svg").outerHTML, infBefore,
+    "policy did not change the reconstruction");
 });

@@ -102,16 +102,34 @@ test("mutations accumulate with the clock rate", () => {
   assert.ok(per(fast) > per(slow) * 2, "faster clock must yield more mutations per case");
 });
 
-test("no lineage's true origin is referenced outside the truth layer", () => {
-  /* Guards the credibility rule: the attribution error has to emerge from the
-     inference, never be read off the answer key. */
-  const mark = "/* INFERENCE */";
-  const i = src.indexOf(mark);
-  if (i < 0) { console.log("      (no inference layer yet — guard is inert)"); return; }
-  const inference = src.slice(i);
-  for (const region of ["aldane", "esker", "corvane"]) {
-    assert.ok(!inference.includes(`"${region}"`),
-      `origin region "${region}" is hardcoded in the inference layer`);
+test("the inference never reads the answer key", () => {
+  /* The credibility rule: the attribution error has to EMERGE from standard
+     method, never be injected. Scan the inference functions themselves rather
+     than "everything after a marker" — the earlier version flagged the UI's
+     default selected region and told us nothing. */
+  const NAMES = ["sampleGenomes", "perfectPhylogeny", "rootToTip", "fitchRegions",
+                 "buildInferredTree", "autoInferredTree"];
+  for (const fn of NAMES) {
+    const at = src.indexOf(`function ${fn}(`);
+    assert.ok(at > 0, `${fn} not found — rename it in this guard too`);
+    /* take the function body by brace matching */
+    let i = src.indexOf("{", at), depth = 0, end = i;
+    for (; end < src.length; end++) {
+      if (src[end] === "{") depth++;
+      else if (src[end] === "}") { depth--; if (!depth) break; }
+    }
+    /* strip comments: a note explaining why a field is NOT read must not trip
+       the guard that checks it is not read */
+    const body = src.slice(i, end)
+      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+    for (const region of ["aldane", "brix", "corvane", "doran", "esker", "fenmoor"])
+      assert.ok(!body.includes(`"${region}"`),
+        `${fn} hardcodes the region "${region}" — the bias must emerge, not be injected`);
+    for (const lineage of ["kestrel", "harrow", "tern"])
+      assert.ok(!body.includes(`"${lineage}"`),
+        `${fn} hardcodes the lineage "${lineage}"`);
+    assert.ok(!/\.originRegion|\.originDay|\.lineage\b/.test(body),
+      `${fn} reads a truth-only field`);
   }
 });
 
