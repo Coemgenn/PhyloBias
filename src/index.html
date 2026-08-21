@@ -1959,7 +1959,13 @@ function renderTreeSVG(roots, opts) {
      resolved fork would invent structure the data does not contain. */
   if (roots.length > 1) {
     const rx = roots.map(r => r.x);
-    const y0 = L.yOf(0);
+    /* At the root's OWN date. The truth's root is day 0; the reconstruction's is
+       wherever root-to-tip put the common ancestor, which is later. Pinning both
+       to day 0 left the reconstruction's branches starting in mid-air with a gap
+       above them. The bar's position is itself the date estimate. */
+    const rootDate = opts.rootDate != null ? opts.rootDate
+                   : Math.min(...roots.map(r => r.tStart));
+    const y0 = L.yOf(rootDate);
     /* The root's own state, passed in. Reading it off the first child painted a
        correct inference as wrong -- the reconstruction put the root in Brix with
        support 1.00 while the bar showed Fenmoor, because Fenmoor happened to sort
@@ -1968,8 +1974,10 @@ function renderTreeSVG(roots, opts) {
     out.push(`<g class="branch">`
       + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--reg-${rootRegion})" stroke-width="1.6" stroke-linecap="round"></line>`
       + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3.4" fill="var(--reg-${rootRegion})" stroke="var(--surface)" stroke-width="1.2"></circle>`
-      + `<text class="tree-root-label" x="${(Math.min(...rx) - 4).toFixed(1)}" y="${(y0 - 5).toFixed(1)}">ancestral genotype</text>`
-      + `<title>Ancestral genotype \u00b7 ${roots.length} lineages descend from it, in no resolved order</title></g>`);
+      + `<text class="tree-root-label" x="${(Math.min(...rx) - 4).toFixed(1)}" y="${(y0 - 5).toFixed(1)}">`
+      + `${esc(opts.rootLabel || "ancestral genotype")}</text>`
+      + `<title>${esc(opts.rootLabel || "Ancestral genotype")} \u00b7 day ${rootDate.toFixed(0)} \u00b7 `
+      + `${roots.length} lineages descend from it, in no resolved order</title></g>`);
   }
 
   for (const n of L.nodes) {
@@ -2022,6 +2030,7 @@ function renderTruthTree() {
   $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
     tMax: Math.ceil(treeSpan(t.roots) / 15) * 15,
     rootRegion: truth.cases.length ? truth.cases[0].region : null,
+    rootDate: 0,
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
   });
   $("#truth-count").textContent =
@@ -2089,6 +2098,8 @@ function renderInferred() {
   $("#inferred-tree").innerHTML = renderTreeSVG(r.tree.roots, {
     tMax: Math.ceil(span / 15) * 15,
     rootRegion: r.fitch.region.get(r.phylo.root),
+    rootDate: Math.min(...r.tree.roots.map(x => x.tStart)),
+    rootLabel: "inferred common ancestor",
     aria: "Phylogeny reconstructed from the sampled genomes. Branches are coloured by the region inferred for them, which need not be the region they came from.",
   });
   $("#inf-note").textContent =

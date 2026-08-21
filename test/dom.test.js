@@ -232,3 +232,26 @@ test("each panel's legend reports its own numbers", () => {
   assert.match(i, /genomes/, "inferred legend should count genomes");
   assert.notStrictEqual(t, i, "the inferred panel is showing the truth's numbers");
 });
+
+test("branches meet the root bar in both panels", () => {
+  /* The reconstruction's root bar was pinned to day 0 while its branches started
+     at the estimated common ancestor, leaving them hanging in mid-air under a
+     disconnected bar. */
+  const w = page({ revealed: "1" });
+  const check = sel => {
+    const gs = [...w.document.querySelectorAll(`${sel} svg g.branch`)];
+    const barY = +gs[0].querySelector("line").getAttribute("y1");
+    const top = Math.min(...gs.slice(1).map(g => +g.querySelector("line").getAttribute("y1")));
+    assert.ok(Math.abs(barY - top) < 0.6,
+      `${sel}: root bar at y=${barY} but the highest branch starts at y=${top}`);
+    return barY;
+  };
+  const truthY = check("#truth-tree");
+  const infY = check("#inferred-tree");
+  /* the reconstruction dates the common ancestor later than it really was, so its
+     bar sits lower down the page — that offset is the date bias, not a bug */
+  assert.ok(infY > truthY,
+    "the inferred common ancestor should be dated later than the true day 0");
+  assert.match(w.document.querySelector("#inferred-tree svg").outerHTML,
+    /inferred common ancestor/, "the inferred root is not labelled as an estimate");
+});
