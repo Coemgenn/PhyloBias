@@ -1,62 +1,810 @@
-<title>AntArtifact</title>
+<title>Meridian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+
 <style>
-  :root {
-    --bg: #fbfaf8;
-    --surface: #ffffff;
-    --border: #e3ded6;
-    --text: #1c1a17;
-    --muted: #6b655c;
-    --accent: #b8501f;
+/* ============================================================
+   TOKENS — light is the bare :root; dark redefined twice
+   ============================================================ */
+:root {
+  color-scheme: light;
+
+  --ground:      #f4f6f6;
+  --surface:     #ffffff;
+  --surface-2:   #eef1f2;
+  --border:      #dbe1e3;
+  --border-firm: #c3ccd0;
+
+  --ink:         #10171a;
+  --ink-2:       #46545a;
+  --ink-3:       #6d7c82;
+
+  --accent:      #2a78d6;
+  --accent-ink:  #1c5cab;
+  --on-accent:   #ffffff;
+
+  /* Kestrel — reserved. Appears nowhere else. */
+  --kestrel:     #eb6834;
+  --kestrel-ink: #b8420f;
+
+  /* sequential ramp: sequencing effort, none -> saturated */
+  --ramp-0: #e6eaec;
+  --ramp-1: #cde2fb;
+  --ramp-2: #9ec5f4;
+  --ramp-3: #5598e7;
+  --ramp-4: #2a78d6;
+
+  /* the unrecoverable past */
+  --dark-zone:   #cfd6d9;
+
+  --shadow: 0 1px 2px rgba(16,23,26,.05), 0 4px 16px rgba(16,23,26,.05);
+
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-ui: "Archivo", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --r: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground:      #0d1214;
+    --surface:     #141b1e;
+    --surface-2:   #1b2427;
+    --border:      #262f33;
+    --border-firm: #3a464b;
+    --ink:         #e8eef0;
+    --ink-2:       #a3b0b6;
+    --ink-3:       #7d8b91;
+    --accent:      #3987e5;
+    --accent-ink:  #86b6ef;
+    --on-accent:   #080f13;
+    --kestrel:     #d95926;
+    --kestrel-ink: #f08a5d;
+    --ramp-0: #1c2529;
+    --ramp-1: #184f95;
+    --ramp-2: #256abf;
+    --ramp-3: #3987e5;
+    --ramp-4: #86b6ef;
+    --dark-zone:   #232d31;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #16150f;
-      --surface: #201e18;
-      --border: #35322a;
-      --text: #f2efe8;
-      --muted: #9c958a;
-      --accent: #e8814a;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #16150f;
-    --surface: #201e18;
-    --border: #35322a;
-    --text: #f2efe8;
-    --muted: #9c958a;
-    --accent: #e8814a;
-  }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font: 16px/1.6 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
-    margin: 0;
-    padding: 3rem 1.5rem;
-  }
-  main { max-width: 42rem; margin: 0 auto; }
-  h1 { font-size: 1.75rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-  p { color: var(--muted); margin: 0 0 1rem; }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-  }
-  .tag {
-    color: var(--accent);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground:      #0d1214;
+  --surface:     #141b1e;
+  --surface-2:   #1b2427;
+  --border:      #262f33;
+  --border-firm: #3a464b;
+  --ink:         #e8eef0;
+  --ink-2:       #a3b0b6;
+  --ink-3:       #7d8b91;
+  --accent:      #3987e5;
+  --accent-ink:  #86b6ef;
+  --on-accent:   #080f13;
+  --kestrel:     #d95926;
+  --kestrel-ink: #f08a5d;
+  --ramp-0: #1c2529;
+  --ramp-1: #184f95;
+  --ramp-2: #256abf;
+  --ramp-3: #3987e5;
+  --ramp-4: #86b6ef;
+  --dark-zone:   #232d31;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+  margin: .35rem 0 0;
+}
+
+.standfirst {
+  color: var(--ink-2);
+  max-width: 62ch;
+  margin: .6rem 0 0;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .875rem 1.125rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-title {
+  font-size: .8125rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  margin: 0;
+}
+
+.panel-note {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.panel-body { padding: 1.125rem; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.fiction-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .04em;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: .3rem .7rem;
+  white-space: nowrap;
+}
+.fiction-flag::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--kestrel);
+  flex: none;
+}
+
+/* ============================================================
+   VERDICT — the thesis in one sentence
+   ============================================================ */
+.verdict { border-left: 3px solid var(--kestrel); }
+
+.verdict-body {
+  padding: 1.375rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.verdict-line {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+  line-height: 1.3;
+  text-wrap: balance;
+  margin: 0;
+  color: var(--ink);
+}
+
+.verdict-line.truth { color: var(--ink-2); }
+
+.slot {
+  display: inline-block;
+  min-width: 5.5ch;
+  border-bottom: 2px solid var(--border-firm);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: .72em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.slot.filled { border-bottom-color: var(--kestrel); color: var(--ink); }
+
+/* ============================================================
+   MAIN GRID
+   ============================================================ */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================
+   MAP
+   ============================================================ */
+.map-svg { display: block; width: 100%; height: auto; }
+
+.region { cursor: pointer; }
+.region-shape {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+  transition: fill .18s ease;
+}
+.region:hover .region-shape { filter: brightness(1.06); }
+.region.selected .region-shape {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.region:focus-visible { outline: none; }
+.region:focus-visible .region-shape {
+  stroke: var(--accent-ink);
+  stroke-width: 3;
+}
+
+.region-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--ink);
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  text-anchor: middle;
+}
+.region-value {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  fill: var(--ink-2);
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  color: var(--ink-3);
+}
+.legend-ramp {
+  display: flex;
+  flex: 1;
+  height: 8px;
+  border-radius: 2px;
+  overflow: hidden;
+  gap: 2px;
+}
+.legend-ramp span { flex: 1; }
+
+/* ============================================================
+   TREE — designed empty state until the engine lands
+   ============================================================ */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  min-height: 300px;
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+.empty-mark {
+  width: 44px; height: 44px;
+  border: 1px dashed var(--border-firm);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: .75rem;
+}
+.empty p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: .875rem;
+  max-width: 36ch;
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+.controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+}
+@media (max-width: 880px) {
+  .controls-grid { grid-template-columns: minmax(0, 1fr); }
+  .control-group + .control-group { border-left: none; border-top: 1px solid var(--border); }
+}
+
+.control-group { padding: 1.125rem 1.25rem; }
+.control-group + .control-group { border-left: 1px solid var(--border); }
+
+.group-label {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 .25rem;
+}
+.group-hint {
+  font-size: .75rem;
+  color: var(--ink-3);
+  margin: 0 0 1rem;
+  max-width: 42ch;
+}
+
+.field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .875rem; }
+.field:last-child { margin-bottom: 0; }
+
+.field-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.field label { font-size: .8125rem; color: var(--ink-2); }
+.field output {
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  margin-top: -6px;
+  box-shadow: 0 0 0 1px var(--border-firm);
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border-firm);
+}
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.region-chips { display: flex; flex-wrap: wrap; gap: .375rem; margin-bottom: 1rem; }
+.chip {
+  font-family: var(--font-ui);
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: .25rem .625rem;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.chip:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* ============================================================
+   SOURCES
+   ============================================================ */
+.sources { font-size: .8125rem; color: var(--ink-3); }
+.sources h2 {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+  margin: 0 0 .75rem;
+}
+.sources ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .5rem; }
+.sources li { padding-left: 1.25rem; position: relative; max-width: 78ch; }
+.sources li::before {
+  content: "\00A7";
+  position: absolute;
+  left: 0;
+  font-family: var(--font-mono);
+  color: var(--border-firm);
+}
+.pending {
+  font-family: var(--font-mono);
+  font-size: .625rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--kestrel-ink);
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 0 .3rem;
+  margin-left: .4rem;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
 </style>
-<main>
-  <span class="tag">Scaffold</span>
-  <h1>AntArtifact</h1>
-  <p>An interactive tool about biosafety. Nothing is built yet — this page exists so the
-     project has a publishable entry point with the theme and layout plumbing already correct.</p>
-  <div class="card">
-    <p style="margin:0">Next: decide the audience, the core interaction, and the source
-       authorities. See <strong>README.md</strong>.</p>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Meridian virus &middot; MRV-1 &middot; variant Kestrel</p>
+      <h1>The history you sequence is the history you get</h1>
+      <p class="standfirst">
+        A phylogenetic tree is not the epidemic. It is a shadow the epidemic casts through your
+        sampling scheme. Fund one region&rsquo;s sequencing and starve another, and the origin of a
+        variant moves &mdash; not in reality, only in the record.
+      </p>
+    </div>
+    <span class="fiction-flag">Fictional pathogen, map &amp; scenario</span>
+  </header>
+
+  <!-- VERDICT ------------------------------------------------ -->
+  <section class="panel verdict" aria-labelledby="verdict-h">
+    <div class="panel-head">
+      <h2 class="panel-title" id="verdict-h">What you would have concluded</h2>
+      <span class="panel-note" id="verdict-note">no simulation run</span>
+    </div>
+    <div class="verdict-body">
+      <p class="verdict-line">
+        You would have concluded Variant Kestrel arose in
+        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
+        <span class="slot" id="v-inf-day">&nbsp;</span>.
+      </p>
+      <p class="verdict-line truth">
+        It arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
+        <span class="slot" id="v-true-day">&nbsp;</span>.
+      </p>
+    </div>
+  </section>
+
+  <!-- STAGE -------------------------------------------------- -->
+  <div class="stage">
+
+    <section class="panel" aria-labelledby="map-h">
+      <div class="panel-head">
+        <h2 class="panel-title" id="map-h">Sequencing effort by region</h2>
+        <span class="panel-note">click a region to fund it</span>
+      </div>
+      <div class="panel-body">
+        <svg class="map-svg" viewBox="0 0 400 320" role="group"
+             aria-label="Map of the six regions. Fill shows sequencing effort.">
+          <g id="map-regions"></g>
+        </svg>
+        <div class="legend">
+          <span>none</span>
+          <div class="legend-ramp" aria-hidden="true">
+            <span style="background:var(--ramp-0)"></span>
+            <span style="background:var(--ramp-1)"></span>
+            <span style="background:var(--ramp-2)"></span>
+            <span style="background:var(--ramp-3)"></span>
+            <span style="background:var(--ramp-4)"></span>
+          </div>
+          <span>saturating</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="tree-h">
+      <div class="panel-head">
+        <h2 class="panel-title" id="tree-h">Inferred phylogeny</h2>
+        <span class="panel-note">neighbour-joining &middot; root-to-tip</span>
+      </div>
+      <div class="panel-body">
+        <div class="empty">
+          <div class="empty-mark">&#9903;</div>
+          <p>
+            The inference engine lands next. This panel will show the tree reconstructed from
+            sampled genomes only, with the pre-sequencing period hatched &mdash; diversity that no
+            later investment can recover.
+          </p>
+        </div>
+      </div>
+    </section>
+
   </div>
-</main>
+
+  <!-- CONTROLS ----------------------------------------------- -->
+  <section class="panel" aria-labelledby="controls-h">
+    <div class="panel-head">
+      <h2 class="panel-title" id="controls-h">Controls</h2>
+      <span class="panel-note">policy never changes what happened</span>
+    </div>
+    <div class="controls-grid">
+
+      <div class="control-group">
+        <p class="group-label">Scenario</p>
+        <p class="group-hint">Sets the outbreak itself. Changing these regenerates the truth.</p>
+        <div id="scenario-fields"></div>
+      </div>
+
+      <div class="control-group">
+        <p class="group-label">Surveillance policy &mdash; <span id="sel-region">Aldane</span></p>
+        <p class="group-hint">
+          Changes only what you can observe. The epidemic underneath is untouched.
+        </p>
+        <div class="region-chips" id="region-chips" role="group" aria-label="Select a region"></div>
+        <div id="policy-fields"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SOURCES ------------------------------------------------ -->
+  <section class="panel sources">
+    <div class="panel-body">
+      <h2>Method &amp; sources</h2>
+      <ul>
+        <li>Substitution-rate range used for the molecular clock <span class="pending">to verify</span></li>
+        <li>Serial interval and offspring-distribution dispersion <span class="pending">to verify</span></li>
+        <li>Root-to-tip regression for clock estimation and rooting <span class="pending">to verify</span></li>
+        <li>Discrete ancestral-state reconstruction and its documented sensitivity to sampling
+            bias <span class="pending">to verify</span></li>
+        <li>Production phylogeographic methods reduce this bias but do not remove it. The
+            attribution error shown here is emergent, not hardcoded &mdash; it comes out of a
+            textbook implementation run on an unevenly sampled tip set.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   REGIONS — fictional landmass; vertices are shared so it tiles
+   ============================================================ */
+const REGIONS = [
+  { id: "aldane",  name: "Aldane",  pts: "170,25 300,45 330,110 185,105",              label: [246,  72] },
+  { id: "fenmoor", name: "Fenmoor", pts: "60,40 170,25 185,105 95,120 45,90",          label: [122,  76] },
+  { id: "brix",    name: "Brix",    pts: "45,90 95,120 185,105 190,190 80,200 35,150", label: [115, 152] },
+  { id: "corvane", name: "Corvane", pts: "185,105 330,110 345,190 190,190",            label: [263, 152] },
+  { id: "doran",   name: "Doran",   pts: "80,200 190,190 185,270 110,290 60,240",      label: [128, 240] },
+  { id: "esker",   name: "Esker",   pts: "190,190 345,190 330,255 250,290 185,270",    label: [263, 236] },
+];
+
+/* ============================================================
+   ENGINE — stubs; implemented next
+   ============================================================ */
+const rng     = {};                    // mulberry32; determinism is load-bearing
+const sim     = { run: () => null };   // truth: transmission tree, genomes, geography
+const sampler = { apply: () => null }; // truth + policy -> observed genomes
+const infer   = { run: () => null };   // NJ, root-to-tip, Fitch parsimony
+const metrics = { compare: () => null };
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const SCENARIO_FIELDS = [
+  { key: "r0",    label: "Basic reproduction number", min: 1.2, max: 4, step: .1, value: 2.4,
+    fmt: v => v.toFixed(1) },
+  { key: "clock", label: "Clock rate", min: 4, max: 16, step: .5, value: 9,
+    fmt: v => v.toFixed(1) + "×10⁻⁴ /site/yr" },
+  { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 137,
+    fmt: v => "#" + v },
+];
+
+const POLICY_FIELDS = [
+  { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v },
+  { key: "seqFraction", label: "Cases sequenced",   min: 0,  max: 100, step: 1, fmt: v => v + "%" },
+  { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%" },
+  { key: "delay",       label: "Reporting delay",   min: 0,  max: 28,  step: 1, fmt: v => v + " d" },
+];
+
+const state = {
+  scenario: Object.fromEntries(SCENARIO_FIELDS.map(f => [f.key, f.value])),
+  selected: "aldane",
+  policy: Object.fromEntries(REGIONS.map(r => [r.id, {
+    startDay: 30, seqFraction: 12, depth: 70, delay: 7,
+  }])),
+  result: null,
+};
+
+/* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more
+   coverage both raise it. Provisional until the sampler is real. */
+function effort(p) {
+  const timeliness = 1 - p.startDay / 90;
+  const volume = p.seqFraction / 100;
+  const raw = (volume * .65 + timeliness * .35) * (0.4 + 0.6 * p.depth / 100);
+  return Math.max(0, Math.min(1, raw));
+}
+
+function rampToken(e) {
+  const i = e <= 0.02 ? 0 : Math.min(4, 1 + Math.floor(e * 4));
+  return "var(--ramp-" + i + ")";
+}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+const $ = sel => document.querySelector(sel);
+
+function renderMap() {
+  $("#map-regions").innerHTML = REGIONS.map(r => {
+    const e = effort(state.policy[r.id]);
+    const on = state.selected === r.id;
+    return '<g class="region' + (on ? " selected" : "") + '" data-region="' + r.id + '"' +
+           ' tabindex="0" role="button" aria-pressed="' + on + '"' +
+           ' aria-label="' + r.name + ', sequencing effort ' + Math.round(e * 100) + ' percent">' +
+           '<polygon class="region-shape" points="' + r.pts + '" fill="' + rampToken(e) + '"></polygon>' +
+           '<text class="region-label" x="' + r.label[0] + '" y="' + r.label[1] + '">' + r.name + '</text>' +
+           '<text class="region-value" x="' + r.label[0] + '" y="' + (r.label[1] + 14) + '">' +
+           Math.round(e * 100) + '%</text>' +
+           '</g>';
+  }).join("");
+}
+
+function renderChips() {
+  $("#region-chips").innerHTML = REGIONS.map(r =>
+    '<button type="button" class="chip" data-region="' + r.id + '" aria-pressed="' +
+    (state.selected === r.id) + '">' + r.name + '</button>'
+  ).join("");
+}
+
+function slider(f, value) {
+  const id = "f-" + f.key;
+  return '<div class="field">' +
+           '<div class="field-top">' +
+             '<label for="' + id + '">' + f.label + '</label>' +
+             '<output for="' + id + '" id="o-' + f.key + '">' + f.fmt(value) + '</output>' +
+           '</div>' +
+           '<input type="range" id="' + id + '" data-key="' + f.key + '" min="' + f.min +
+           '" max="' + f.max + '" step="' + f.step + '" value="' + value + '">' +
+         '</div>';
+}
+
+function renderScenario() {
+  $("#scenario-fields").innerHTML =
+    SCENARIO_FIELDS.map(f => slider(f, state.scenario[f.key])).join("");
+}
+
+function renderPolicy() {
+  const p = state.policy[state.selected];
+  $("#sel-region").textContent = REGIONS.find(r => r.id === state.selected).name;
+  $("#policy-fields").innerHTML = POLICY_FIELDS.map(f => slider(f, p[f.key])).join("");
+}
+
+/* No fabricated numbers: verdict slots stay empty until the engine returns. */
+function renderVerdict() {
+  $("#verdict-note").textContent = state.result ? "" : "no simulation run";
+}
+
+function render() {
+  renderMap();
+  renderChips();
+  renderPolicy();
+  renderVerdict();
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function select(id) {
+  if (!id || id === state.selected) return;
+  state.selected = id;
+  renderMap();
+  renderChips();
+  renderPolicy();
+}
+
+document.addEventListener("click", e => {
+  const node = e.target.closest("[data-region]");
+  if (node) select(node.dataset.region);
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const node = e.target.closest(".region[data-region]");
+  if (!node) return;
+  e.preventDefault();
+  select(node.dataset.region);
+});
+
+document.addEventListener("input", e => {
+  const el = e.target;
+  if (el.type !== "range") return;
+  const key = el.dataset.key;
+  const val = Number(el.value);
+
+  const sf = SCENARIO_FIELDS.find(f => f.key === key);
+  if (sf) {
+    state.scenario[key] = val;
+    $("#o-" + key).textContent = sf.fmt(val);
+    return;
+  }
+  const pf = POLICY_FIELDS.find(f => f.key === key);
+  if (pf) {
+    state.policy[state.selected][key] = val;
+    $("#o-" + key).textContent = pf.fmt(val);
+    renderMap();
+  }
+});
+
+renderScenario();
+render();
+</script>

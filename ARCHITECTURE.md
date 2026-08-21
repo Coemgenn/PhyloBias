@@ -148,6 +148,12 @@ No build step, so tests read `src/index.html`, extract the `<script>` block, eva
 assert against the engine. Key invariants: determinism under a fixed seed, monotonicity of
 recoverable history in sequencing start day, and that the attribution flip reproduces.
 
+⚠️ **This machine has no JavaScript runtime** — `node`, `deno`, and `bun` are all absent, as are
+`gh` and Homebrew. Until a runtime is installed the engine can only be exercised in a browser,
+which means no automated assertions. Installing Node is the cheapest unblock; the alternative is
+an in-page self-test panel that runs the invariants at load and reports pass/fail, which has the
+side benefit of being visible to a reviewer.
+
 ## Open
 
 - Region polygon geometry for the fictional landmass (hand-authored SVG paths)
