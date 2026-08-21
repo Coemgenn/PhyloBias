@@ -164,3 +164,23 @@ test("variant markers are labelled on the tree", () => {
   for (const name of ["Kestrel", "Tern", "Harrow"])
     assert.ok(svg.includes(">" + name + "<"), `${name} not labelled on the tree`);
 });
+
+test("the UI's own scenario object drives the engine correctly", () => {
+  /* Regression: the slider key was `clock` while the engine read `clockRate`,
+     so the page silently built a 3-mutation tree instead of ~22,000. Tests that
+     call runTruth with a hand-written literal cannot catch that — this one
+     reads the defaults the page actually ships. */
+  const defaults = Object.fromEntries(
+    src.match(/const SCENARIO_FIELDS = \[[\s\S]*?\n\];/)[0]
+       .match(/key: "(\w+)"[\s\S]*?value: ([\d.]+)/g)
+       .map(m => [m.match(/key: "(\w+)"/)[1], Number(m.match(/value: ([\d.]+)/)[1])]));
+  const T = PB.runTruth(defaults);
+  assert.ok(T.mutations.length > 5000,
+    `UI defaults produced only ${T.mutations.length} mutations`);
+  assert.ok(PB.autoTree(T, 26, 46).tips >= 20);
+});
+
+test("a malformed scenario throws instead of degrading quietly", () => {
+  assert.throws(() => PB.runTruth({ seed: 111, r0: 2.4 }), /clockRate/);
+  assert.throws(() => PB.runTruth({ seed: 111, r0: 2.4, clockRate: NaN }), /clockRate/);
+});

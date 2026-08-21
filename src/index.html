@@ -300,8 +300,11 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch;
 }
+.lower > .panel { display: flex; flex-direction: column; }
+.lower > .panel > .panel-body,
+.lower > .panel > .controls-grid { flex: 1; }
 @media (max-width: 940px) {
   .stage, .lower { grid-template-columns: minmax(0, 1fr); }
 }
@@ -403,6 +406,50 @@ h1 {
   text-anchor: middle;
 }
 
+.btn {
+  font-family: var(--font-ui);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 100px;
+  padding: .25rem .75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+.btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--ink-2); border-color: var(--border-firm); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+.curtain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .875rem;
+  min-height: 320px;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background:
+    repeating-linear-gradient(135deg,
+      transparent 0 7px, var(--surface-2) 7px 8px);
+  border-radius: var(--r);
+}
+.curtain p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: .875rem;
+  max-width: 32ch;
+}
+.curtain .curtain-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--ink);
+  margin: 0;
+}
+
 .region-key {
   display: flex;
   flex-wrap: wrap;
@@ -423,6 +470,7 @@ h1 {
   border-radius: 2px;
   flex: none;
 }
+.key-count { margin-left: auto; color: var(--ink-3); }
 
 /* ============================================================
    EMPTY STATE
@@ -638,39 +686,6 @@ input[type="range"]:focus-visible {
     </div>
   </section>
 
-  <!-- STAGE: the comparison ------------------------------- -->
-  <div class="stage">
-
-    <section class="panel" aria-labelledby="truth-h">
-      <div class="panel-head">
-        <h2 class="panel-title" id="truth-h">What happened</h2>
-        <span class="panel-note" id="truth-note">&nbsp;</span>
-      </div>
-      <div class="panel-body">
-        <div id="truth-tree"></div>
-      </div>
-      <div class="region-key" id="region-key"></div>
-    </section>
-
-    <section class="panel" aria-labelledby="inf-h">
-      <div class="panel-head">
-        <h2 class="panel-title" id="inf-h">What you would reconstruct</h2>
-        <span class="panel-note">perfect phylogeny &middot; Fitch</span>
-      </div>
-      <div class="panel-body">
-        <div class="empty">
-          <div class="empty-mark">&#9903;</div>
-          <p>
-            The sampler and inference land next. This panel draws the same tree rebuilt from
-            only the genomes your policy collected, with each branch coloured by the region
-            <em>inferred</em> for it &mdash; not the region it actually came from.
-          </p>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
   <!-- MAP + CONTROLS ----------------------------------------- -->
   <div class="lower">
 
@@ -722,6 +737,46 @@ input[type="range"]:focus-visible {
 
     </div>
   </section>
+
+  </div>
+
+  <!-- STAGE: the comparison ------------------------------- -->
+  <div class="stage">
+
+    <section class="panel" aria-labelledby="truth-h">
+      <div class="panel-head">
+        <h2 class="panel-title" id="truth-h">What actually happened</h2>
+        <button type="button" class="btn ghost" id="reveal-btn" aria-expanded="false"
+                aria-controls="truth-body">Reveal</button>
+      </div>
+      <div class="panel-body" id="truth-body">
+        <div class="curtain" id="truth-curtain">
+          <p class="curtain-title">The answer key</p>
+          <p>The true phylogeny, with every branch coloured by the region the mutation
+             really appeared in. Hidden so you can try reading the reconstruction first.</p>
+          <button type="button" class="btn" id="reveal-btn-2">Reveal the truth</button>
+        </div>
+        <div id="truth-tree" hidden></div>
+      </div>
+      <div class="region-key" id="region-key" hidden></div>
+    </section>
+
+    <section class="panel" aria-labelledby="inf-h">
+      <div class="panel-head">
+        <h2 class="panel-title" id="inf-h">What you would reconstruct</h2>
+        <span class="panel-note">perfect phylogeny &middot; Fitch</span>
+      </div>
+      <div class="panel-body">
+        <div class="empty">
+          <div class="empty-mark">&#9903;</div>
+          <p>
+            The sampler and inference land next. This panel draws the same tree rebuilt from
+            only the genomes your policy collected, with each branch coloured by the region
+            <em>inferred</em> for it &mdash; not the region it actually came from.
+          </p>
+        </div>
+      </div>
+    </section>
 
   </div>
 
@@ -904,6 +959,12 @@ function tierOf(score) {
 
 /* ---------- the truth layer ---------- */
 function runTruth(scenario) {
+  /* A missing or NaN parameter must not degrade quietly: Math.exp(-NaN) makes the
+     Poisson draw return 0, which yields a near-empty tree that looks plausible. */
+  for (const k of ["seed", "r0", "clockRate"]) {
+    if (!Number.isFinite(scenario[k]))
+      throw new Error(`runTruth: scenario.${k} is ${scenario[k]}`);
+  }
   const R = makeRandom(scenario.seed);
   const muPerDay = scenario.clockRate * 1e-4 * GENOME_SITES / 365;
 
@@ -1207,7 +1268,7 @@ if (typeof globalThis !== "undefined") globalThis.PB = ENGINE;
 const SCENARIO_FIELDS = [
   { key: "r0",    label: "Basic reproduction number", min: 1.2, max: 4, step: .1, value: 2.4,
     fmt: v => v.toFixed(1) },
-  { key: "clock", label: "Clock rate", min: 4, max: 16, step: .5, value: 9,
+  { key: "clockRate", label: "Clock rate", min: 4, max: 16, step: .5, value: 9,
     fmt: v => v.toFixed(1) + "×10⁻⁴ /site/yr" },
   { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 111,
     fmt: v => "#" + v },
@@ -1227,6 +1288,7 @@ const state = {
     startDay: 30, seqFraction: 12, depth: 70, delay: 7,
   }])),
   result: null,
+  revealed: false,
 };
 
 /* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more
@@ -1366,23 +1428,34 @@ function renderTreeSVG(roots, opts) {
 }
 
 function renderTruthTree() {
-  if (!HAS_DOM) return;
+  if (!HAS_DOM || !state.revealed) return;
   const truth = truthFor(state.scenario);
   const t = autoTree(truth, 26, 46);
-  const tMax = Math.ceil(truth.stats.lastDay / 30) * 30;
   state.truthTree = t;
   $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
-    tMax,
+    tMax: Math.ceil(truth.stats.lastDay / 30) * 30,
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
   });
-  $("#truth-note").textContent =
-    truth.stats.cases.toLocaleString() + " cases · " + t.tips + " tips · ≥" + t.threshold + " carriers";
+  $("#truth-count").textContent =
+    truth.stats.cases.toLocaleString() + " cases · " + t.tips + " tips";
+}
+
+function setRevealed(on) {
+  state.revealed = on;
+  $("#truth-curtain").hidden = on;
+  $("#truth-tree").hidden = !on;
+  $("#region-key").hidden = !on;
+  const b = $("#reveal-btn");
+  b.textContent = on ? "Hide" : "Reveal";
+  b.setAttribute("aria-expanded", String(on));
+  if (on) renderTruthTree();
 }
 
 function renderRegionKey() {
   if (!HAS_DOM) return;
   $("#region-key").innerHTML = REGIONS.map(r =>
-    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("");
+    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("")
+    + `<span class="key-item key-count" id="truth-count"></span>`;
 }
 
 /* ============================================================
@@ -1397,6 +1470,8 @@ function select(id) {
 }
 
 if (HAS_DOM) document.addEventListener("click", e => {
+  if (e.target.closest("#reveal-btn")) { setRevealed(!state.revealed); return; }
+  if (e.target.closest("#reveal-btn-2")) { setRevealed(true); return; }
   const node = e.target.closest("[data-region]");
   if (node) select(node.dataset.region);
 });
