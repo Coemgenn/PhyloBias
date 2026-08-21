@@ -1,97 +1,49 @@
 <title>Meridian</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Red+Hat+Mono:wght@400;500&family=Red+Hat+Text:wght@400;500&display=swap">
 
 <style>
 /* ============================================================
-   TOKENS — light is the bare :root; dark redefined twice
+   TOKENS — committed to a single dark world.
+
+   The theme-aware rule in CLAUDE.md was retired deliberately: a hue
+   that must clear contrast on #ffffff AND read on near-black lives in
+   a narrow middle band, and that tax fell hardest on the region hues
+   this tool encodes its argument in. Committing to one ground frees
+   the luminous range. Every colour is painted explicitly, so the page
+   holds whatever ground the host paints behind it.
    ============================================================ */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --ground:       #f4f6f6;
-  --surface:      #ffffff;
-  --surface-2:    #eef1f2;
-  --border:       #dbe1e3;
-  --border-firm:  #c3ccd0;
-  --ink:          #10171a;
-  --ink-2:        #46545a;
-  --ink-3:        #6d7c82;
+  --ground:       #080c10;
+  --surface:      #0b1116;
+  --surface-2:    #0e161c;
+  --border:       #1b2732;
+  --border-firm:  #2b3d4c;
+  --ink:          #dbe4ea;   /* 14.7:1 on surface */
+  --ink-2:        #a9bac4;   /*  9.5:1 */
+  --ink-3:        #8698a4;   /*  6.4:1 — the microtext sits well clear of AA */
+  --ink-hi:       #dfe9ef;   /* headings and the active state only */
 
-  --accent:       #4a5b63;
-  --accent-ink:   #2f3c43;
-  --on-accent:    #ffffff;
+  /* No accent hue. Chroma belongs to data; interaction is near-white.
+     An accent that is neither ink nor region colour has nothing to say
+     here, and the desaturated slate it used to be collided with both. */
+  --accent:       #dfe9ef;
+  --accent-ink:   #ffffff;
+  --on-accent:    #080c10;
 
   /* Region identity, used identically by the map and the trees so one hue always
      means one region. Six hues spread 45deg+ apart (19, 93, 142, 209, 261, 325)
      with lightness free as a second channel: under protanopia the wheel collapses
-     toward one axis, so hue alone cannot separate six. All-pairs in BOTH themes --
-     CVD dE 15.0 light / 16.1 dark against a target of 8; normal vision 18.4 / 18.7
-     against a floor of 15. Every colour clears 2.5:1 on its surface and the region
-     key supplies the relief the 3:1 rule wants. Aldane and Corvane hold the most
-     separated pair (dE 35.7); the argument is read off those two. Uniform
+     toward one axis, so hue alone cannot separate six. All-pairs CVD dE 16.1,
+     normal vision 18.7, against targets of 8 and 15. These are the values that
+     were validated for a dark ground; on this darker surface every one gains
+     contrast rather than losing it (Corvane, the tightest, 2.51 -> 2.74:1) and
+     the region key supplies the relief the 3:1 rule wants. Aldane and Corvane
+     hold the most separated pair; the argument is read off those two. Uniform
      lightness is traded away knowingly. */
-  --reg-aldane:   #baa047;
-  --reg-brix:     #3062bc;
-  --reg-corvane:  #66056c;
-  --reg-doran:    #094e04;
-  --reg-esker:    #3db1c2;
-  --reg-fenmoor:  #ac5e60;
-
-  --shadow: 0 1px 2px rgba(16,23,26,.05), 0 4px 16px rgba(16,23,26,.05);
-
-  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-ui: "Archivo", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-
-  --r: 6px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --ground:       #0d1214;
-    --surface:      #141b1e;
-    --surface-2:    #1b2427;
-    --border:       #262f33;
-    --border-firm:  #3a464b;
-    --ink:          #e8eef0;
-    --ink-2:        #a3b0b6;
-    --ink-3:        #7d8b91;
-
-    --accent:       #8fa3ac;
-    --accent-ink:   #b8c8cf;
-    --on-accent:    #0d1214;
-
-    --reg-aldane:   #f6d464;
-    --reg-brix:     #71a2f9;
-    --reg-corvane:  #7e4481;
-    --reg-doran:    #0d7f01;
-    --reg-esker:    #4de8fe;
-    --reg-fenmoor:  #ec898b;
-
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
-  }
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-
-  --ground:       #0d1214;
-  --surface:      #141b1e;
-  --surface-2:    #1b2427;
-  --border:       #262f33;
-  --border-firm:  #3a464b;
-  --ink:          #e8eef0;
-  --ink-2:        #a3b0b6;
-  --ink-3:        #7d8b91;
-
-  --accent:       #8fa3ac;
-  --accent-ink:   #b8c8cf;
-  --on-accent:    #0d1214;
-
   --reg-aldane:   #f6d464;
   --reg-brix:     #71a2f9;
   --reg-corvane:  #7e4481;
@@ -99,7 +51,15 @@
   --reg-esker:    #4de8fe;
   --reg-fenmoor:  #ec898b;
 
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  /* A drop shadow is invisible on near-black. Panels lift with a top
+     highlight instead — the dark-UI equivalent of elevation. */
+  --shadow: inset 0 1px 0 rgba(255,255,255,.045);
+
+  --font-display: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Red Hat Text", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Red Hat Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --r: 2px;
 }
 
 /* ============================================================
@@ -114,7 +74,7 @@ body {
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
   margin: 0;
   padding: 0;
@@ -132,7 +92,7 @@ body {
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: .6875rem;
+  font-size: .75rem;
   font-weight: 500;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -142,12 +102,14 @@ body {
 
 h1 {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(2.25rem, 5vw, 3.25rem);
-  line-height: 1.05;
-  letter-spacing: -.01em;
+  font-weight: 600;
+  font-size: clamp(1.875rem, 4.2vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: .015em;
+  text-transform: uppercase;
   text-wrap: balance;
-  margin: .35rem 0 0;
+  margin: .4rem 0 0;
+  color: var(--ink-hi);
 }
 
 .standfirst {
@@ -173,15 +135,18 @@ h1 {
 }
 
 .panel-title {
-  font-size: .8125rem;
-  font-weight: 600;
-  letter-spacing: .01em;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-2);
   margin: 0;
 }
 
 .panel-note {
   font-family: var(--font-mono);
-  font-size: .6875rem;
+  font-size: .75rem;
   color: var(--ink-3);
   white-space: nowrap;
 }
@@ -204,19 +169,18 @@ h1 {
   align-items: center;
   gap: .5rem;
   font-family: var(--font-mono);
-  font-size: .6875rem;
+  font-size: .75rem;
   letter-spacing: .04em;
   color: var(--ink-2);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 100px;
+  border-radius: var(--r);
   padding: .3rem .7rem;
   white-space: nowrap;
 }
 .fiction-flag::before {
   content: "";
   width: 6px; height: 6px;
-  border-radius: 50%;
   background: var(--ink-2);
   flex: none;
 }
@@ -234,8 +198,8 @@ h1 {
 }
 
 .verdict-line {
-  font-family: var(--font-display);
-  font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+  font-family: var(--font-ui);
+  font-size: clamp(1.0625rem, 1.8vw, 1.3125rem);
   line-height: 1.3;
   text-wrap: balance;
   margin: 0;
@@ -250,11 +214,63 @@ h1 {
   border-bottom: 2px solid var(--border-firm);
   color: var(--ink-3);
   font-family: var(--font-mono);
-  font-size: .72em;
+  font-size: .82em;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .slot.filled { border-bottom-color: var(--ink); color: var(--ink); }
+
+/* ============================================================
+   VIRUS STRIP — the pathogen's identity and the three knobs that
+   regenerate the truth, on one horizontal rail. Separated from
+   surveillance policy because these two do categorically different
+   things: this rail changes what happened, policy only changes
+   what you can see of it.
+   ============================================================ */
+.virus { display: flex; align-items: stretch; overflow-x: auto; }
+
+.virus-id {
+  padding: .8rem 1rem;
+  border-right: 1px solid var(--border);
+  flex: 0 0 auto;
+  min-width: 16rem;
+  max-width: 32ch;
+}
+.virus-name {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0 0 .3rem;
+}
+.virus-info {
+  font-size: .8125rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+.virus #scenario-fields { display: flex; flex: 1; min-width: 0; }
+.virus .field {
+  flex: 1 1 0;
+  min-width: 12.5rem;
+  justify-content: center;
+  gap: .4rem;
+  margin-bottom: 0;
+  padding: .8rem 1rem;
+  border-right: 1px solid var(--border);
+}
+.virus .field:last-child { border-right: 0; }
+.virus .field-top { flex-wrap: wrap; gap: .2rem .75rem; }
+
+@media (max-width: 880px) {
+  .virus { flex-direction: column; }
+  .virus-id { border-right: 0; border-bottom: 1px solid var(--border); max-width: none; }
+  .virus #scenario-fields { flex-wrap: wrap; }
+  .virus .field { min-width: 14rem; }
+}
 
 /* ============================================================
    MAIN GRID
@@ -267,7 +283,7 @@ h1 {
 }
 .lower {
   display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
   gap: 1.25rem;
   align-items: stretch;
 }
@@ -302,7 +318,7 @@ h1 {
 
 .region-label {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   fill: var(--ink);
   paint-order: stroke fill;
@@ -314,7 +330,7 @@ h1 {
 }
 .region-value {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 10.5px;
   fill: var(--ink-2);
   paint-order: stroke fill;
   stroke: var(--surface);
@@ -331,14 +347,14 @@ h1 {
   gap: .625rem;
   margin-top: 1rem;
   font-family: var(--font-mono);
-  font-size: .6875rem;
+  font-size: .75rem;
   color: var(--ink-3);
 }
 .legend-ramp {
   display: flex;
   flex: 1;
   height: 8px;
-  border-radius: 2px;
+  border-radius: 1px;
   overflow: hidden;
   gap: 2px;
 }
@@ -351,7 +367,7 @@ h1 {
 .tree-svg line { shape-rendering: crispEdges; }
 .tree-label {
   font-family: var(--font-ui);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
   fill: var(--ink);
   paint-order: stroke fill;
@@ -361,7 +377,7 @@ h1 {
 }
 .tree-muts {
   font-family: var(--font-mono);
-  font-size: 7.5px;
+  font-size: 8.5px;
   fill: var(--ink-3);
   text-anchor: middle;
   paint-order: stroke fill;
@@ -370,7 +386,7 @@ h1 {
 }
 .tree-axis {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   fill: var(--ink-3);
   text-anchor: end;
 }
@@ -378,7 +394,7 @@ h1 {
 .tree-muts { text-anchor: start; }
 .tree-root-label {
   font-family: var(--font-mono);
-  font-size: 7.5px;
+  font-size: 8.5px;
   fill: var(--ink-3);
   text-anchor: start;
   letter-spacing: .04em;
@@ -386,12 +402,12 @@ h1 {
 
 .btn {
   font-family: var(--font-ui);
-  font-size: .75rem;
+  font-size: .8125rem;
   font-weight: 600;
   color: var(--on-accent);
   background: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 100px;
+  border-radius: var(--r);
   padding: .25rem .75rem;
   cursor: pointer;
   white-space: nowrap;
@@ -412,18 +428,18 @@ h1 {
   padding: 2rem 1.5rem;
   background:
     repeating-linear-gradient(135deg,
-      transparent 0 7px, var(--surface-2) 7px 8px);
+      transparent 0 7px, var(--border-firm) 7px 8px);
   border-radius: var(--r);
 }
 .curtain p {
   margin: 0;
   color: var(--ink-3);
-  font-size: .875rem;
+  font-size: .9375rem;
   max-width: 32ch;
 }
 .curtain .curtain-title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   color: var(--ink);
   margin: 0;
 }
@@ -439,13 +455,13 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  font-size: .6875rem;
+  font-size: .75rem;
   color: var(--ink-2);
   font-family: var(--font-mono);
 }
 .key-item i {
   width: 10px; height: 10px;
-  border-radius: 2px;
+  border-radius: 1px;
   flex: none;
 }
 .key-count { margin-left: auto; color: var(--ink-3); }
@@ -466,17 +482,17 @@ h1 {
 .empty-mark {
   width: 44px; height: 44px;
   border: 1px dashed var(--border-firm);
-  border-radius: 50%;
+  border-radius: var(--r);
   display: grid;
   place-items: center;
   color: var(--ink-3);
   font-family: var(--font-mono);
-  font-size: .75rem;
+  font-size: .8125rem;
 }
 .empty p {
   margin: 0;
   color: var(--ink-3);
-  font-size: .875rem;
+  font-size: .9375rem;
   max-width: 36ch;
 }
 
@@ -485,7 +501,7 @@ h1 {
    ============================================================ */
 .controls-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 @media (max-width: 880px) {
   .controls-grid { grid-template-columns: minmax(0, 1fr); }
@@ -497,14 +513,14 @@ h1 {
 
 .group-label {
   font-family: var(--font-mono);
-  font-size: .6875rem;
+  font-size: .75rem;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--ink-3);
   margin: 0 0 .25rem;
 }
 .group-note {
-  font-size: .75rem;
+  font-size: .8125rem;
   line-height: 1.5;
   color: var(--ink-2);
   background: var(--surface-2);
@@ -517,7 +533,7 @@ h1 {
 }
 
 .group-hint {
-  font-size: .75rem;
+  font-size: .8125rem;
   color: var(--ink-3);
   margin: 0 0 1rem;
   max-width: 42ch;
@@ -532,10 +548,10 @@ h1 {
   justify-content: space-between;
   gap: 1rem;
 }
-.field label { font-size: .8125rem; color: var(--ink-2); }
+.field label { font-size: .875rem; color: var(--ink-2); }
 .field output {
   font-family: var(--font-mono);
-  font-size: .8125rem;
+  font-size: .875rem;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
@@ -558,11 +574,11 @@ input[type="range"]::-webkit-slider-runnable-track {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px; height: 14px;
-  border-radius: 50%;
+  width: 12px; height: 12px;
+  border-radius: 1px;
   background: var(--accent);
   border: 2px solid var(--surface);
-  margin-top: -6px;
+  margin-top: -5px;
   box-shadow: 0 0 0 1px var(--border-firm);
 }
 input[type="range"]::-moz-range-track {
@@ -572,8 +588,8 @@ input[type="range"]::-moz-range-track {
   border: 1px solid var(--border);
 }
 input[type="range"]::-moz-range-thumb {
-  width: 14px; height: 14px;
-  border-radius: 50%;
+  width: 12px; height: 12px;
+  border-radius: 1px;
   background: var(--accent);
   border: 2px solid var(--surface);
   box-shadow: 0 0 0 1px var(--border-firm);
@@ -586,16 +602,17 @@ input[type="range"]:focus-visible {
 
 .region-chips { display: flex; flex-wrap: wrap; gap: .375rem; margin-bottom: 1rem; }
 .chip {
-  font-family: var(--font-ui);
+  font-family: var(--font-mono);
   font-size: .75rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ink-2);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: .25rem .625rem;
+  background: transparent;
+  border: 1px solid var(--border-firm);
+  border-radius: var(--r);
+  padding: .22rem .55rem;
   cursor: pointer;
 }
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
 .chip[aria-pressed="true"] {
   background: var(--accent);
   border-color: var(--accent);
@@ -606,33 +623,45 @@ input[type="range"]:focus-visible {
 /* ============================================================
    SOURCES
    ============================================================ */
-.sources { font-size: .8125rem; color: var(--ink-3); }
+.sources { font-size: .875rem; color: var(--ink-3); }
 .sources h2 {
   font-family: var(--font-mono);
-  font-size: .6875rem;
+  font-size: .75rem;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--ink-3);
   font-weight: 500;
   margin: 0 0 .75rem;
 }
-.sources ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .5rem; }
-.sources li { padding-left: 1.25rem; position: relative; max-width: 78ch; }
+.sources ul {
+  margin: 0; padding: 0; list-style: none; display: grid; gap: .5rem;
+  counter-reset: src;
+}
+.sources li {
+  padding-left: 1.9rem;
+  position: relative;
+  max-width: 78ch;
+  counter-increment: src;
+}
+/* Numbered, not a section mark: these are citations the page owes the
+   reader, so the marker keys to something instead of decorating. */
 .sources li::before {
-  content: "\00A7";
+  content: counter(src, decimal-leading-zero);
   position: absolute;
   left: 0;
   font-family: var(--font-mono);
-  color: var(--border-firm);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
 }
 .pending {
   font-family: var(--font-mono);
-  font-size: .625rem;
+  font-size: .6875rem;
   letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--ink-2);
   border: 1px solid currentColor;
-  border-radius: 3px;
+  border-radius: var(--r);
   padding: 0 .3rem;
   margin-left: .4rem;
   white-space: nowrap;
@@ -658,23 +687,16 @@ input[type="range"]:focus-visible {
     <span class="fiction-flag">Fictional pathogen, map &amp; scenario</span>
   </header>
 
-  <!-- VERDICT ------------------------------------------------ -->
-  <section class="panel verdict" aria-labelledby="verdict-h">
-    <div class="panel-head">
-      <h2 class="panel-title" id="verdict-h">What you would have concluded</h2>
-      <span class="panel-note" id="verdict-note">no simulation run</span>
-    </div>
-    <div class="verdict-body">
-      <p class="verdict-line">
-        You would have concluded Variant Kestrel arose in
-        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
-        <span class="slot" id="v-inf-day">&nbsp;</span>.
-      </p>
-      <p class="verdict-line truth">
-        It arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
-        <span class="slot" id="v-true-day">&nbsp;</span>.
+  <!-- VIRUS --------------------------------------------------- -->
+  <section class="panel virus" aria-labelledby="virus-h">
+    <div class="virus-id">
+      <p class="virus-name" id="virus-h">Meridian virus &middot; MRV-1</p>
+      <p class="virus-info">
+        Enveloped RNA virus, respiratory. These three set the outbreak itself &mdash;
+        move any of them and the truth is regenerated from scratch.
       </p>
     </div>
+    <div id="scenario-fields"></div>
   </section>
 
   <!-- MAP + CONTROLS ----------------------------------------- -->
@@ -710,20 +732,22 @@ input[type="range"]:focus-visible {
     <div class="controls-grid">
 
       <div class="control-group">
-        <p class="group-label">Scenario</p>
-        <p class="group-hint">Sets the outbreak itself. Changing these regenerates the truth.</p>
-        <div id="scenario-fields"></div>
-      </div>
-
-      <div class="control-group">
         <p class="group-label">Surveillance policy &mdash; <span id="sel-region">Aldane</span></p>
         <p class="group-hint">
           Changes only what you can observe. The epidemic underneath is untouched.
+          Capacity buys <em>tests</em>, not cases: community screening reaches every
+          severity tier but wastes most of its tests on people who are not infected,
+          while hospital intake lands a genome almost every time and sees only the
+          severely ill.
         </p>
         <p class="group-note" id="fullinfo-note" hidden>
-          Every region sequencing every detected case, from day&nbsp;0, at full coverage,
-          all through community screening. Roughly 63% of infections &mdash; the rest were
-          never detected at all. The reconstruction should now match the truth.
+          <strong>Not a policy &mdash; a control experiment.</strong> Every infection
+          sequenced the moment it happens, including the ones nobody ever knew they had.
+          No surveillance programme can do this: maxing every slider still reaches only
+          about 63% of infections, because most asymptomatic cases are never found at all.
+          Shown so you can check that the reconstruction is sound when the sampling is
+          perfect &mdash; the errors elsewhere on this page come from sampling, not from
+          the method.
         </p>
         <div class="region-chips" id="region-chips" role="group" aria-label="Select a region"></div>
         <div id="policy-fields"></div>
@@ -733,6 +757,25 @@ input[type="range"]:focus-visible {
   </section>
 
   </div>
+
+  <!-- VERDICT ------------------------------------------------ -->
+  <section class="panel verdict" aria-labelledby="verdict-h">
+    <div class="panel-head">
+      <h2 class="panel-title" id="verdict-h">What you would have concluded</h2>
+      <span class="panel-note" id="verdict-note">no simulation run</span>
+    </div>
+    <div class="verdict-body">
+      <p class="verdict-line">
+        You would have concluded Variant Kestrel arose in
+        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
+        <span class="slot" id="v-inf-day">&nbsp;</span>.
+      </p>
+      <p class="verdict-line truth">
+        It arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
+        <span class="slot" id="v-true-day">&nbsp;</span>.
+      </p>
+    </div>
+  </section>
 
   <!-- STAGE: the comparison ------------------------------- -->
   <div class="stage">
@@ -778,6 +821,19 @@ input[type="range"]:focus-visible {
         <li>Root-to-tip regression for clock estimation and rooting <span class="pending">to verify</span></li>
         <li>Discrete ancestral-state reconstruction and its documented sensitivity to sampling
             bias <span class="pending">to verify</span></li>
+        <li>Test positivity as an indicator of surveillance adequacy, and real-world peak
+            per-capita testing rates <span class="pending">to verify</span></li>
+        <li>Testing capacity is modelled as swabs per day. Community screening swabs at
+            random, so its hit rate is the prevalence of the population it screens and most
+            of its tests return nothing; hospital intake swabs admissions, who are already
+            enriched for infection, but it sees only severe and critical cases and it
+            saturates once capacity exceeds the ward census.</li>
+        <li><strong>A caveat against ourselves.</strong> This world holds under 10,000 people
+            and infects most of them, so prevalence peaks far higher than any real outbreak
+            reaches. Random screening is therefore <em>more</em> efficient here than it would
+            be in reality &mdash; which means the cost of community screening early, and the
+            pull toward hospital sampling, are understated on this page rather than
+            exaggerated.</li>
         <li>Production phylogeographic methods reduce this bias but do not remove it. The
             attribution error shown here is emergent, not hardcoded &mdash; it comes out of a
             textbook implementation run on an unevenly sampled tip set.</li>
@@ -1129,10 +1185,27 @@ function runTruth(scenario) {
   const byTier = new Array(TIERS.length).fill(0);
   for (const c of cases) { byRegion[c.region]++; byTier[c.tier]++; }
 
+  /* Daily censuses, per region. The sampler needs these to price a test: a
+     hospital bed can only be swabbed if someone is in it, and a screening
+     programme's hit rate is the prevalence of the population it screens. */
+  const daily = Object.fromEntries(REGIONS.map(r => [r.id, {
+    active: new Array(MAX_DAYS + 1).fill(0),
+    inHospital: new Array(MAX_DAYS + 1).fill(0),
+  }]));
+  const span = (arr, from, to) => {
+    const a = Math.max(0, Math.floor(from)), b = Math.min(MAX_DAYS, Math.ceil(to));
+    for (let d = a; d <= b; d++) arr[d]++;
+  };
+  for (const c of cases) {
+    const d = daily[c.region];
+    span(d.active, c.t, c.tRemoved);
+    if (c.tAdmit != null) span(d.inHospital, c.tAdmit, c.tDischarge);
+  }
+
   return {
     scenario, cases, mutations, carriers, markerOf,
     lineages: lineageTruth,
-    attemptLog,
+    attemptLog, daily,
     stats: { cases: cases.length, mutations: mutations.length, byRegion, byTier,
              lastDay: cases.length ? cases[cases.length - 1].t : 0 },
   };
@@ -1304,8 +1377,23 @@ function hashU(a, b) {
   return (h >>> 0) / 4294967296;
 }
 
-/* Community screening still misses the people who feel fine. */
-const COMMUNITY_DETECT = [0.15, 0.55, 0.85, 1.0, 1.0];
+/* A test is a thing you spend, not a case you collect. `capacity` is tests run
+   per day as a percentage of the region's population, and the two channels turn
+   tests into genomes at very different rates:
+
+   COMMUNITY screening swabs people at random, so it reaches every severity tier
+   equally -- but most of the people it swabs are not infected, and those tests
+   return nothing. It is unbiased and wasteful.
+
+   HOSPITAL intake swabs admissions, who selected themselves by being ill enough
+   to be admitted, so almost every test lands on a case. It is efficient and
+   biased -- only severe and critical cases are ever admitted, so a mild lineage
+   is close to invisible to it. It also SATURATES: once capacity exceeds the ward
+   census there is nobody left to swab, and further capacity buys nothing.
+
+   The dilemma is therefore not "which yields more genomes" but "more genomes or
+   less biased genomes", and which one wins changes over the outbreak. */
+const MAX_CAPACITY = 5;      /* % of population tested per day at the slider's top */
 /* A backstop, not a policy. It used to bind at every realistic setting: with the
    old population the sampler collected 33,865 genomes at full sliders and thinned
    them to 1,500, which left a 110-case variant represented by THREE genomes and
@@ -1314,29 +1402,77 @@ const COMMUNITY_DETECT = [0.15, 0.55, 0.85, 1.0, 1.0];
    meaning 100% on every slider really is full information. */
 const SAMPLE_CAP = 7000;
 
-function sampleGenomes(truth, policy) {
+/* Omniscient sampling: every infection sequenced the moment it happens, including
+   the ones nobody ever knew about. This is NOT a policy -- no programme can reach
+   the asymptomatic case that never presented -- it is the control experiment. It
+   separates "the method is broken" from "your sampling broke it", and without it
+   a reader has no way to tell those two apart. */
+function sampleEverything(truth) {
+  const kept = truth.cases.map(c => ({
+    caseId: c.id, region: c.region, t: c.t, tier: c.tier,
+    observed: new Set(genotypeOf(truth, c.id)),
+  }));
+  return { samples: kept, collected: kept.length, dropped: 0, omniscient: true };
+}
+
+/* Probability a daily swab rate of `r` finds someone over a window of `w` days. */
+function catchProb(r, w) {
+  if (!(r > 0) || !(w > 0)) return 0;
+  return 1 - Math.pow(1 - Math.min(1, r), w);
+}
+
+function sampleGenomes(truth, policy, opts) {
+  if (opts && opts.omniscient) return sampleEverything(truth);
   const kept = [];
+  const spend = Object.fromEntries(REGIONS.map(r => [r.id, { tests: 0, genomes: 0 }]));
+  for (const r of REGIONS) {
+    const p = policy[r.id];
+    if (!p || p.capacity <= 0) continue;
+    spend[r.id].tests = (p.capacity / 100) * r.pop * Math.max(0, MAX_DAYS - p.startDay);
+  }
+
   for (const c of truth.cases) {
     const p = policy[c.region];
-    if (!p || p.seqFraction <= 0) continue;
-
-    /* which channel this slot draws from */
-    const viaHospital = hashU(c.id, 1) < p.hospitalMix / 100;
-    /* the hospital channel can only ever see a case that reached a hospital */
-    const t0 = viaHospital ? c.tAdmit : c.tOnset;
-    if (t0 == null) continue;
-    if (!viaHospital && hashU(c.id, 2) >= COMMUNITY_DETECT[c.tier]) continue;
+    if (!p || p.capacity <= 0) continue;
+    const pop = REG[c.region].pop;
+    const q = p.capacity / 100;
+    const qHosp = q * (p.hospitalMix / 100);
+    const qComm = q - qHosp;
 
     /* A sample can only be taken while there is material to take. A case that
        came and went before the programme started leaves nothing, and no later
-       spending recovers it. This is the irreversibility, implemented.
-       The reporting delay governs when the RESULT lands, not when the swab is
-       taken -- charging it against the illness window made a 7-day delay wipe out
-       almost every case, since most illnesses are shorter than that. */
-    const ts = Math.max(t0, p.startDay);
-    if (ts > c.tRemoved) continue;
+       spending recovers it. This is the irreversibility, implemented. */
 
-    if (hashU(c.id, 3) >= p.seqFraction / 100) continue;
+    /* HOSPITAL. Swabs go to the ward, so the pool is the ward census, not the
+       population -- which is why this channel is efficient, and why it stops
+       improving once capacity exceeds the number of beds occupied. */
+    let pHosp = 0, hStart = 0;
+    if (c.tAdmit != null) {
+      hStart = Math.max(c.tAdmit, p.startDay);
+      const stay = c.tDischarge - hStart;
+      const census = truth.daily[c.region].inHospital[
+        Math.max(0, Math.min(MAX_DAYS, Math.round(hStart)))] || 0;
+      if (census > 0) pHosp = catchProb((qHosp * pop) / census, stay);
+    }
+
+    /* COMMUNITY. Swabs go to random people, so an infected person's chance of
+       being swabbed is just the testing rate -- the same for every severity tier,
+       which is what makes this channel unbiased. Most swabs land on somebody who
+       is not infected, and those tests return nothing at all. */
+    const cStart = Math.max(c.t, p.startDay);
+    const pComm = catchProb(qComm, c.tRemoved - cStart);
+
+    /* Both channels run at once; one draw decides which, if either, found it. */
+    const u = hashU(c.id, 1);
+    let ts;
+    if (u < pHosp) {
+      ts = hStart;
+    } else if (u < pHosp + (1 - pHosp) * pComm) {
+      /* found at some point during the illness, not the instant it began */
+      ts = cStart + hashU(c.id, 5) * Math.max(0, c.tRemoved - cStart);
+    } else continue;
+
+    spend[c.region].genomes++;
 
     const observed = new Set();
     for (const m of genotypeOf(truth, c.id))
@@ -1354,7 +1490,7 @@ function sampleGenomes(truth, policy) {
     thinned = kept.filter(s => hashU(s.caseId, 7) < SAMPLE_CAP / kept.length);
     dropped = kept.length - thinned.length;
   }
-  return { samples: thinned, collected: kept.length, dropped };
+  return { samples: thinned, collected: kept.length, dropped, spend };
 }
 
 /* INFERENCE */
@@ -1758,7 +1894,7 @@ function truthFor(scenario) {
 const ENGINE = {
   mulberry32, makeRandom, MinHeap,
   REGIONS, REG, LINEAGES, LIN, TIERS, TIER_CUTS,
-  GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION,
+  GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION, MAX_CAPACITY,
   runTruth, truthFor, genotypeOf, tierOf,
   buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan, countTips,
   hashU, sampleGenomes, perfectPhylogeny, rootToTip, fitchRegions, lineageVerdicts,
@@ -1783,7 +1919,8 @@ const SCENARIO_FIELDS = [
 
 const POLICY_FIELDS = [
   { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v },
-  { key: "seqFraction", label: "Cases sequenced",   min: 0,  max: 100, step: 1, fmt: v => v + "%" },
+  { key: "capacity", label: "Testing capacity", min: 0, max: MAX_CAPACITY, step: .05,
+    fmt: v => v.toFixed(2) + "% of people tested daily" },
   { key: "hospitalMix", label: "From hospital intake", min: 0, max: 100, step: 1,
     fmt: v => v + "% hosp / " + (100 - v) + "% community" },
   { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%" },
@@ -1797,31 +1934,31 @@ const state = {
      late -- reconstructs the origins correctly, so a uniform default would open on
      a tool that appears to do nothing. */
   policy: Object.fromEntries(REGIONS.map(r => [r.id, {
-    corvane: { startDay: 8,  seqFraction: 70, hospitalMix: 55, depth: 92 },
-    esker:   { startDay: 22, seqFraction: 30, hospitalMix: 65, depth: 85 },
-    brix:    { startDay: 26, seqFraction: 22, hospitalMix: 70, depth: 80 },
-    doran:   { startDay: 40, seqFraction: 10, hospitalMix: 80, depth: 70 },
-    fenmoor: { startDay: 48, seqFraction: 8,  hospitalMix: 85, depth: 62 },
-    aldane:  { startDay: 62, seqFraction: 4,  hospitalMix: 85, depth: 55 },
+    corvane: { startDay: 8,  capacity: 2.50, hospitalMix: 55, depth: 92 },
+    esker:   { startDay: 22, capacity: 1.10, hospitalMix: 65, depth: 85 },
+    brix:    { startDay: 26, capacity: 0.80, hospitalMix: 70, depth: 80 },
+    doran:   { startDay: 40, capacity: 0.35, hospitalMix: 80, depth: 70 },
+    fenmoor: { startDay: 48, capacity: 0.25, hospitalMix: 85, depth: 62 },
+    aldane:  { startDay: 62, capacity: 0.15, hospitalMix: 85, depth: 55 },
   }[r.id]])),
   result: null,
   revealed: false,
   savedPolicy: null,
+  omniscient: false,
 };
 
-/* The most information the world can give you. hospitalMix goes to 0 because the
-   hospital channel can only ever draw from severe and critical cases -- roughly
-   15% of the outbreak -- so any capacity sent there is fishing in a small pool.
-   Community screening reaches every tier. Even so this captures about 63% of
-   cases, not 100%: you cannot sequence someone who was never detected, and most
-   asymptomatic infections never are. */
-const FULL_INFO = { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 };
+/* The best a real programme could do: every slider at its limit, from day 0, all
+   of it spent on community screening because that arm alone reaches every
+   severity tier. It is still nowhere near everything -- a swab only finds a case
+   if it happens to land on that person during the few days they are infected --
+   which is why the omniscient control exists separately. */
+const FULL_INFO = { startDay: 0, capacity: MAX_CAPACITY, hospitalMix: 0, depth: 100 };
 
 /* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more
    coverage both raise it. Provisional until the sampler is real. */
 function effort(p) {
   const timeliness = 1 - p.startDay / 90;
-  const volume = p.seqFraction / 100;
+  const volume = p.capacity / MAX_CAPACITY;
   const raw = (volume * .65 + timeliness * .35) * (0.4 + 0.6 * p.depth / 100);
   return Math.max(0, Math.min(1, raw));
 }
@@ -1977,7 +2114,8 @@ function renderTreeSVG(roots, opts) {
       + `<text class="tree-root-label" x="${(Math.min(...rx) - 4).toFixed(1)}" y="${(y0 - 5).toFixed(1)}">`
       + `${esc(opts.rootLabel || "ancestral genotype")}</text>`
       + `<title>${esc(opts.rootLabel || "Ancestral genotype")} \u00b7 day ${rootDate.toFixed(0)} \u00b7 `
-      + `${roots.length} lineages descend from it, in no resolved order</title></g>`);
+      + `${roots.length} lineages descend from it, in no resolved order`
+      + `${opts.rootEvidence ? " \u00b7 " + esc(opts.rootEvidence) : ""}</title></g>`);
   }
 
   for (const n of L.nodes) {
@@ -2054,6 +2192,11 @@ function setFullInfo(on) {
     state.policy = state.savedPolicy;
     state.savedPolicy = null;
   }
+  /* The sliders go to their maximum AND the sampler drops the detection floor.
+     Maxed sliders alone reach about 63% of infections, because most asymptomatic
+     cases are never found -- so the maxed-slider run is a real programme's
+     ceiling, not the world's. */
+  state.omniscient = on;
   const b = $("#fullinfo-btn");
   b.textContent = on ? "Restore policy" : "Sequence everything";
   b.setAttribute("aria-pressed", String(on));
@@ -2078,7 +2221,7 @@ function setRevealed(on) {
 
 function inferNow() {
   const truth = truthFor(state.scenario);
-  const s = sampleGenomes(truth, state.policy);
+  const s = sampleGenomes(truth, state.policy, { omniscient: state.omniscient });
   const phylo = perfectPhylogeny(s.samples);
   const clock = rootToTip(s.samples);
   const date = datePhylogeny(phylo.root, s.samples, clock);
@@ -2088,6 +2231,29 @@ function inferNow() {
   const tree = autoInferredTree(s.samples, phylo, fitch, clock, markerOfMut, date);
   const verdicts = lineageVerdicts(truth, s.samples, phylo, fitch, clock);
   return { truth, s, phylo, clock, fitch, tree, verdicts, date };
+}
+
+/* What the root's region is actually resting on. The reconstruction reports a
+   posterior of 1.000 for almost every root it has ever been wrong about: that
+   number is a product over every tip below the node, so a slight consistent lean
+   across hundreds of tips compounds into false certainty. The tips that decide a
+   root are the ones carrying no informative mutations at all -- the least
+   informative genomes in the set -- so the honest thing to show is how few they
+   are and how they split, not a probability. */
+function rootEvidence(r) {
+  const root = r.phylo.root;
+  const own = new Set(root.tips);
+  for (const c of root.children) for (const t of c.tips) own.delete(t);
+  if (!own.size) return "";
+  const by = {};
+  for (const i of own) {
+    const g = r.s.samples[i].region;
+    by[g] = (by[g] || 0) + 1;
+  }
+  const parts = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([g, n]) => n + " " + ((REGIONS.find(x => x.id === g) || {}).name || g));
+  return "rests on " + own.size + " genome" + (own.size > 1 ? "s" : "")
+    + " with no informative mutations (" + parts.join(", ") + ")";
 }
 
 function renderInferred() {
@@ -2100,10 +2266,20 @@ function renderInferred() {
     rootRegion: r.fitch.region.get(r.phylo.root),
     rootDate: Math.min(...r.tree.roots.map(x => x.tStart)),
     rootLabel: "inferred common ancestor",
+    rootEvidence: rootEvidence(r),
     aria: "Phylogeny reconstructed from the sampled genomes. Branches are coloured by the region inferred for them, which need not be the region they came from.",
   });
-  $("#inf-note").textContent =
-    r.s.samples.length.toLocaleString() + " genomes \u00b7 " + r.tree.tips + " tips";
+  /* Say what the programme spent, not just what it got. A genome is the end of a
+     long chain of tests that mostly returned nothing, and the ratio between the
+     two is the whole argument for where to point a testing programme. */
+  const tests = Object.values(r.s.spend || {}).reduce((a, x) => a + x.tests, 0);
+  const capture = r.s.samples.length / Math.max(1, r.truth.cases.length);
+  $("#inf-note").textContent = r.s.omniscient
+    ? r.s.samples.length.toLocaleString() + " genomes \u00b7 every infection \u00b7 "
+      + r.tree.tips + " tips"
+    : r.s.samples.length.toLocaleString() + " genomes from "
+      + Math.round(tests).toLocaleString() + " tests \u00b7 "
+      + (capture * 100).toFixed(0) + "% of infections \u00b7 " + r.tree.tips + " tips";
   const ic = $("#inferred-count");
   if (ic) ic.textContent = r.tree.tips + " tips \u00b7 " + r.s.samples.length.toLocaleString() + " genomes";
   renderVerdict();
@@ -2172,6 +2348,7 @@ if (HAS_DOM) document.addEventListener("input", e => {
     if ($("#fullinfo-btn").getAttribute("aria-pressed") === "true") {
       /* the reading no longer holds once a slider is touched */
       state.savedPolicy = null;
+      state.omniscient = false;
       $("#fullinfo-btn").textContent = "Sequence everything";
       $("#fullinfo-btn").setAttribute("aria-pressed", "false");
       $("#fullinfo-btn").classList.add("ghost");

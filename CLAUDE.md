@@ -11,9 +11,17 @@ interview portfolio piece, so polish counts: this should look and feel finished,
 - **Self-contained.** A strict CSP blocks external hosts. Inline all CSS and JS, embed assets as
   `data:` URIs. The only exception is Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com`).
   No CDN scripts, no fetch/XHR, no remote images.
-- **Theme-aware.** Define the full light palette as tokens on bare `:root`; override under
-  `@media (prefers-color-scheme: dark)` guarded as `:root:not([data-theme="light"])`; override
-  again under `:root[data-theme="dark"]`. `body` needs an explicit token background.
+- **Dark-committed, single theme.** The theme-aware rule was retired on 21 Aug 2026. Define the
+  complete palette once on bare `:root` with `color-scheme: dark`; no `prefers-color-scheme`
+  block, no `[data-theme]` block. Paint every colour explicitly — `body` included — so the page
+  holds whatever ground the host paints behind it. The reason is chromatic: a hue that must clear
+  contrast on `#ffffff` *and* read on near-black is trapped in a narrow middle band, and that tax
+  fell hardest on the six region hues the argument is encoded in.
+- **Chroma is data.** Colour means region, and nothing else. There is no accent hue; interaction
+  is near-white (`--accent` is an ink, not a colour). Chrome is achromatic throughout.
+- **Type.** Chakra Petch for display and headings *only* — letting it into figures or labels tips
+  it from instrument into costume. Red Hat Mono carries every label and every number; Red Hat Text
+  carries prose, including the verdict sentence. No display serif.
 - **Responsive.** Relative units; wide content scrolls inside its own `overflow-x: auto` box.
   The page body must never scroll horizontally.
 - Load the `artifact-design` skill before any design pass, and `artifact-diagramming` before

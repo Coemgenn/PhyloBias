@@ -82,7 +82,7 @@ All inlined in `src/index.html`, clearly sectioned. No build step.
 | `rng` | seeded PRNG (mulberry32) — determinism is load-bearing |
 | `sim` | branching process over demes; infinite-sites mutation along the transmission tree; variant emergence |
 | `sampler` | applies per-region policy to truth → observed genome set with missing sites |
-| `infer` | neighbour-joining, root-to-tip rooting + clock, Fitch parsimony ancestral demes |
+| `infer` | perfect phylogeny, root-to-tip rooting + clock, ML ancestral demes under an Mk model |
 | `metrics` | truth-vs-inference comparison → verdict |
 | `state` | single store, one-way flow, `render()` on change |
 | `viewMap` | fictional landmass; **input and output** — click a region to set its policy |
@@ -131,7 +131,7 @@ Case {
   variant: 0 | 1
 }
 
-DemePolicy { detectionRate, seqFraction, seqStartDay, depth, reportingDelay }
+DemePolicy { startDay, capacity, hospitalMix, depth }   // capacity = % of population swabbed/day
 
 Sample { caseId, deme, tSampled, observed: Set<int> }   // observed ⊆ mutations, thinned by depth
 ```
@@ -141,12 +141,15 @@ That is the irreversibility, implemented rather than asserted.
 
 ## Inference chain
 
-1. Hamming distance on observed mutation sets → distance matrix
-2. Neighbour-joining → unrooted topology
-3. Root-to-tip regression over candidate roots, maximising R² of divergence against sample date
-   → root placement, clock-rate estimate, and x-intercept as tMRCA
-4. Fitch parsimony over deme labels → ancestral deme at the root and at the Kestrel clade's MRCA
-5. Deme-state changes along the tree → inferred introduction count
+1. Perfect phylogeny over observed mutation sets → topology
+2. Root-to-tip regression of observed mutation count against sample date → clock rate and tMRCA
+3. **Maximum-likelihood ancestral state reconstruction** under an Mk model: Felsenstein pruning
+   down-pass, marginal-posterior up-pass, migration rate fitted over a grid rather than assumed
+4. Deme-state changes along the tree → inferred introduction count
+
+Fitch parsimony was tried first and **replaced**. It admitted 132 migrations where 3,127 had
+happened, then collapsed each node onto whichever region held the most tips — wrong even at
+complete data, which would have made every slider-induced error unattributable to sampling.
 
 ## Verdict
 
@@ -165,12 +168,70 @@ No build step, so tests read `src/index.html`, extract the `<script>` block, eva
 assert against the engine. Key invariants: determinism under a fixed seed, monotonicity of
 recoverable history in sequencing start day, and that the attribution flip reproduces.
 
-Node 24 LTS is installed under `~/.local` (no Homebrew, no sudo). Run `node --test test/`.
-Twelve invariants pass, covering determinism, bounded final size, lineage emergence and origin,
-the severity ordering, perfect-phylogeny validity of the mutation record, and clock scaling.
+Node 24 LTS is installed under `~/.local` (no Homebrew, no sudo). Run `node --test test/*.test.js`.
+Fifty invariants pass, covering determinism, bounded final size, lineage emergence and origin,
+the severity ordering, perfect-phylogeny validity of the mutation record, clock scaling, the
+sampling economics (capacity monotonicity, hospital saturation, community severity-neutrality),
+and the omniscient control recovering every root.
 
 ## Open
 
 - Region polygon geometry for the fictional landmass (hand-authored SVG paths)
 - Whether inference uncertainty is shown as an interval or a point estimate
 - Verification pass on every cited parameter before it appears on the page
+
+## Sampling economics
+
+`capacity` buys **tests**, not cases. The two channels convert tests into genomes at very
+different rates, and which one is the better buy changes over the outbreak.
+
+| | hit rate | reach | scaling |
+|---|---|---|---|
+| **Community** | the prevalence of the population screened — most swabs return nothing | every severity tier, in true proportion | unbounded |
+| **Hospital** | high; admissions are pre-enriched by being ill | severe and critical only (~16% of cases) | **saturates** at the ward census |
+
+Measured at seed 111: at 0.25%/day capacity the hospital arm yields 604 genomes against
+community's 252; at 5%/day it yields 1,344 against 3,789, having stopped improving after 2%.
+The sampled severity mix at 100% community is 18/35/27/14/6 against a true 19/37/29/11/5; at
+100% hospital it is 0/0/0/70/30.
+
+So the dilemma is **more genomes or less biased genomes**, and the rational early choice —
+hospital, while prevalence is too low for screening to pay — is the one that hides a mild
+lineage. The trap is structural, not asserted.
+
+**Honest caveat, stated on the page.** This world holds under 10,000 people and infects most of
+them, so prevalence peaks far above any real outbreak. Random screening is therefore *more*
+efficient here than in reality, which means the page **understates** the pull toward hospital
+sampling rather than exaggerating it.
+
+## The omniscient control
+
+A button that bypasses the sampler entirely: every infection sequenced the moment it happens,
+including those nobody ever knew about. It is labelled on the page as impossible, because it is —
+no programme reaches the asymptomatic case that never presented.
+
+Its job is to separate *the method is broken* from *your sampling broke it*. Without it, a
+skeptical reader cannot tell those apart, and every claim on the page is unfalsifiable.
+
+| | genomes/seed | origins misplaced | root recovered |
+|---|---|---|---|
+| default (lopsided) | 1,182 | 5 / 22 | 5 of 8 |
+| every slider maxed | 3,714 | 4 / 22 | 8 of 8 |
+| **omniscient** | 8,812 | **2 / 22** | **8 of 8** |
+
+Two of the four failures at maxed sliders are the same two that survive omniscience — the
+method's own floor. The other two are clades of 9 and 19 tips: genuinely too small to place.
+
+## Why `support` is not shown
+
+The reconstruction reports a marginal posterior for each node's region. At the root it is
+essentially always 1.000 — and it is 1.000 on **six of the eight roots it gets wrong** under the
+default policy. The one root scoring below 1.0 anywhere is a *correct* one.
+
+The number is a product over every tip below the node, so a 12% edge in log-likelihood totals
+(187.3 against 164.5 on seed 111) becomes odds of 8×10⁹. It answers "if every tip were an
+independent witness, how sure would I be?" — and the tips that decide a root are identical
+zero-mutation genomes, largely one clonal expansion, which are not independent witnesses at all.
+
+The page shows the evidence instead: how many genomes carry no informative mutations, and how
+they split by region. A test asserts the view layer never references `support`.

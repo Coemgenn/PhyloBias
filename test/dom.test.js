@@ -41,7 +41,7 @@ test("controls render with the shipped defaults", () => {
   assert.deepStrictEqual(ids, ["r0", "clockRate", "seed"]);
   assert.deepStrictEqual(
     [...w.document.querySelectorAll("#policy-fields input")].map(i => i.dataset.key),
-    ["startDay", "seqFraction", "hospitalMix", "depth"]);
+    ["startDay", "capacity", "hospitalMix", "depth"]);
 });
 
 test("the truth tree is hidden until revealed, then actually appears", () => {
@@ -109,11 +109,11 @@ test("the map and the tree speak the same colour language", () => {
   const before = w.document.querySelector('#map-regions [data-region="corvane"] polygon')
     .getAttribute("fill-opacity");
   const slider = [...w.document.querySelectorAll("#policy-fields input")]
-    .find(i => i.dataset.key === "seqFraction");
+    .find(i => i.dataset.key === "capacity");
   w.document.querySelector('.chip[data-region="corvane"]').dispatchEvent(
     new w.MouseEvent("click", { bubbles: true }));
   const s2 = [...w.document.querySelectorAll("#policy-fields input")]
-    .find(i => i.dataset.key === "seqFraction");
+    .find(i => i.dataset.key === "capacity");
   s2.value = "95";
   s2.dispatchEvent(new w.Event("input", { bubbles: true }));
   const after = w.document.querySelector('#map-regions [data-region="corvane"] polygon')
@@ -151,7 +151,7 @@ test("moving a slider changes the reconstruction but never the truth", async () 
   w.document.querySelector('.chip[data-region="corvane"]')
     .dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   const el = [...w.document.querySelectorAll("#policy-fields input")]
-    .find(i => i.dataset.key === "seqFraction");
+    .find(i => i.dataset.key === "capacity");
   el.value = "0";
   el.dispatchEvent(new w.Event("input", { bubbles: true }));
   /* the redraw is coalesced into an animation frame so a drag stays smooth */
@@ -196,7 +196,7 @@ test("touching a slider drops out of full-information mode", () => {
   const w = page();
   w.document.querySelector("#fullinfo-btn").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   const el = [...w.document.querySelectorAll("#policy-fields input")]
-    .find(i => i.dataset.key === "seqFraction");
+    .find(i => i.dataset.key === "capacity");
   el.value = "10";
   el.dispatchEvent(new w.Event("input", { bubbles: true }));
   assert.strictEqual(w.document.querySelector("#fullinfo-btn").getAttribute("aria-pressed"), "false",

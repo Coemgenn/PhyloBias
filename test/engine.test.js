@@ -36,8 +36,8 @@ test("different seed produces a different epidemic", () => {
 
 test("truth ignores policy entirely", () => {
   /* The thesis in test form: sampling policy must not reach the truth layer. */
-  const a = PB.truthFor({ ...BASE, policy: { corvane: { seqFraction: 90 } } });
-  const b = PB.truthFor({ ...BASE, policy: { corvane: { seqFraction: 0 } } });
+  const a = PB.truthFor({ ...BASE, policy: { corvane: { capacity: 90 } } });
+  const b = PB.truthFor({ ...BASE, policy: { corvane: { capacity: 0 } } });
   assert.strictEqual(a, b, "same scenario must return the memoised same object");
 });
 
@@ -288,9 +288,7 @@ test("at full coverage the inferred topology IS the true topology", () => {
      data the method must contribute zero error, so every difference the sliders
      produce is the sampling policy and not the algorithm. Asserted, not assumed. */
   const T = PB.runTruth(BASE);
-  const pol = Object.fromEntries(PB.REGIONS.map(r =>
-    [r.id, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100, delay: 0 }]));
-  const { samples } = PB.sampleGenomes(T, pol);
+  const { samples } = PB.sampleGenomes(T, {}, { omniscient: true });
   const P = PB.perfectPhylogeny(samples);
 
   const trueCarriers = new Map();
@@ -329,33 +327,33 @@ test("and it stops being identical once coverage drops", () => {
   /* guards the test above from being vacuous */
   const T = PB.runTruth(BASE);
   const pol = Object.fromEntries(PB.REGIONS.map(r =>
-    [r.id, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 60, delay: 0 }]));
+    [r.id, { startDay: 0, capacity: PB.MAX_CAPACITY, hospitalMix: 0, depth: 60, delay: 0 }]));
   const { samples } = PB.sampleGenomes(T, pol);
   const P = PB.perfectPhylogeny(samples);
   assert.ok(P.conflicts > 0,
     "partial coverage should make mutation sets conflict — otherwise the identity test proves nothing");
 });
 
-test("at full information the origins come out right", () => {
-  /* The test that makes the tool's claim honest: if the reconstruction were wrong
-     with every case sequenced, slider-induced errors could always be blamed on the
-     method. Run across seeds, because a single scenario hides both collapse bugs
-     that have shipped here -- Fitch funnelling every node to one region, and a
-     likelihood underflow that made argmax silently return the first region.
+test("under omniscient sampling the origins come out right", () => {
+  /* The control experiment, and the test that makes the tool's claim honest: if
+     the reconstruction were wrong even with every infection sequenced, then
+     slider-induced errors could always be blamed on the method instead. Run
+     across seeds, because a single scenario hides both collapse bugs that have
+     shipped here -- Fitch funnelling every node to one region, and a likelihood
+     underflow that made argmax silently return the first region.
 
-     The ROOT is deliberately not asserted per-seed. It sits under a 36-way
-     polytomy that carries almost no information about its own state, so it is not
-     reliably recoverable; it is checked in aggregate instead. */
+     Note this is strictly stronger than any slider setting can reach. Maxing
+     every slider samples about 42% of infections, because a swab only finds a
+     case if it lands during the few days that person is infectious. */
   const REG = PB.REGIONS.map(r => r.id);
   const seeds = [111, 112, 200, 333, 529, 700, 884, 901];
   let wrong = 0, total = 0, rootOk = 0;
 
   for (const seed of seeds) {
     const T = PB.runTruth({ seed, r0: 2.4, clockRate: 9 });
-    const pol = Object.fromEntries(REG.map(r =>
-      [r, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 }]));
-    const S = PB.sampleGenomes(T, pol);
-    assert.strictEqual(S.dropped, 0, "the cap must not bind at full information");
+    const S = PB.sampleGenomes(T, {}, { omniscient: true });
+    assert.strictEqual(S.samples.length, T.cases.length,
+      "omniscient sampling must reach every case, with no cap and no detection floor");
     const P = PB.perfectPhylogeny(S.samples);
     const clock = PB.rootToTip(S.samples);
     const date = PB.datePhylogeny(P.root, S.samples, clock);
@@ -374,7 +372,10 @@ test("at full information the origins come out right", () => {
   }
   assert.ok(wrong / total <= 0.15,
     `${wrong} of ${total} origins misplaced with complete data — too many to blame on sampling`);
-  assert.ok(rootOk >= seeds.length - 2,
+  /* With nothing hidden the root IS recoverable, on every seed. It stops being
+     recoverable as soon as sampling is real -- that is the point of the page, and
+     the reason this assertion lives here and not in the slider tests. */
+  assert.strictEqual(rootOk, seeds.length,
     `root recovered on only ${rootOk} of ${seeds.length} seeds`);
 });
 
@@ -391,14 +392,14 @@ test("uniform sampling stays right; imbalanced sampling does not", () => {
     return PB.lineageVerdicts(T, S.samples, P, anc, clock);
   };
   const sparseEven = Object.fromEntries(REG.map(r =>
-    [r, { startDay: 35, seqFraction: 15, hospitalMix: 75, depth: 75 }]));
+    [r, { startDay: 35, capacity: 1.2, hospitalMix: 75, depth: 75 }]));
   assert.strictEqual(verdict(sparseEven).filter(v => v.found && !v.regionRight).length, 0,
     "sparse but even sampling should still recover the origins");
 
   const lopsided = Object.fromEntries(REG.map(r =>
-    [r, { startDay: 35, seqFraction: 15, hospitalMix: 60, depth: 80 }]));
-  lopsided.corvane = { startDay: 5, seqFraction: 80, hospitalMix: 60, depth: 95 };
-  lopsided.aldane = { startDay: 70, seqFraction: 2, hospitalMix: 60, depth: 50 };
+    [r, { startDay: 35, capacity: 1.2, hospitalMix: 60, depth: 80 }]));
+  lopsided.corvane = { startDay: 5, capacity: 4.0, hospitalMix: 60, depth: 95 };
+  lopsided.aldane = { startDay: 70, capacity: 0.1, hospitalMix: 60, depth: 50 };
   assert.ok(verdict(lopsided).filter(v => v.found && !v.regionRight).length >= 1,
     "lopsided sampling should misplace at least one origin");
 });
@@ -411,7 +412,7 @@ test("inferred branches record the ancestor they descend from", () => {
   const T = PB.runTruth(BASE);
   const REG = PB.REGIONS.map(r => r.id);
   const pol = Object.fromEntries(REG.map(r =>
-    [r, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 }]));
+    [r, { startDay: 0, capacity: PB.MAX_CAPACITY, hospitalMix: 0, depth: 100 }]));
   const S = PB.sampleGenomes(T, pol);
   const P = PB.perfectPhylogeny(S.samples);
   const clock = PB.rootToTip(S.samples);
@@ -450,4 +451,89 @@ test("inferred branches record the ancestor they descend from", () => {
   const tsvg = PB.renderTreeSVG(tt.roots, { tMax: 75, aria: "x", rootRegion: "brix" });
   assert.strictEqual((tsvg.match(/<linearGradient/g) || []).length, 0,
     "the truth panel should draw hard edges, not fades");
+});
+
+/* ---------- sampling economics ---------- */
+
+test("capacity is monotone: more testing never loses a genome", () => {
+  /* The keyed-draw design exists for this. If raising a slider could swap which
+     cases were sampled rather than only adding to them, every comparison the page
+     invites the reader to make would be noise. */
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const at = (cap, mix) => {
+    const pol = Object.fromEntries(REG.map(r =>
+      [r, { startDay: 0, capacity: cap, hospitalMix: mix, depth: 100 }]));
+    return new Set(PB.sampleGenomes(T, pol).samples.map(s => s.caseId));
+  };
+  for (const mix of [0, 50, 100]) {
+    let prev = at(0.25, mix);
+    for (const cap of [0.5, 1, 2, PB.MAX_CAPACITY]) {
+      const next = at(cap, mix);
+      assert.ok(next.size >= prev.size, `mix ${mix}: capacity ${cap} collected fewer genomes`);
+      for (const id of prev)
+        assert.ok(next.has(id), `mix ${mix}: raising capacity to ${cap} DROPPED case ${id}`);
+      prev = next;
+    }
+  }
+});
+
+test("the hospital channel saturates; the community channel does not", () => {
+  /* Why the mix is a real decision and not a slider with a right answer: hospital
+     swabs go to a ward that holds only so many people, so past a point more
+     capacity buys nothing. Community swabs go to the whole population, so they
+     keep scaling -- at a hit rate of roughly the prevalence. */
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const n = (cap, mix) => PB.sampleGenomes(T, Object.fromEntries(REG.map(r =>
+    [r, { startDay: 0, capacity: cap, hospitalMix: mix, depth: 100 }]))).samples.length;
+
+  const hosp2 = n(2, 100), hosp5 = n(PB.MAX_CAPACITY, 100);
+  const comm2 = n(2, 0), comm5 = n(PB.MAX_CAPACITY, 0);
+  assert.ok(hosp5 < hosp2 * 1.25,
+    `hospital arm grew ${hosp2} -> ${hosp5} on 2.5x the capacity — it is not saturating`);
+  assert.ok(comm5 > comm2 * 1.5,
+    `community arm grew only ${comm2} -> ${comm5} — it should still be scaling`);
+
+  /* and at low capacity the efficient channel is genuinely the better buy, which
+     is what makes the early decision a trap rather than a gotcha */
+  assert.ok(n(0.25, 100) > n(0.25, 0) * 1.5,
+    "at low capacity hospital intake should clearly out-yield community screening");
+});
+
+test("community screening is severity-unbiased; hospital intake is not", () => {
+  const T = PB.runTruth(BASE);
+  const REG = PB.REGIONS.map(r => r.id);
+  const mixOf = mix => {
+    const S = PB.sampleGenomes(T, Object.fromEntries(REG.map(r =>
+      [r, { startDay: 0, capacity: 1, hospitalMix: mix, depth: 100 }])));
+    const t = new Array(PB.TIERS.length).fill(0);
+    for (const s of S.samples) t[s.tier]++;
+    return t.map(x => x / S.samples.length);
+  };
+  const truthMix = (() => {
+    const t = new Array(PB.TIERS.length).fill(0);
+    for (const c of T.cases) t[c.tier]++;
+    return t.map(x => x / T.cases.length);
+  })();
+
+  const comm = mixOf(0);
+  for (let i = 0; i < truthMix.length; i++)
+    assert.ok(Math.abs(comm[i] - truthMix[i]) < 0.05,
+      `community tier ${i}: ${comm[i].toFixed(2)} vs true ${truthMix[i].toFixed(2)}`);
+
+  /* the hospital arm can only ever see cases that reached a hospital */
+  const hosp = mixOf(100);
+  assert.strictEqual(hosp[0] + hosp[1] + hosp[2], 0,
+    "hospital intake sampled a case that was never admitted");
+});
+
+test("no bare posterior is presented to the reader as confidence", () => {
+  /* `support` is a product over every tip below a node, so a slight consistent
+     lean across hundreds of tips compounds to 1.000 -- including on six of the
+     eight roots it gets WRONG under the shipped default policy. It stays in the
+     engine for ranking; it must never reach the page as a confidence figure. */
+  const view = src.slice(src.indexOf("HAS_DOM ="));
+  assert.ok(!/support/.test(view.replace(/\/\*[\s\S]*?\*\//g, "")),
+    "the view layer references `support` — it must not be shown as certainty");
 });
