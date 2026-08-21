@@ -280,3 +280,58 @@ test("connectors are continuous with the branches they join", () => {
   const svg = PB.renderTreeSVG(t.roots, { tMax: 60, aria: "x" });
   assert.ok(!/stroke="var\(--border-firm\)"/.test(svg), "a connector is still drawn neutral");
 });
+
+/* ---------- the claim the whole design rests on ---------- */
+
+test("at full coverage the inferred topology IS the true topology", () => {
+  /* This is why perfect phylogeny was chosen over neighbour-joining: at complete
+     data the method must contribute zero error, so every difference the sliders
+     produce is the sampling policy and not the algorithm. Asserted, not assumed. */
+  const T = PB.runTruth(BASE);
+  const pol = Object.fromEntries(PB.REGIONS.map(r =>
+    [r.id, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100, delay: 0 }]));
+  const { samples } = PB.sampleGenomes(T, pol);
+  const P = PB.perfectPhylogeny(samples);
+
+  const trueCarriers = new Map();
+  samples.forEach((s, i) => {
+    for (const m of PB.genotypeOf(T, s.caseId)) {
+      if (!trueCarriers.has(m)) trueCarriers.set(m, new Set());
+      trueCarriers.get(m).add(i);
+    }
+  });
+  const kept = new Set([...trueCarriers].filter(([, v]) => v.size >= 2).map(([m]) => m));
+
+  const infTips = new Map(), infParent = new Map();
+  (function walk(n, p) {
+    if (n.mut !== null) { infTips.set(n.mut, n.tips); infParent.set(n.mut, p); }
+    for (const c of n.children) walk(c, n.mut === null ? null : n.mut);
+  })(P.root, null);
+
+  assert.strictEqual(P.conflicts, 0, "complete data must not conflict");
+  assert.ok(kept.size > 100, "not enough clades to make this meaningful");
+
+  for (const m of kept) {
+    const want = trueCarriers.get(m), got = infTips.get(m);
+    assert.ok(got, `clade for mutation ${m} missing from the reconstruction`);
+    assert.strictEqual(got.size, want.size, `clade ${m} has the wrong size`);
+    for (const t of want) assert.ok(got.has(t), `clade ${m} has the wrong members`);
+
+    /* nesting too, not just membership */
+    let p = T.mutations[m].parent;
+    while (p >= 0 && !kept.has(p)) p = T.mutations[p].parent;
+    assert.strictEqual(infParent.get(m) ?? null, p >= 0 ? p : null,
+      `mutation ${m} is attached under the wrong parent`);
+  }
+});
+
+test("and it stops being identical once coverage drops", () => {
+  /* guards the test above from being vacuous */
+  const T = PB.runTruth(BASE);
+  const pol = Object.fromEntries(PB.REGIONS.map(r =>
+    [r.id, { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 60, delay: 0 }]));
+  const { samples } = PB.sampleGenomes(T, pol);
+  const P = PB.perfectPhylogeny(samples);
+  assert.ok(P.conflicts > 0,
+    "partial coverage should make mutation sets conflict — otherwise the identity test proves nothing");
+});
