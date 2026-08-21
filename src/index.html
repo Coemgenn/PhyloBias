@@ -503,6 +503,19 @@ h1 {
   color: var(--ink-3);
   margin: 0 0 .25rem;
 }
+.group-note {
+  font-size: .75rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: .5rem .7rem;
+  margin: 0 0 .875rem;
+  max-width: 46ch;
+}
+
 .group-hint {
   font-size: .75rem;
   color: var(--ink-3);
@@ -692,7 +705,7 @@ input[type="range"]:focus-visible {
   <section class="panel" aria-labelledby="controls-h">
     <div class="panel-head">
       <h2 class="panel-title" id="controls-h">Controls</h2>
-      <span class="panel-note">policy never changes what happened</span>
+      <button type="button" class="btn ghost" id="fullinfo-btn" aria-pressed="false">Sequence everything</button>
     </div>
     <div class="controls-grid">
 
@@ -706,6 +719,11 @@ input[type="range"]:focus-visible {
         <p class="group-label">Surveillance policy &mdash; <span id="sel-region">Aldane</span></p>
         <p class="group-hint">
           Changes only what you can observe. The epidemic underneath is untouched.
+        </p>
+        <p class="group-note" id="fullinfo-note" hidden>
+          Every region sequencing every detected case, from day&nbsp;0, at full coverage,
+          all through community screening. Roughly 63% of infections &mdash; the rest were
+          never detected at all. The reconstruction should now match the truth.
         </p>
         <div class="region-chips" id="region-chips" role="group" aria-label="Select a region"></div>
         <div id="policy-fields"></div>
@@ -1740,7 +1758,16 @@ const state = {
   }[r.id]])),
   result: null,
   revealed: false,
+  savedPolicy: null,
 };
+
+/* The most information the world can give you. hospitalMix goes to 0 because the
+   hospital channel can only ever draw from severe and critical cases -- roughly
+   15% of the outbreak -- so any capacity sent there is fishing in a small pool.
+   Community screening reaches every tier. Even so this captures about 63% of
+   cases, not 100%: you cannot sequence someone who was never detected, and most
+   asymptomatic infections never are. */
+const FULL_INFO = { startDay: 0, seqFraction: 100, hospitalMix: 0, depth: 100 };
 
 /* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more
    coverage both raise it. Provisional until the sampler is real. */
@@ -1940,6 +1967,25 @@ function readRevealed() {
   try { return localStorage.getItem(REVEAL_KEY) === "1"; } catch (e) { return false; }
 }
 
+function setFullInfo(on) {
+  if (on) {
+    if (!state.savedPolicy)
+      state.savedPolicy = JSON.parse(JSON.stringify(state.policy));
+    for (const r of REGIONS) state.policy[r.id] = { ...FULL_INFO };
+  } else if (state.savedPolicy) {
+    state.policy = state.savedPolicy;
+    state.savedPolicy = null;
+  }
+  const b = $("#fullinfo-btn");
+  b.textContent = on ? "Restore policy" : "Sequence everything";
+  b.setAttribute("aria-pressed", String(on));
+  b.classList.toggle("ghost", !on);
+  $("#fullinfo-note").hidden = !on;
+  renderMap();
+  renderPolicy();
+  renderInferred();
+}
+
 function setRevealed(on) {
   state.revealed = on;
   try { localStorage.setItem(REVEAL_KEY, on ? "1" : "0"); } catch (e) { /* storage unavailable */ }
@@ -2003,6 +2049,10 @@ function select(id) {
 if (HAS_DOM) document.addEventListener("click", e => {
   if (e.target.closest("#reveal-btn")) { setRevealed(!state.revealed); return; }
   if (e.target.closest("#reveal-btn-2")) { setRevealed(true); return; }
+  if (e.target.closest("#fullinfo-btn")) {
+    setFullInfo($("#fullinfo-btn").getAttribute("aria-pressed") !== "true");
+    return;
+  }
   const node = e.target.closest("[data-region]");
   if (node) select(node.dataset.region);
 });
@@ -2033,6 +2083,14 @@ if (HAS_DOM) document.addEventListener("input", e => {
   if (pf) {
     state.policy[state.selected][key] = val;
     $("#o-" + key).textContent = pf.fmt(val);
+    if ($("#fullinfo-btn").getAttribute("aria-pressed") === "true") {
+      /* the reading no longer holds once a slider is touched */
+      state.savedPolicy = null;
+      $("#fullinfo-btn").textContent = "Sequence everything";
+      $("#fullinfo-btn").setAttribute("aria-pressed", "false");
+      $("#fullinfo-btn").classList.add("ghost");
+      $("#fullinfo-note").hidden = true;
+    }
     renderMap();
     scheduleInfer();
   }

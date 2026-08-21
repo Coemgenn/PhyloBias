@@ -162,3 +162,43 @@ test("moving a slider changes the reconstruction but never the truth", async () 
   assert.notStrictEqual(w.document.querySelector("#inferred-tree svg").outerHTML, infBefore,
     "policy did not change the reconstruction");
 });
+
+test("the full-information toggle sets every region and recovers the truth", () => {
+  const w = page({ revealed: "1" });
+  const btn = w.document.querySelector("#fullinfo-btn");
+  assert.ok(btn, "toggle missing");
+
+  const wrongBefore = w.document.querySelector("#verdict-note").textContent;
+  assert.match(wrongBefore, /[1-9] of \d+ variant origins misplaced/,
+    "the default policy should open with the bias visible");
+
+  btn.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+
+  /* every region, not just the selected one */
+  for (const r of ["aldane", "brix", "corvane", "doran", "esker", "fenmoor"]) {
+    const pct = w.document.querySelector(`#map-regions [data-region="${r}"] .region-value`);
+    assert.strictEqual(pct.textContent, "100%", `${r} not set to full effort`);
+  }
+  assert.strictEqual(w.document.querySelector("#fullinfo-btn").textContent, "Restore policy");
+  assert.ok(!w.document.querySelector("#fullinfo-note").hidden, "explanation not shown");
+
+  assert.match(w.document.querySelector("#verdict-note").textContent,
+    /^0 of \d+ variant origins misplaced/,
+    "with complete data every origin should be recovered");
+
+  /* and it restores */
+  w.document.querySelector("#fullinfo-btn").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+  assert.strictEqual(w.document.querySelector("#verdict-note").textContent, wrongBefore,
+    "restoring did not bring the original policy back");
+});
+
+test("touching a slider drops out of full-information mode", () => {
+  const w = page();
+  w.document.querySelector("#fullinfo-btn").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+  const el = [...w.document.querySelectorAll("#policy-fields input")]
+    .find(i => i.dataset.key === "seqFraction");
+  el.value = "10";
+  el.dispatchEvent(new w.Event("input", { bubbles: true }));
+  assert.strictEqual(w.document.querySelector("#fullinfo-btn").getAttribute("aria-pressed"), "false",
+    "the label still claims full information after a slider moved");
+});
