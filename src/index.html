@@ -410,6 +410,13 @@ h1 {
 }
 .tree-axis-cap { fill: var(--ink-3); letter-spacing: .05em; }
 .tree-muts { text-anchor: start; }
+.tree-root-label {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  fill: var(--ink-3);
+  text-anchor: start;
+  letter-spacing: .04em;
+}
 
 .btn {
   font-family: var(--font-ui);
@@ -1422,6 +1429,7 @@ function renderTreeSVG(roots, opts) {
     out.push(`<g class="branch">`
       + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`
       + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3" fill="var(--ink-3)"></circle>`
+      + `<text class="tree-root-label" x="${(Math.min(...rx) - 4).toFixed(1)}" y="${(y0 - 5).toFixed(1)}">ancestral genotype</text>`
       + `<title>Ancestral genotype \u00b7 ${roots.length} lineages descend from it, in no resolved order</title></g>`);
   }
 
@@ -1438,6 +1446,10 @@ function renderTreeSVG(roots, opts) {
       const xs = n.children.map(c => c.x);
       g.push(`<line x1="${Math.min(...xs).toFixed(1)}" y1="${n.y1.toFixed(1)}" x2="${Math.max(...xs).toFixed(1)}" y2="${n.y1.toFixed(1)}" stroke="var(--border-firm)" stroke-width="1.2"></line>`);
     }
+    /* The mutation happens at the far END of a branch; the near end is only
+       where its ancestor sat. Without a node mark the eye reads the start of a
+       long stem as the event, which puts a day-34 mutation at day 0. */
+    g.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y1.toFixed(1)}" r="2.2" fill="var(--reg-${n.region})"></circle>`);
     if (k > 1) g.push(`<text class="tree-muts" x="${(n.x + 4.5).toFixed(1)}" y="${((n.y0 + n.y1) / 2 + 2.5).toFixed(1)}">${k}</text>`);
     if (n.marker) {
       g.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y1.toFixed(1)}" r="4" fill="var(--surface)" stroke="var(--reg-${n.region})" stroke-width="2.5"></circle>`);
