@@ -1513,20 +1513,19 @@ function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips, d
        predate its parent */
     const tEnd = Math.max(parentDate + 0.4, Math.max(0, date ? date.get(node) : dateOf(node)));
     const region = fitch.region.get(node);
-    /* A branch begins in whatever state its ancestor was reconstructed in and
-       ends in its own, exactly as the truth panel shows a lineage sitting in one
-       region and then moving. Without this the reconstruction repainted a branch
-       from its very top and could not be read against the truth at all.
-       The reconstruction does NOT identify WHEN along the branch the move
-       happened -- only that it happened somewhere on it -- so the change is drawn
-       at the midpoint by convention. */
-    const path = (parentRegion && parentRegion !== region)
-      ? [{ t0: parentDate, t1: (parentDate + tEnd) / 2, region: parentRegion },
-         { t0: (parentDate + tEnd) / 2, t1: tEnd, region }]
-      : [{ t0: parentDate, t1: tEnd, region }];
+    /* A branch descends from whatever state its ancestor was reconstructed in and
+       arrives in its own. The reconstruction does NOT identify WHEN along the
+       branch the move happened -- only that it happened somewhere on it -- so
+       splitting the branch at a hard midpoint drew a claim we cannot make, and
+       made every transition look like the same arbitrary 50/50 artefact. The
+       branch fades from one region to the other instead: a soft edge for an
+       unknown time, against the truth panel's hard edges, which mark migrations
+       whose timing IS known. */
+    const from = parentRegion && parentRegion !== region ? parentRegion : null;
     return {
       segs: segs.map(m => ({ id: m, t: tEnd, region })),
-      marker, carriers: node.n, tStart: parentDate, tEnd, region, path,
+      marker, carriers: node.n, tStart: parentDate, tEnd, region, from,
+      path: [{ t0: parentDate, t1: tEnd, region, from }],
       children: kids.map(c => make(c, tEnd, region)),
     };
   }
@@ -1581,7 +1580,7 @@ function datePhylogeny(root, samples, clock) {
    even with every case sequenced at full coverage. A rate model has no such
    preference: it lets a long branch move and a short one stay, and it estimates
    how often movement happens instead of assuming as rarely as possible. */
-function mkAncestralStates(root, samples, regionIds, date) {
+function mkAncestralStates(root, samples, regionIds, date, muOverride) {
   const K = regionIds.length;
   const idx = {}; regionIds.forEach((r, i) => idx[r] = i);
 
@@ -1605,11 +1604,19 @@ function mkAncestralStates(root, samples, regionIds, date) {
     (function post(n) {
       for (const c of n.children) post(c);
       const v = new Array(K).fill(1);
+      /* Renormalise after EVERY child, not once at the end. A node here can have
+         hundreds of children, and the product underflows to zero long before the
+         end of the loop; logL then came out -Infinity for every candidate rate, no
+         rate ever beat the first one tried, and the model was pinned at
+         mu = 1e-4.2 -- migration effectively forbidden, so every node collapsed
+         to a single region. */
       const push = (childL, t) => {
         const [ps, pd] = P(mu, t);
         let tot = 0;
         for (let j = 0; j < K; j++) tot += childL[j];
-        for (let i = 0; i < K; i++) v[i] *= pd * tot + (ps - pd) * childL[i];
+        let s = 0;
+        for (let i = 0; i < K; i++) { v[i] *= pd * tot + (ps - pd) * childL[i]; s += v[i]; }
+        if (s > 0) { for (let i = 0; i < K; i++) v[i] /= s; logL += Math.log(s); }
       };
       for (const c of n.children) push(L.get(c), date.get(c) - date.get(n));
       for (const ti of ownTips.get(n)) {
@@ -1617,8 +1624,6 @@ function mkAncestralStates(root, samples, regionIds, date) {
         leaf[idx[samples[ti].region]] = 1;
         push(leaf, Math.max(0.25, samples[ti].t - date.get(n)));
       }
-      let s = 0; for (let i = 0; i < K; i++) s += v[i];
-      if (s > 0) { for (let i = 0; i < K; i++) v[i] /= s; logL += Math.log(s); }
       L.set(n, v);
     })(root);
     let r = 0; for (let i = 0; i < K; i++) r += L.get(root)[i] / K;
@@ -1627,11 +1632,14 @@ function mkAncestralStates(root, samples, regionIds, date) {
 
   /* fit the migration rate rather than assuming one */
   let best = null;
-  for (let e = -4.2; e <= -0.4; e += 0.2) {
+  if (muOverride) best = { mu: muOverride, ...prune(muOverride) };
+  for (let e = -4.2; !muOverride && e <= -0.4; e += 0.2) {
     const mu = Math.pow(10, e);
     const r = prune(mu);
-    if (!best || r.logL > best.logL) best = { mu, ...r };
+    if (Number.isFinite(r.logL) && (!best || r.logL > best.logL)) best = { mu, ...r };
   }
+  /* never silently keep an unfitted rate */
+  if (!best) best = { mu: 0.01, ...prune(0.01) };
   const { mu, L } = best;
 
   /* up-pass for marginal posteriors */
@@ -1641,15 +1649,26 @@ function mkAncestralStates(root, samples, regionIds, date) {
     for (const c of n.children) {
       const u = new Array(K).fill(0);
       const sib = new Array(K).fill(1);
+      /* Renormalise after every factor. This product runs over every other child
+         AND every tip hanging off the node -- hundreds of them -- so unnormalised
+         it underflows to all zeros, the posterior becomes all zeros, and argmax
+         silently returns index 0. That is why every failure at full information
+         came back as the first region in the list regardless of the evidence,
+         including a clade whose tips were 100% somewhere else. */
+      const mul = (vec, ps, pd, tot) => {
+        let s = 0;
+        for (let i = 0; i < K; i++) { sib[i] *= pd * tot + (ps - pd) * vec[i]; s += sib[i]; }
+        if (s > 0) for (let i = 0; i < K; i++) sib[i] /= s;
+      };
       for (const o of n.children) if (o !== c) {
         const oc = L.get(o), [ps, pd] = P(mu, date.get(o) - date.get(n));
         let tot = 0; for (let j = 0; j < K; j++) tot += oc[j];
-        for (let i = 0; i < K; i++) sib[i] *= pd * tot + (ps - pd) * oc[i];
+        mul(oc, ps, pd, tot);
       }
       for (const ti of ownTips.get(n)) {
         const leaf = new Array(K).fill(0); leaf[idx[samples[ti].region]] = 1;
         const [ps, pd] = P(mu, Math.max(0.25, samples[ti].t - date.get(n)));
-        for (let i = 0; i < K; i++) sib[i] *= pd + (ps - pd) * leaf[i];
+        mul(leaf, ps, pd, 1);
       }
       const up = Up.get(n), [ps, pd] = P(mu, date.get(c) - date.get(n));
       let tot = 0; for (let i = 0; i < K; i++) tot += up[i] * sib[i];
@@ -1669,7 +1688,8 @@ function mkAncestralStates(root, samples, regionIds, date) {
     let s = 0;
     const u = Up.get(n) || new Array(K).fill(1 / K);
     for (let i = 0; i < K; i++) { post[i] = l[i] * u[i]; s += post[i]; }
-    if (s > 0) for (let i = 0; i < K; i++) post[i] /= s;
+    if (s > 0) { for (let i = 0; i < K; i++) post[i] /= s; }
+    else { for (let i = 0; i < K; i++) post[i] = l[i]; }   /* fall back on the data */
     let bi = 0; for (let i = 1; i < K; i++) if (post[i] > post[bi]) bi = i;
     region.set(n, regionIds[bi]);
     support.set(n, post[bi]);
@@ -1921,6 +1941,8 @@ function renderTreeSVG(roots, opts) {
   const L = layoutTree(roots, { colW, tMax: opts.tMax, depth, padT, padB, padL });
   const W = Math.max(L.width + 56, 240), H = depth + 6;
   const out = [];
+  const defs = [];
+  let gradId = 0;
 
   /* time axis, down the left edge */
   const step = opts.tMax <= 60 ? 15 : opts.tMax <= 120 ? 30 : 60;
@@ -1958,7 +1980,20 @@ function renderTreeSVG(roots, opts) {
     for (const seg of n.path) {
       const a = L.yOf(seg.t0), b = L.yOf(seg.t1);
       if (b - a < 0.05) continue;
-      g.push(`<line x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}" stroke="var(--reg-${seg.region})" stroke-width="2.5"></line>`);
+      let stroke = `var(--reg-${seg.region})`;
+      if (seg.from) {
+        /* the move is somewhere on this branch; a gradient says so without
+           pretending to know where */
+        const id = `mv${gradId++}`;
+        defs.push(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" `
+          + `x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}">`
+          + `<stop offset="0" stop-color="var(--reg-${seg.from})"></stop>`
+          + `<stop offset="0.28" stop-color="var(--reg-${seg.from})"></stop>`
+          + `<stop offset="0.72" stop-color="var(--reg-${seg.region})"></stop>`
+          + `<stop offset="1" stop-color="var(--reg-${seg.region})"></stop></linearGradient>`);
+        stroke = `url(#${id})`;
+      }
+      g.push(`<line x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}" stroke="${stroke}" stroke-width="2.5"></line>`);
     }
     if (n.children.length) {
       const xs = n.children.map(c => c.x);
@@ -1975,7 +2010,8 @@ function renderTreeSVG(roots, opts) {
     }
     out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} \u00b7 ${esc(n.carriers.toLocaleString())} cases \u00b7 ${esc(n.region)} \u00b7 day ${n.tEnd.toFixed(0)}</title></g>`);
   }
-  return `<svg class="tree-svg" viewBox="0 0 ${W.toFixed(0)} ${H}" role="img" aria-label="${esc(opts.aria)}">${out.join("")}</svg>`;
+  const defsBlock = defs.length ? `<defs>${defs.join("")}</defs>` : "";
+  return `<svg class="tree-svg" viewBox="0 0 ${W.toFixed(0)} ${H}" role="img" aria-label="${esc(opts.aria)}">${defsBlock}${out.join("")}</svg>`;
 }
 
 function renderTruthTree() {
