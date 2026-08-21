@@ -28,17 +28,20 @@
      themes (worst deutan dE 9.2 light / 9.4 dark). Aqua sits below 3:1 on the
      light surface, so direct labels on the trees are required, not optional. */
 
-  /* Region identity. Six hues cannot be separated inside a fixed lightness band,
-     so lightness carries a second channel -- the atlas convention, and what makes
-     these readable under colour blindness. Worst-case dE 16.7 across normal,
-     protan, deutan and tritan vision in BOTH themes (target 8). The uniform-
-     lightness guideline is deliberately traded away to buy that. */
-  --reg-aldane:  #c06841;
-  --reg-doran:   #7f255b;
-  --reg-esker:   #deae65;
-  --reg-fenmoor: #78d0ea;
-  --reg-brix:    #448ec5;
-  --reg-corvane: #3a33bd;
+  /* Region identity. Six hues spread 45deg+ apart around the wheel (19, 93, 142,
+     209, 261, 325) with lightness free as a second channel -- under protanopia the
+     wheel collapses toward one axis, so hue alone cannot separate six. Passes
+     all-pairs in BOTH themes: CVD dE 15.0 light / 16.1 dark against a target of 8,
+     normal-vision 18.4 / 18.7 against a floor of 15. Every colour clears 2.5:1 on
+     its surface; the region key supplies the relief the 3:1 rule asks for.
+     Aldane and Corvane hold the most separated pair (dE 35.7) because the whole
+     argument is read off those two. Uniform lightness is traded away knowingly. */
+  --reg-aldane:  #baa047;
+  --reg-brix:    #3062bc;
+  --reg-corvane: #66056c;
+  --reg-doran:   #094e04;
+  --reg-esker:   #3db1c2;
+  --reg-fenmoor: #ac5e60;
 
   --lin-wild:    #7c8a90;
   --lin-kestrel: #eb6834;
@@ -78,18 +81,18 @@
     --accent:      #8fa3ac;
     --accent-ink:  #b8c8cf;
     --on-accent:   #0d1214;
-    --reg-aldane:  #d47a53;
-    --reg-doran:   #92376c;
-    --reg-esker:   #f2c178;
-    --reg-fenmoor: #87e0fa;
-    --reg-brix:    #57a0d9;
-    --reg-corvane: #4748d1;
-      --reg-aldane:  #d47a53;
-  --reg-doran:   #92376c;
-  --reg-esker:   #f2c178;
-  --reg-fenmoor: #87e0fa;
-  --reg-brix:    #57a0d9;
-  --reg-corvane: #4748d1;
+    --reg-aldane:  #f6d464;
+    --reg-brix:    #71a2f9;
+    --reg-corvane: #7e4481;
+    --reg-doran:   #0d7f01;
+    --reg-esker:   #4de8fe;
+    --reg-fenmoor: #ec898b;
+        --reg-aldane:  #f6d464;
+  --reg-brix:    #71a2f9;
+  --reg-corvane: #7e4481;
+  --reg-doran:   #0d7f01;
+  --reg-esker:   #4de8fe;
+  --reg-fenmoor: #ec898b;
   --lin-wild:    #78868c;
     --lin-kestrel: #d95926;
     --lin-harrow:  #3987e5;
@@ -117,12 +120,12 @@
     --accent:      #8fa3ac;
   --accent-ink:  #b8c8cf;
   --on-accent:   #0d1214;
-    --reg-aldane:  #d47a53;
-  --reg-doran:   #92376c;
-  --reg-esker:   #f2c178;
-  --reg-fenmoor: #87e0fa;
-  --reg-brix:    #57a0d9;
-  --reg-corvane: #4748d1;
+      --reg-aldane:  #f6d464;
+  --reg-brix:    #71a2f9;
+  --reg-corvane: #7e4481;
+  --reg-doran:   #0d7f01;
+  --reg-esker:   #4de8fe;
+  --reg-fenmoor: #ec898b;
   --lin-wild:    #78868c;
   --lin-kestrel: #d95926;
   --lin-harrow:  #3987e5;
