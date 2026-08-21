@@ -199,6 +199,28 @@ So the dilemma is **more genomes or less biased genomes**, and the rational earl
 hospital, while prevalence is too low for screening to pay — is the one that hides a mild
 lineage. The trap is structural, not asserted.
 
+### The trap, measured
+
+Seed 111. Kestrel is the mild lineage (severity ×0.5), true origin Aldane, emerging day 15 —
+before any of this is decided. `%K` is Kestrel's share of the sampled genomes.
+
+| capacity | mix | genomes | before day 40 | Kestrel | %K |
+|---|---|---|---|---|---|
+| 0.25%/day | community | 252 | 34 | 32 | **12.7%** |
+| 0.25%/day | hospital | **604** | **114** | 6 | **1.0%** |
+| 1%/day | community | 985 | 146 | 142 | 14.4% |
+| 1%/day | hospital | 1,080 | 145 | 8 | 0.7% |
+| 5%/day | community | **3,789** | **569** | 525 | 13.9% |
+| 5%/day | hospital | 1,344 | 151 | 10 | 0.7% |
+
+At a realistic budget (0.25%/day) hospital intake returns **2.4× the genomes and 3.4× the early
+ones** — and takes Kestrel from 12.7% of the sample to 1.0%. The choice that buys the most data,
+soonest, is the choice that makes the mild variant almost invisible.
+
+The trap weakens as capacity grows: by 5%/day community screening wins outright. That is the
+right shape. Scarcity is what forces the biasing choice, which is why the slider's realistic
+range matters more than its ceiling.
+
 **Honest caveat, stated on the page.** This world holds under 10,000 people and infects most of
 them, so prevalence peaks far above any real outbreak. Random screening is therefore *more*
 efficient here than in reality, which means the page **understates** the pull toward hospital
