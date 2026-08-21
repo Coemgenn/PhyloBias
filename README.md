@@ -1,4 +1,4 @@
-# PgyloBias - how sampling decisions write an outbreak's history
+# PhyloBias - how sampling decisions write an outbreak's history
 
 An interactive, single-page tool showing how early testing and sequencing decisions determine
 what can ever be known about an epidemic's origin and phylogenetics.
