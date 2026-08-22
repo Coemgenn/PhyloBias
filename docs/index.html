@@ -392,54 +392,6 @@ h1 {
 
 :root[data-theme="dark"] #verdict-note { box-shadow: 3px 3px 0 rgba(0,0,0,0.4); }
 
-/* Inline variant picker in the verdict sentence.
-
-   A <select> cannot be opened from script -- .click() on one does nothing in
-   every browser -- so the real control is laid over the word at zero opacity
-   and the styled text underneath is what you see. The click lands on the
-   select, the native popup opens at the word, and keyboard and screen readers
-   get an ordinary form control for free. */
-.variant-picker {
-  position: relative;
-  display: inline-block;
-}
-
-.variant-picker select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  font: inherit;
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-
-.variant-inline-select {
-  border-bottom: 1px dashed var(--border-firm);
-  padding-bottom: 1px;
-  transition: border-color .15s, color .15s;
-}
-
-.variant-inline-select::after {
-  content: "\00a0\25BE";
-  font-size: .7em;
-  color: var(--ink-3);
-}
-
-.variant-picker:hover .variant-inline-select {
-  border-bottom-color: var(--ink-2);
-  color: var(--ink-hi);
-}
-
-/* the select carries the real focus, so the ring has to be drawn on its stand-in */
-.variant-picker:focus-within .variant-inline-select {
-  outline: 2px solid var(--accent-ink);
-  outline-offset: 2px;
-}
-
 .panel-body { padding: 1.125rem; }
 
 /* ============================================================
@@ -521,49 +473,62 @@ h1 {
   flex-direction: column;
 }
 
-.verdict-line {
-  font-family: var(--font-ui);
-  /* Smaller than it was as a full-width banner: this now reads as a column of
-     type beside the trees, not a headline spanning the page. */
-  font-size: clamp(1.0625rem, 1.3vw, 1.3125rem);
-  line-height: 1.35;
-  text-wrap: balance;
-  margin: 0;
-  color: var(--ink);
-}
-
-/* Claim and answer are the same sentence twice over, so they are set in the same
-   face, size and ink: the reader compares two readings, not a statement and a
-   footnote. A rule and air carry the turn instead. */
-.verdict-line.truth {
-  border-top: 1px solid var(--border);
-  margin-top: .95rem;
-  padding-top: .95rem;
-}
-
-.verdict-hint {
+/* Every lineage at once, claim beside answer on the same row. The sentence this
+   replaces could only ever hold one variant, which made the comparison a thing
+   you had to remember across clicks instead of one you could read down. */
+.verdict-table {
+  width: 100%;
+  border-collapse: collapse;
   font-family: var(--font-mono);
-  font-size: .75rem;
-  letter-spacing: .04em;
-  color: var(--ink-3);
-  margin: 1rem 0 0;
-}
-
-.slot {
-  display: inline-block;
-  min-width: 5.5ch;
-  border-bottom: 2px solid var(--border-firm);
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: .82em;
-  text-align: center;
+  font-size: .8125rem;
   font-variant-numeric: tabular-nums;
 }
-.slot.filled { border-bottom-color: var(--ink); color: var(--ink); }
-/* After .filled on purpose: same specificity, so the verdict's reading of a slot
-   wins over the plain filled ink. */
-.slot.ok  { color: var(--ok);  border-bottom-color: var(--ok); }
-.slot.bad { color: var(--bad); border-bottom-color: var(--bad); }
+.verdict-table th,
+.verdict-table td {
+  padding: .4rem .45rem;
+  text-align: left;
+  white-space: nowrap;
+}
+.verdict-table thead th {
+  font-weight: 500;
+  font-size: .6875rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  vertical-align: bottom;
+}
+/* The two readings are the whole point of the table, so the pair of columns each
+   one owns is banded together under a rule rather than left to be inferred from
+   four identical headings. */
+.verdict-table th.grp {
+  text-align: center;
+  border-bottom: 1px solid var(--border-firm);
+  color: var(--ink-2);
+  white-space: normal;
+}
+.verdict-table thead tr:last-child th { border-bottom: 1px solid var(--border); }
+/* The seam between claim and answer, carried down the body. */
+.verdict-table th.grp-truth,
+.verdict-table th.col-truth,
+.verdict-table td.col-truth { border-left: 1px solid var(--border); }
+.verdict-table tbody td { color: var(--ink-2); }
+.verdict-table tbody tr + tr td { border-top: 1px solid var(--border); }
+.verdict-table td.variant {
+  color: var(--ink);
+  font-weight: 500;
+  padding-left: 0;
+}
+.verdict-table td.day { text-align: right; }
+/* The judgement rides on the region cells only: green and red here answer exactly
+   the question the badge is counting — was this origin recovered — and nothing
+   else. A lineage never sampled reads wrong rather than blank, because that is
+   how the tally scores it. */
+.verdict-table td.ok  { color: var(--ok); }
+.verdict-table td.bad { color: var(--bad); }
+.verdict-table td.none { color: var(--ink-3); font-style: italic; }
+/* Wild type is the root, not a variant: it answers for where the outbreak itself
+   began, so it is set off from the lineages that came after it. */
+.verdict-table tbody tr.wild td { border-bottom: 1px solid var(--border-firm); }
 
 .theme-switch {
   display: inline-flex;
@@ -1289,18 +1254,22 @@ input[type="range"]:focus-visible {
       <span class="panel-note" id="verdict-note">no simulation run</span>
     </div>
     <div class="verdict-body">
-      <p class="verdict-line">
-        You would have concluded<span id="v-variant-word"> Variant</span> <span class="variant-picker"><span
-          id="v-variant-select" class="variant-inline-select" aria-hidden="true">Alpha</span><select
-          id="variant-selector" aria-label="Which variant to report on"></select></span> arose in
-        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
-        <span class="slot" id="v-inf-day">&nbsp;</span>.
-      </p>
-      <p class="verdict-line truth">
-        In reality, it arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
-        <span class="slot" id="v-true-day">&nbsp;</span>.
-      </p>
-      <p class="verdict-hint">Click the variant name to change it.</p>
+      <table class="verdict-table" id="verdict-table">
+        <thead>
+          <tr>
+            <th rowspan="2" scope="col">Variant</th>
+            <th colspan="2" scope="colgroup" class="grp">You would conclude</th>
+            <th colspan="2" scope="colgroup" class="grp grp-truth">In reality</th>
+          </tr>
+          <tr>
+            <th scope="col">Region</th>
+            <th scope="col">Day</th>
+            <th scope="col" class="col-truth">Region</th>
+            <th scope="col">Day</th>
+          </tr>
+        </thead>
+        <tbody id="verdict-rows"></tbody>
+      </table>
     </div>
   </section>
 
@@ -2455,7 +2424,6 @@ const state = {
   /* The root is the first question a reader has of any tree — where did THIS
      thing start — and it is the one lineage the reconstruction always answers
      for, so the verdict opens on it. */
-  selectedVariant: "wild",
   /* A plausible starting world rather than a uniform one: the populous hub runs a
      real programme, the periphery does not. Uniform sampling -- even sparse and
      late -- reconstructs the origins correctly, so a uniform default would open on
@@ -2576,9 +2544,8 @@ function rootVerdict(r) {
 
 function renderVerdict() {
   const r = state.result;
-  if (!r) { $("#verdict-note").textContent = "no simulation run"; return; }
-  const selectedId = state.selectedVariant;
-  const k = selectedId === "wild" ? rootVerdict(r) : r.verdicts.find(v => v.id === selectedId);
+  const body = $("#verdict-rows");
+  if (!r) { $("#verdict-note").textContent = "no simulation run"; body.innerHTML = ""; return; }
   const name = id => (REGIONS.find(x => x.id === id) || {}).name || String(id);
   /* Score what was RECOVERED, not what was misplaced.
      Counting misplacements made the worst possible run look like the best: with
@@ -2586,11 +2553,10 @@ function renderVerdict() {
      read "0 misplaced" in green over an empty tree. A lineage that was never
      sampled is not misplaced — but it is certainly not recovered either, and that
      is the thing the reader needs to see.
-     The denominator is every lineage that actually arose in THIS outbreak, which
-     is not all of them: a variant only enters truth.lineages with a marker
-     mutation once it establishes, and seeds differ in which ones do. Wild type is
-     in the count too — it has an origin like any other lineage, and the
-     reconstruction answers for it at the root. */
+     The rows are every lineage that actually arose in THIS outbreak, which is not
+     all of them: a variant only enters truth.lineages with a marker mutation once
+     it establishes, and seeds differ in which ones do. Wild type is a row like any
+     other — it has an origin, and the reconstruction answers for it at the root. */
   const scored = [rootVerdict(r)].concat(r.verdicts).filter(v => v.trueRegion);
   const right = scored.filter(v => v.found && v.regionRight).length;
   const note = $("#verdict-note");
@@ -2600,39 +2566,22 @@ function renderVerdict() {
   const missed = scored.length ? 1 - right / scored.length : 1;
   note.style.setProperty("--score", SCORE_RAMP[Math.round(missed * (SCORE_RAMP.length - 1))]);
 
-  /* the picker's label reads off LINEAGES, like the tree's tip labels do, so
-     adding a lineage needs no second edit here */
-  $("#v-variant-select").textContent = (LIN[selectedId] || {}).name || String(selectedId);
-
-  /* "Variant Wild type" is not a thing anyone says. */
-  const word = $("#v-variant-word");
-  if (word) word.hidden = selectedId === "wild";
-
-  const set = (sel, text, filled, tone) => {
-    const el = $(sel);
-    el.textContent = text;
-    el.classList.toggle("filled", !!filled);
-    el.classList.toggle("ok", tone === "ok");
-    el.classList.toggle("bad", tone === "bad");
-  };
-  /* The region slots carry the judgement and the day slots do not: the colour
-     answers exactly the question the badge is counting — was this origin
-     recovered — and nothing else. A lineage that was never sampled reads wrong
-     rather than blank, because that is how the tally scores it. */
-  if (!k || !k.found) {
-    set("#v-inf-deme", "not seen", false, "bad");
-    set("#v-inf-day", "\u2014", false);
-  } else {
-    set("#v-inf-deme", name(k.region), true, k.regionRight ? "ok" : "bad");
-    set("#v-inf-day", k.day == null ? "\u2014" : String(Math.round(k.day)), true);
-  }
-  /* The answer is set as firmly as the claim above it: both lines are readings of
-     the same event, and greying one of them made it look like the footnote. */
-  const t = k;
-  set("#v-true-deme", t && t.trueRegion ? name(t.trueRegion) : "\u2014", !!(t && t.trueRegion),
-      t && t.trueRegion ? "ok" : undefined);
-  set("#v-true-day", t && t.trueDay != null ? String(Math.round(t.trueDay)) : "\u2014",
-      !!(t && t.trueDay != null));
+  const day = d => d == null ? "\u2014" : String(Math.round(d));
+  /* Lineage names come from LINEAGES, like the tree's tip labels do, so adding a
+     lineage needs no second edit here. */
+  body.innerHTML = scored.map(v => {
+    const label = (LIN[v.id] || {}).name || String(v.id);
+    const inferred = !v.found
+      ? '<td class="none">not seen</td><td class="day none">\u2014</td>'
+      : '<td class="' + (v.regionRight ? "ok" : "bad") + '">' + esc(name(v.region)) + "</td>"
+        + '<td class="day">' + day(v.day) + "</td>";
+    return '<tr' + (v.id === "wild" ? ' class="wild"' : "") + ">"
+      + '<th scope="row" class="variant">' + esc(label) + "</th>"
+      + inferred
+      + '<td class="col-truth">' + esc(name(v.trueRegion)) + "</td>"
+      + '<td class="day">' + day(v.trueDay) + "</td>"
+      + "</tr>";
+  }).join("");
 }
 
 let pending = 0;
@@ -2640,13 +2589,6 @@ function scheduleInfer() {
   if (!HAS_DOM) return;
   if (pending) return;
   pending = requestAnimationFrame(() => { pending = 0; renderInferred(); });
-}
-
-function renderVariantPicker() {
-  const sel = $("#variant-selector");
-  sel.innerHTML = LINEAGES.map(l =>
-    '<option value="' + l.id + '">' + esc(l.name) + '</option>').join("");
-  sel.value = state.selectedVariant;
 }
 
 function renderVirus() {
@@ -2658,7 +2600,6 @@ function render() {
   renderVirus();
   renderMap();
   renderChips();
-  renderVariantPicker();
   renderPolicy();
   renderRegionKey();
   renderTruthTree();
@@ -3051,15 +2992,6 @@ if (HAS_DOM) document.addEventListener("input", e => {
     }
     renderMap();
     scheduleInfer();
-  }
-});
-
-if (HAS_DOM) document.addEventListener("change", e => {
-  const el = e.target;
-  if (el.id === "variant-selector") {
-    state.selectedVariant = el.value;
-    renderVerdict();
-    return;
   }
 });
 
