@@ -136,8 +136,11 @@ test("the inferred tree draws and the verdict reads off it", () => {
   assert.ok(svg, "inferred tree not drawn");
   assert.ok(svg.querySelectorAll("g.branch").length > 15, "inferred tree is nearly empty");
   assert.match(w.document.querySelector("#inf-note").textContent, /tests|sequenced/);
-  for (const id of ["#v-inf-deme", "#v-inf-day", "#v-true-deme", "#v-true-day"])
-    assert.ok(w.document.querySelector(id).textContent.trim().length > 0, `${id} is blank`);
+  const cells = [...w.document.querySelectorAll("#verdict-rows tr")]
+    .flatMap(tr => [...tr.children]);
+  assert.ok(cells.length > 0, "the verdict table has no rows");
+  for (const c of cells)
+    assert.ok(c.textContent.trim().length > 0, "the verdict table left a blank cell");
 });
 
 test("moving a slider changes the reconstruction but never the truth", async () => {
@@ -262,36 +265,39 @@ test("branches meet the root bar in both panels", () => {
    on a hidden <select>, which opens nothing in any browser. The control is now
    a real select laid over the word, so these assert it is reachable and that
    selecting a variant moves every number in the panel, not just the name. */
-test("the variant picker is a real control, not a span pretending", () => {
+test("the verdict table is a real table, one row per lineage that arose", () => {
   const w = page();
-  const sel = w.document.querySelector("#variant-selector");
-  assert.ok(sel, "no select");
-  assert.strictEqual(sel.tagName, "SELECT");
-  assert.ok(!sel.hasAttribute("hidden"), "a hidden select cannot be opened");
-  assert.ok(w.document.querySelector(".variant-picker").contains(sel),
-    "the select must overlay the word it replaces");
-  /* options come from LINEAGES, so this count tracks the roster */
-  assert.strictEqual(sel.options.length, w.PB.LINEAGES.length);
-  assert.strictEqual(sel.options[0].value, "wild");
+  const t = w.document.querySelector("#verdict-table");
+  assert.ok(t, "no verdict table");
+  /* four readings under two banded headings: claim, then answer */
+  const groups = [...t.querySelectorAll("thead th.grp")];
+  assert.strictEqual(groups.length, 2);
+  for (const g of groups) assert.strictEqual(g.getAttribute("colspan"), "2");
+
+  const rows = [...t.querySelectorAll("#verdict-rows tr")];
+  assert.ok(rows.length > 1, "a table of one row is the old sentence with extra steps");
+  for (const r of rows)
+    assert.strictEqual(r.children.length, 5, "every row owes five cells");
+
+  /* the roster drives the rows, and wild type answers for the root first */
+  assert.strictEqual(rows[0].children[0].textContent, w.PB.LIN.wild.name);
+  const names = rows.map(r => r.children[0].textContent);
+  const roster = w.PB.LINEAGES.map(l => l.name);
+  for (const n of names) assert.ok(roster.includes(n), `${n} is not a lineage`);
+  assert.strictEqual(new Set(names).size, names.length, "a lineage is listed twice");
+
+  /* the badge counts exactly the rows on show */
+  const [, of] = w.document.querySelector("#verdict-note").textContent
+    .match(/^\d+ of (\d+) origins recovered$/);
+  assert.strictEqual(Number(of), rows.length, "the tally and the table disagree");
 });
 
-test("choosing a variant moves the whole verdict, not just the name", () => {
+test("each row reads its own reconstruction, not one repeated down the column", () => {
   const w = page();
-  const sel = w.document.querySelector("#variant-selector");
-  const snap = () => ["#v-variant-select", "#v-inf-deme", "#v-inf-day", "#v-true-deme", "#v-true-day"]
-    .map(id => w.document.querySelector(id).textContent);
-
-  const seen = new Set();
-  for (const o of [...sel.options]) {
-    sel.value = o.value;
-    sel.dispatchEvent(new w.Event("change", { bubbles: true }));
-    const [nameCell, ...rest] = snap();
-    assert.strictEqual(nameCell, o.text, "the sentence disagrees with the picker");
-    for (const cell of rest)
-      assert.ok(cell.trim().length > 0, `${o.value} left a blank cell in the verdict`);
-    seen.add(rest.join("|"));
-  }
-  assert.ok(seen.size > 1, "every variant produced the same numbers — nothing is wired up");
+  const readings = [...w.document.querySelectorAll("#verdict-rows tr")]
+    .map(r => [...r.children].slice(1).map(c => c.textContent).join("|"));
+  assert.ok(new Set(readings).size > 1,
+    "every lineage produced the same four numbers — nothing is wired up");
 });
 
 test("the score badge colours from green at none wrong toward red", () => {
