@@ -49,6 +49,15 @@
   --reg-esker:    #3db1c2;
   --reg-fenmoor:  #ac5e60;
 
+  /* Right and wrong, the verdict's only chroma outside region. It is the same
+     language the score badge speaks -- its ramp runs between these two ends --
+     so the page carries ONE second colour, not two. Both are pulled away from
+     the region hues they sit near: the green is bluer than Doran's, the red
+     oranger than Fenmoor's rose, and the word inside the slot says which region
+     it is regardless. 4.9:1 and 5.7:1 on this surface. */
+  --ok:           #198546;
+  --bad:          #c2321c;
+
   --shadow: 0 1px 2px rgba(16,23,26,.05), 0 4px 16px rgba(16,23,26,.05);
 
   --font-display: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
@@ -84,6 +93,11 @@
     --reg-esker:    #4de8fe;
     --reg-fenmoor:  #ec898b;
 
+    /* Not the light pair lightened: on near-black both of those fall under 4.5:1,
+       so each end is picked again on this ground. 9.6:1 and 6.7:1. */
+    --ok:           #5fcf8a;
+    --bad:          #ff6a52;
+
     /* A drop shadow is invisible on near-black; panels lift with a
        top highlight instead. */
     --shadow: inset 0 1px 0 rgba(255,255,255,.045);
@@ -115,6 +129,11 @@
     --reg-esker:    #4de8fe;
     --reg-fenmoor:  #ec898b;
 
+    /* Not the light pair lightened: on near-black both of those fall under 4.5:1,
+       so each end is picked again on this ground. 9.6:1 and 6.7:1. */
+    --ok:           #5fcf8a;
+    --bad:          #ff6a52;
+
     /* A drop shadow is invisible on near-black; panels lift with a
        top highlight instead. */
     --shadow: inset 0 1px 0 rgba(255,255,255,.045);
@@ -145,11 +164,19 @@ body::before {
   mask-size: 60px 30px;
 }
 
+/* Every measure on this page is in rem, so the root size is the one knob that
+   scales the whole layout at once. A very large monitor gets a proportionally
+   larger page — bigger type, wider panels, the same design — rather than the
+   same page with its middle stretched. It does not touch tree height, which is
+   pinned to days, so the page cannot grow itself off the bottom of the screen. */
+html { font-size: 16px; }
+@media (min-width: 1900px) { html { font-size: 17px; } }
+
 body {
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.55;
   margin: 0;
   padding: 0;
@@ -159,9 +186,15 @@ body {
 .wrap {
   position: relative;
   z-index: 1;
-  max-width: 1180px;
+  /* Fluid, not a fixed measure: the page fills whatever the monitor gives it up
+     to 1800px, and the rows below decide for themselves which of their columns
+     should absorb the extra — the trees, which read better spread out, rather
+     than the map or the verdict, which do not. Prose blocks carry their own ch
+     caps, so nothing here sets a line longer than it can be read at. */
+  width: 100%;
+  max-width: 112rem;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 1.25rem clamp(1.5rem, 2vw, 2.5rem) 3rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -170,9 +203,9 @@ body {
 h1 {
   font-family: var(--font-display);
   font-weight: 600;
-  /* Sized to hold on one line inside .wrap's 1148px measure; the cap
+  /* Sized to hold on one line inside the bar, next to the theme switch; the cap
      keeps it from outgrowing the container on very wide viewports. */
-  font-size: min(2.9vw, 2.3rem);
+  font-size: min(2.45vw, 2.6rem);
   line-height: 1.1;
   letter-spacing: .015em;
   text-transform: uppercase;
@@ -180,14 +213,26 @@ h1 {
   margin: 0;
   color: var(--ink-hi);
 }
+/* Below the centred masthead's breakpoint the title shares a row with the switch,
+   and one line of it no longer fits beside one — so it wraps rather than running
+   underneath the buttons. */
+@media (max-width: 899px) {
+  h1 { white-space: normal; font-size: clamp(1.5rem, 3.4vw, 2rem); text-wrap: balance; }
+}
 @media (max-width: 640px) {
-  h1 { white-space: normal; font-size: clamp(1.5rem, 6.5vw, 2rem); text-wrap: balance; }
+  h1 { font-size: clamp(1.5rem, 6.5vw, 2rem); }
 }
 
 .standfirst {
-  color: var(--ink-2);
-  max-width: none;
-  margin: .7rem 0 0;
+  /* This is the argument of the whole page, so it is set to be read, not skimmed
+     past: full ink rather than the secondary grey, and a size up on body copy.
+     One continuous paragraph the width of its box; the extra leading is what
+     keeps the eye on the line at that measure. */
+  color: var(--ink);
+  font-size: clamp(1.0625rem, .6rem + .8vw, 1.375rem);
+  line-height: 1.6;
+  margin: 0;
+  text-wrap: pretty;
 }
 
 .panel {
@@ -200,95 +245,235 @@ h1 {
 .panel-head {
   display: flex;
   align-items: baseline;
+  align-content: center;
   justify-content: space-between;
-  gap: 1rem;
+  /* In a narrow column the title and its note cannot share a line. Let the note
+     drop below the title rather than letting the title break mid-phrase. */
+  flex-wrap: wrap;
+  gap: .3rem 1rem;
   padding: .875rem 1.125rem;
   border-bottom: 1px solid var(--border);
+  /* A head holding a button is taller than one holding a line of text. Side by
+     side that pushed one panel's chart down relative to the other's, so their
+     axes no longer lined up. Pin the height instead of hoping the contents match. */
+  min-height: 3.5rem;
 }
+/* The two tree heads hold different furniture — a button on one, a spend note on
+   the other, and at this column width the note takes a line of its own. One
+   height for both, so the two axes still start at the same pixel. */
+.stage .panel-head { min-height: 6.25rem; align-content: flex-start; }
 
 .panel-title {
   font-family: var(--font-mono);
-  font-size: .75rem;
-  font-weight: 500;
+  font-size: .875rem;
+  font-weight: 600;
   letter-spacing: .13em;
   text-transform: uppercase;
-  color: var(--ink-2);
+  color: var(--ink);
   margin: 0;
+  white-space: nowrap;
 }
+@media (max-width: 420px) { .panel-title { white-space: normal; } }
 
 .panel-note {
   font-family: var(--font-mono);
-  font-size: .75rem;
+  font-size: .875rem;
   color: var(--ink-3);
   white-space: nowrap;
 }
 
-/* Verdict score: distressed DANGER stamp style */
+/* ============================================================
+   HELP MARKS
+
+   A ? beside a control, holding one plain sentence about what the
+   control does. Hover or focus; there is no click state, and nothing
+   on the page is explained ONLY here, so a reader who never opens one
+   loses nothing.
+
+   The bubble's text is the button's own accessible name, read out of
+   `aria-label` by `content: attr(...)`. One string, so the sentence a
+   screen reader gets and the sentence a mouse gets cannot drift apart.
+   ============================================================ */
+.help {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-left: .35rem;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--ink-3);
+  background: transparent;
+  border: 1px solid var(--border-firm);
+  border-radius: 50%;
+  cursor: help;
+}
+.help:hover, .help:focus {
+  color: var(--ink);
+  border-color: var(--ink-3);
+  background: var(--surface-2);
+}
+.help:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* The bubble is anchored to the BOX the mark sits in — a label row, a panel
+   head — and pinned to both its edges. A tooltip that sizes itself around the
+   mark can hang off the side of a narrow column and set the page scrolling
+   sideways; one that spans its container cannot. */
+.help::after {
+  content: attr(aria-label);
+  position: absolute;
+  z-index: 30;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .12s ease;
+  font-family: var(--font-ui);
+  font-size: .8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-firm);
+  border-radius: var(--r);
+  box-shadow: 0 8px 22px rgba(0,0,0,.16);
+  padding: .65rem .8rem;
+  pointer-events: none;
+}
+.help:hover::after, .help:focus::after { opacity: 1; visibility: visible; }
+
+.field-top, .panel-head { position: relative; }
+.field-top .help::after { top: calc(100% + .4rem); left: 0; right: 0; }
+.panel-head .help::after { top: calc(100% + .4rem); left: 1.125rem; right: 1.125rem; }
+
+.field-name { display: inline-flex; align-items: baseline; min-width: 0; }
+
+/* The score, stamped. This is the one place chroma does not mean region: the
+   green-to-red ramp is a second colour language on the page, admitted because
+   the badge is the reader's only running feedback on how badly the current
+   policy is doing. It is redundant with the number printed inside it, so a
+   reader who cannot separate the hues loses nothing -- which is the only
+   footing on which a red/green scale is defensible. Every stop was checked to
+   clear 4.6:1 against the white text. */
 #verdict-note {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: #d32f2f;
+  background: var(--score);
   color: #ffffff;
   padding: 0.5rem 0.9rem;
   border-radius: 4px;
-  border: 2px solid #d32f2f;
   white-space: nowrap;
   display: inline-block;
-  transform: rotate(-2deg);
   box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+  transition: background-color .25s;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) #verdict-note {
-    background: #d32f2f;
-    box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
-  }
+  :root:not([data-theme="light"]) #verdict-note { box-shadow: 3px 3px 0 rgba(0,0,0,0.4); }
 }
 
-:root[data-theme="dark"] #verdict-note {
-  background: #d32f2f;
-  box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+:root[data-theme="dark"] #verdict-note { box-shadow: 3px 3px 0 rgba(0,0,0,0.4); }
+
+/* Inline variant picker in the verdict sentence.
+
+   A <select> cannot be opened from script -- .click() on one does nothing in
+   every browser -- so the real control is laid over the word at zero opacity
+   and the styled text underneath is what you see. The click lands on the
+   select, the native popup opens at the word, and keyboard and screen readers
+   get an ordinary form control for free. */
+.variant-picker {
+  position: relative;
+  display: inline-block;
 }
 
-/* Inline variant selector in verdict prose */
-.variant-inline-select {
-  border-bottom: 2px solid var(--border-firm);
+.variant-picker select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 2px;
-  padding-bottom: 1px;
-  transition: border-color 0.15s, color 0.15s;
+  font: inherit;
+  border: 0;
+  padding: 0;
+  margin: 0;
 }
 
-.variant-inline-select:hover {
+.variant-inline-select {
+  border-bottom: 1px dashed var(--border-firm);
+  padding-bottom: 1px;
+  transition: border-color .15s, color .15s;
+}
+
+.variant-inline-select::after {
+  content: "\00a0\25BE";
+  font-size: .7em;
+  color: var(--ink-3);
+}
+
+.variant-picker:hover .variant-inline-select {
   border-bottom-color: var(--ink-2);
   color: var(--ink-hi);
 }
 
-.variant-inline-select:focus-visible {
+/* the select carries the real focus, so the ring has to be drawn on its stand-in */
+.variant-picker:focus-within .variant-inline-select {
   outline: 2px solid var(--accent-ink);
-  outline-offset: 1px;
-}
-
-#variant-selector {
-  position: absolute;
-  left: -9999px;
+  outline-offset: 2px;
 }
 
 .panel-body { padding: 1.125rem; }
 
 /* ============================================================
    HEADER
+
+   Built out of the same two parts the acts below are: a grey bar,
+   then the box it caps. The page opens in the idiom it goes on to
+   use rather than in a masthead of its own invention, and the title
+   reads as the first tab of three rather than as a poster over them.
    ============================================================ */
-.masthead {
+.masthead { display: flex; flex-direction: column; }
+
+.masthead-bar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 2rem;
   flex-wrap: wrap;
+  gap: .4rem 1.5rem;
+  background: var(--border-firm);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: .55rem clamp(.9rem, 1.2vw, 1.25rem) .65rem;
+  /* Overlaps the box below by the 1px of its own border, as the act tabs do, so
+     bar and box read as one object. */
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+.masthead-bar h1 { flex: 1 1 18rem; min-width: 0; }
+/* The switch is standing on --border-firm now, which is the colour of its own
+   border: on the page background that outline did the work, here it would
+   vanish into the bar. */
+.masthead-bar .theme-switch { border-color: var(--ink-3); }
+.masthead-bar .theme-btn + .theme-btn { border-left-color: var(--ink-3); }
+
+.masthead-body {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 1.125rem clamp(.9rem, 1.2vw, 1.25rem) 1.25rem;
 }
 
 
@@ -297,23 +482,64 @@ h1 {
    ============================================================ */
 .verdict { border-left: 3px solid var(--ink); }
 
+/* The head carries two different things — what the panel is, and the running
+   score — so each gets its own band with a rule between them rather than
+   sharing a line and reading as one label. */
+.verdict .panel-head {
+  flex-direction: column;
+  /* Column + wrap + the inherited `align-content: center` would centre the
+     single flex line horizontally and shrink both bands to their content;
+     nowrap keeps each band the full width of the panel. */
+  flex-wrap: nowrap;
+  align-items: stretch;
+  align-content: stretch;
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+}
+/* Same size and ink as every other panel title — it was set larger when it stood
+   alone in a wide banner, and beside the rest it read as a different rank of
+   heading rather than the same one. */
+.verdict .panel-title {
+  white-space: normal;
+  padding: .95rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.verdict #verdict-note { align-self: flex-start; margin: .95rem 1.25rem; }
+
 .verdict-body {
-  padding: 1.375rem 1.5rem;
+  padding: 1.125rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: .5rem;
 }
 
 .verdict-line {
   font-family: var(--font-ui);
-  font-size: clamp(1.0625rem, 1.8vw, 1.3125rem);
-  line-height: 1.3;
+  /* Smaller than it was as a full-width banner: this now reads as a column of
+     type beside the trees, not a headline spanning the page. */
+  font-size: clamp(1.0625rem, 1.3vw, 1.3125rem);
+  line-height: 1.35;
   text-wrap: balance;
   margin: 0;
   color: var(--ink);
 }
 
-.verdict-line.truth { color: var(--ink-2); }
+/* Claim and answer are the same sentence twice over, so they are set in the same
+   face, size and ink: the reader compares two readings, not a statement and a
+   footnote. A rule and air carry the turn instead. */
+.verdict-line.truth {
+  border-top: 1px solid var(--border);
+  margin-top: .95rem;
+  padding-top: .95rem;
+}
+
+.verdict-hint {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+  margin: 1rem 0 0;
+}
 
 .slot {
   display: inline-block;
@@ -326,6 +552,10 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 .slot.filled { border-bottom-color: var(--ink); color: var(--ink); }
+/* After .filled on purpose: same specificity, so the verdict's reading of a slot
+   wins over the plain filled ink. */
+.slot.ok  { color: var(--ok);  border-bottom-color: var(--ok); }
+.slot.bad { color: var(--bad); border-bottom-color: var(--bad); }
 
 .theme-switch {
   display: inline-flex;
@@ -350,24 +580,63 @@ h1 {
 .theme-btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
 
 /* ============================================================
+   ACT TABS
+
+   The page is a causal chain, not a menu: the virus is set, then the
+   testing programme that observes it, then what that programme lets
+   you conclude. The numbers are earned — they mark a real order, and
+   reading them out of order does not work.
+
+   A tab overlaps the box below it by 1px so it covers that box's top
+   border where they meet, which is what makes the two read as one
+   object rather than a label sitting on a lid.
+   ============================================================ */
+.act { display: flex; flex-direction: column; }
+.act > * + * { margin-top: 1.25rem; }
+.act > .act-tab + * { margin-top: 0; }
+
+.act-tab {
+  align-self: stretch;
+  display: flex;
+  align-items: baseline;
+  gap: .55rem;
+  font-family: var(--font-mono);
+  font-size: .9375rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-hi);
+  background: var(--border-firm);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: .4rem .95rem .5rem;
+  margin: 0 0 -1px;
+  position: relative;
+  z-index: 2;
+}
+.act-n { color: var(--ink-2); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+
+/* ============================================================
    VIRUS STRIP — the pathogen's identity and the three knobs that
    regenerate the truth, on one horizontal rail. Separated from
    surveillance policy because these two do categorically different
    things: this rail changes what happened, policy only changes
    what you can see of it.
    ============================================================ */
-.virus { display: flex; align-items: stretch; overflow-x: auto; }
+/* Vertical: the rail stands beside the map rather than above it, so the three
+   knobs stack down a narrow column instead of running across a wide one. */
+.virus { display: flex; flex-direction: column; align-items: stretch; }
 
 .virus-id {
   padding: .8rem 1rem;
-  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
-  min-width: 16rem;
-  max-width: 32ch;
+  min-width: 0;
 }
 .virus-name {
   font-family: var(--font-mono);
-  font-size: .75rem;
+  font-size: .875rem;
   font-weight: 500;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -375,50 +644,82 @@ h1 {
   margin: 0 0 .3rem;
 }
 .virus-info {
-  font-size: .8125rem;
+  font-size: .875rem;
   line-height: 1.5;
   color: var(--ink-3);
   margin: 0;
 }
 
-.virus #scenario-fields { display: flex; flex: 1; min-width: 0; }
+.virus #scenario-fields {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
 .virus .field {
   flex: 1 1 0;
-  min-width: 12.5rem;
+  min-width: 0;
   justify-content: center;
   gap: .4rem;
   margin-bottom: 0;
   padding: .8rem 1rem;
-  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
-.virus .field:last-child { border-right: 0; }
+.virus .field:last-child { border-bottom: 0; }
 .virus .field-top { flex-wrap: wrap; gap: .2rem .75rem; }
-
-@media (max-width: 880px) {
-  .virus { flex-direction: column; }
-  .virus-id { border-right: 0; border-bottom: 1px solid var(--border); max-width: none; }
-  .virus #scenario-fields { flex-wrap: wrap; }
-  .virus .field { min-width: 14rem; }
-}
 
 /* ============================================================
    MAIN GRID
    ============================================================ */
+/* Acts 01 and 02 share one row so the whole set-up fits above the fold.
+   They are two separate <section class="act">s, each carrying its own tab,
+   so the tabs sit over their own boxes and never fuse into one lid. */
+.setup {
+  display: grid;
+  /* The virus rail holds three sliders and a paragraph; past ~22rem it is just
+     wider, not better, so it is capped and the testing block takes the rest. */
+  grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+.setup > .act > .panel,
+.setup > .act > .lower { flex: 1; }
+
+/* Trees on the left, the verdict standing beside them on the right. */
+.results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 26rem);
+  gap: 1.25rem;
+  align-items: start;
+}
+
 .stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  /* Equal-height boxes, the same way .lower does it. The reconstruction genuinely
+     spans more days than the truth tree, so its chart is taller; the shorter panel
+     absorbs the difference as space under its chart rather than having its axis
+     padded out, which is what made the trees look squashed before. */
+  align-items: stretch;
 }
+.stage > .panel { display: flex; flex-direction: column; }
+.stage > .panel > .panel-body { flex: 1; }
 .lower {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  /* The map is capped in the same spirit — it is a locator, and every pixel of
+     width it takes it also takes in height, which is the one budget this row has
+     to respect. Policy absorbs what is left. */
+  grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: stretch;
 }
 .lower > .panel { display: flex; flex-direction: column; }
 .lower > .panel > .panel-body,
 .lower > .panel > .controls-grid { flex: 1; }
+@media (max-width: 1080px) {
+  .setup, .results { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 940px) {
   .stage, .lower { grid-template-columns: minmax(0, 1fr); }
 }
@@ -426,7 +727,10 @@ h1 {
 /* ============================================================
    MAP
    ============================================================ */
-.map-svg { display: block; width: 100%; height: auto; }
+/* Capped: the map is a locator, not a chart, and letting it soak up the wider
+   measure would have bought nothing but height on the one row that has to stay
+   short. It centres in whatever the column leaves it. */
+.map-svg { display: block; width: 100%; max-width: 24rem; height: auto; margin-inline: auto; }
 
 .region { cursor: pointer; }
 .region-shape {
@@ -476,7 +780,7 @@ h1 {
   gap: .625rem;
   margin-top: 1rem;
   font-family: var(--font-mono);
-  font-size: .75rem;
+  font-size: .8125rem;
   color: var(--ink-3);
 }
 .legend-ramp {
@@ -496,7 +800,7 @@ h1 {
    number of days in each panel. Equalising WIDTH instead would have worked too,
    but only by scaling both down to the wider one — and by making each panel's
    geometry depend on the other's, which is exactly what must not happen here. */
-.tree-svg { display: block; height: 300px; width: auto; max-width: none; }
+.tree-svg { display: block; max-width: none; }
 #truth-tree, #inferred-tree { overflow-x: auto; }
 .tree-svg line { shape-rendering: crispEdges; }
 .tree-label {
@@ -568,7 +872,7 @@ h1 {
 .curtain p {
   margin: 0;
   color: var(--ink-3);
-  font-size: .9375rem;
+  font-size: 1rem;
   max-width: 32ch;
 }
 .curtain .curtain-title {
@@ -578,6 +882,19 @@ h1 {
   margin: 0;
 }
 
+.panel-sub {
+  font-family: var(--font-mono);
+  font-size: .875rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  /* Sits inside the head, on a line of its own under the title: the count is
+     part of what the panel says it is showing, not a footnote to the chart. */
+  flex-basis: 100%;
+  padding: 0;
+}
+.panel-sub:empty { display: none; }
+
 .region-key {
   display: flex;
   flex-wrap: wrap;
@@ -585,11 +902,21 @@ h1 {
   padding: .75rem 1.125rem;
   border-top: 1px solid var(--border);
 }
+/* The swatches name the regions; this names what a colour MEANS, which is the
+   one thing a reader cannot infer from the swatches themselves. */
+.key-lede {
+  flex-basis: 100%;
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+}
+
 .key-item {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  font-size: .75rem;
+  font-size: .8125rem;
   color: var(--ink-2);
   font-family: var(--font-mono);
 }
@@ -598,7 +925,6 @@ h1 {
   border-radius: 1px;
   flex: none;
 }
-.key-count { margin-left: auto; color: var(--ink-3); }
 
 /* ============================================================
    EMPTY STATE
@@ -612,16 +938,6 @@ h1 {
   min-height: 300px;
   text-align: center;
   padding: 2rem 1.5rem;
-}
-.empty-mark {
-  width: 44px; height: 44px;
-  border: 1px dashed var(--border-firm);
-  border-radius: var(--r);
-  display: grid;
-  place-items: center;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: .8125rem;
 }
 .empty p {
   margin: 0;
@@ -645,32 +961,20 @@ h1 {
 .control-group { padding: 1.125rem 1.25rem; }
 .control-group + .control-group { border-left: 1px solid var(--border); }
 
-.group-label {
-  font-family: var(--font-mono);
-  font-size: .75rem;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 0 0 .25rem;
-}
+/* Full width and centred, which is why the left accent rule went: a bar down
+   one edge is the pull-quote idiom and reads as a promise of left-aligned text.
+   Squared off on all four sides, it reads as the banner it is. */
 .group-note {
-  font-size: .8125rem;
+  font-size: .875rem;
   line-height: 1.5;
   color: var(--ink-2);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 var(--r) var(--r) 0;
-  padding: .5rem .7rem;
+  border-radius: var(--r);
+  padding: .7rem .9rem;
   margin: 0 0 .875rem;
-  max-width: 46ch;
-}
-
-.group-hint {
-  font-size: .8125rem;
-  color: var(--ink-3);
-  margin: 0 0 1rem;
-  max-width: 42ch;
+  text-align: center;
+  text-wrap: pretty;
 }
 
 .field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .875rem; }
@@ -682,10 +986,10 @@ h1 {
   justify-content: space-between;
   gap: 1rem;
 }
-.field label { font-size: .875rem; color: var(--ink-2); }
+.field label { font-size: .9375rem; color: var(--ink-2); }
 .field output {
   font-family: var(--font-mono);
-  font-size: .875rem;
+  font-size: .9375rem;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
@@ -737,7 +1041,7 @@ input[type="range"]:focus-visible {
 .region-chips { display: flex; flex-wrap: wrap; gap: .375rem; margin-bottom: 1rem; }
 .chip {
   font-family: var(--font-mono);
-  font-size: .75rem;
+  font-size: .8125rem;
   font-weight: 400;
   color: var(--ink-2);
   background: transparent;
@@ -757,10 +1061,10 @@ input[type="range"]:focus-visible {
 /* ============================================================
    SOURCES
    ============================================================ */
-.sources { font-size: .875rem; color: var(--ink-3); }
+.sources { font-size: .9375rem; color: var(--ink-3); }
 .sources h2 {
   font-family: var(--font-mono);
-  font-size: .75rem;
+  font-size: .875rem;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -768,14 +1072,23 @@ input[type="range"]:focus-visible {
   margin: 0 0 .75rem;
 }
 .sources ul {
-  margin: 0; padding: 0; list-style: none; display: grid; gap: .5rem;
+  margin: 0; padding: 0; list-style: none;
+  /* Two columns once there is room for two readable ones. A citation list set to
+     the full 1452px measure is a line too long to track back to its own start.
+     Flowed rather than gridded, so the entries pack tight instead of each row
+     being padded out to the height of its tallest neighbour. */
+  columns: 34rem;
+  column-gap: 3rem;
   counter-reset: src;
 }
 .sources li {
   padding-left: 1.9rem;
+  margin-bottom: .5rem;
+  break-inside: avoid;
   position: relative;
-  max-width: 78ch;
   counter-increment: src;
+  text-align: justify;
+  text-align-last: left;
 }
 /* Numbered, not a section mark: these are citations the page owes the
    reader, so the marker keys to something instead of decorating. */
@@ -809,39 +1122,57 @@ input[type="range"]:focus-visible {
 <div class="wrap">
 
   <header class="masthead">
-    <div>
-      <h1>The history you sequence is the history you get</h1>
-      <p class="standfirst">
-        A phylogenetic tree is not the epidemic. It is a shadow the epidemic casts through your
-        sampling scheme. Fund one region&rsquo;s sequencing and starve another, and the origin of a
-        variant moves &mdash; not in reality, only in the record.
-      </p>
+    <div class="masthead-bar">
+      <h1>The history you test is the history you get</h1>
+      <div class="theme-switch" role="group" aria-label="Colour theme">
+        <button type="button" class="theme-btn" data-set-theme="light" aria-pressed="false">Light</button>
+        <button type="button" class="theme-btn" data-set-theme="dark" aria-pressed="false">Dark</button>
+      </div>
     </div>
-    <div class="theme-switch" role="group" aria-label="Colour theme">
-      <button type="button" class="theme-btn" data-set-theme="light" aria-pressed="false">Light</button>
-      <button type="button" class="theme-btn" data-set-theme="dark" aria-pressed="false">Dark</button>
+    <div class="masthead-body">
+      <p class="standfirst">
+        A pathogen&rsquo;s phylogenetic tree is built from the samples that happened to get sequenced,
+        which makes it prone to ascertainment and sampling bias. Some regions test early and broadly.
+        Others test late, or only the sickest patients. Cases that were never sampled leave no trace.
+        The result is a tree that can look complete and confident while telling an inaccurate story of
+        how the pathogen evolved and spread. This tool lets you change those testing parameters and
+        watch the reconstructed history diverge from a known truth.
+      </p>
     </div>
   </header>
 
-  <!-- VIRUS --------------------------------------------------- -->
+  <!-- ACTS 1 + 2 : the two inputs, side by side. Each keeps its own tab —
+       the tabs are deliberately NOT merged, because the virus rail and the
+       surveillance rail do categorically different things. ---------------- -->
+  <div class="setup">
+
+  <section class="act" aria-labelledby="act-virus">
+  <h2 class="act-tab" id="act-virus"><span class="act-n">01</span>Virus</h2>
+
   <section class="panel virus" aria-labelledby="virus-h">
     <div class="virus-id">
       <p class="virus-name" id="virus-h">Meridian virus &middot; MRV-1</p>
       <p class="virus-info">
-        Enveloped RNA virus, respiratory. These three set the outbreak itself &mdash;
-        move any of them and the truth is regenerated from scratch.
+        Enveloped RNA virus, respiratory.<br>
+        Adjust the sliders to modify the epidemic&rsquo;s characteristics.
       </p>
     </div>
     <div id="scenario-fields"></div>
   </section>
 
-  <!-- MAP + CONTROLS ----------------------------------------- -->
+  </section>
+
+  <section class="act" aria-labelledby="act-testing">
+  <h2 class="act-tab" id="act-testing"><span class="act-n">02</span>Testing</h2>
+
   <div class="lower">
 
   <section class="panel" aria-labelledby="map-h">
       <div class="panel-head">
-        <h2 class="panel-title" id="map-h">Sequencing effort by region</h2>
-        <span class="panel-note">click to fund</span>
+        <h3 class="panel-title" id="map-h">Sequencing effort by region<button type="button"
+          class="help" aria-label="How much sequencing each region does: darker fill is more,
+          combining how early testing starts with how much of it there is. Click a region to edit
+          its own policy below.">?</button></h3>
       </div>
       <div class="panel-body">
         <svg class="map-svg" viewBox="0 0 400 320" role="group"
@@ -849,34 +1180,35 @@ input[type="range"]:focus-visible {
           <g id="map-regions"></g>
         </svg>
         <div class="legend">
-          <span>colour&nbsp;=&nbsp;region &middot; strength&nbsp;=&nbsp;sequencing</span>
+          <span>fill&nbsp;=&nbsp;surveillance&nbsp;effort</span>
           <div class="legend-ramp" aria-hidden="true">
             <span style="opacity:.12"></span><span style="opacity:.26"></span>
             <span style="opacity:.40"></span><span style="opacity:.55"></span>
             <span style="opacity:.70"></span>
           </div>
-          <span>none&nbsp;&rarr;&nbsp;high</span>
+          <span>none&nbsp;&rarr;&nbsp;maximum</span>
         </div>
       </div>
     </section>
 
   <section class="panel" aria-labelledby="controls-h">
     <div class="panel-head">
-      <h2 class="panel-title" id="controls-h">Testing policy</h2>
-      <button type="button" class="btn ghost" id="fullinfo-btn" aria-pressed="false">Sequence everything</button>
+      <h3 class="panel-title" id="controls-h">Testing policy</h3>
+      <button type="button" class="btn ghost" id="fullinfo-btn" aria-pressed="false">Omniscient mode</button>
     </div>
     <div class="controls-grid">
 
       <div class="control-group">
-        <p class="group-label">Region &mdash; <span id="sel-region">Aldane</span></p>
         <p class="group-note" id="fullinfo-note" hidden>
-          <strong>Not a policy &mdash; a control experiment.</strong> Every infection
-          sequenced the moment it happens, including the ones nobody ever knew they had.
-          No surveillance programme can do this: maxing every slider still reaches only
-          about 63% of infections, because most asymptomatic cases are never found at all.
-          Shown so you can check that the reconstruction is sound when the sampling is
-          perfect &mdash; the errors elsewhere on this page come from sampling, not from
-          the method.
+          <strong>Omniscient mode is not a real possibility &mdash; it is a control
+          experiment.</strong> Every infection is sequenced the moment it happens,
+          asymptomatic cases included, so you can see how the tree would be reconstructed
+          under perfect testing. It is still not identical to the known truth, because
+          even a complete set of genomes only records mutations, not movements: two
+          regions holding the same genotype are indistinguishable, parsimony has to break
+          the ties that leaves, and dates come from a clock regression rather than a
+          calendar. Those residual errors are the method&rsquo;s floor &mdash; everything
+          worse than this, elsewhere on the page, came from sampling.
         </p>
         <div class="region-chips" id="region-chips" role="group" aria-label="Select a region"></div>
         <div id="policy-fields"></div>
@@ -887,42 +1219,30 @@ input[type="range"]:focus-visible {
 
   </div>
 
-  <!-- VERDICT ------------------------------------------------ -->
-  <section class="panel verdict" aria-labelledby="verdict-h">
-    <div class="panel-head">
-      <h2 class="panel-title" id="verdict-h">What you would have concluded</h2>
-      <span class="panel-note" id="verdict-note">no simulation run</span>
-    </div>
-    <div class="verdict-body">
-      <p class="verdict-line">
-        You would have concluded Variant <span id="v-variant-select" class="variant-inline-select" role="button" tabindex="0" aria-label="Select variant">Alpha</span> arose in
-        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
-        <span class="slot" id="v-inf-day">&nbsp;</span>.
-      </p>
-      <select id="variant-selector" aria-label="Select variant to view verdict" hidden>
-        <option value="wild">Wild-type</option>
-        <option value="alpha">Alpha</option>
-        <option value="beta">Beta</option>
-        <option value="gamma">Gamma</option>
-        <option value="delta">Delta</option>
-        <option value="epsilon">Epsilon</option>
-        <option value="zeta">Zeta</option>
-      </select>
-      <p class="verdict-line truth">
-        It arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
-        <span class="slot" id="v-true-day">&nbsp;</span>.
-      </p>
-    </div>
   </section>
 
-  <!-- STAGE: the comparison ------------------------------- -->
+  </div>
+
+  <!-- ACT 3 : RESULTS ------------------------------------------ -->
+  <section class="act" aria-labelledby="act-results">
+  <h2 class="act-tab" id="act-results"><span class="act-n">03</span>Results</h2>
+
+  <div class="results">
+
+  <!-- STAGE: the two trees, side by side on the left ------ -->
   <div class="stage">
 
     <section class="panel" aria-labelledby="truth-h">
       <div class="panel-head">
-        <h2 class="panel-title" id="truth-h">What actually happened</h2>
+        <h3 class="panel-title" id="truth-h">What actually happened<button type="button"
+          class="help" aria-label="The virus&rsquo;s true family
+          tree, taken straight from the simulation: every infection, every mutation, wherever it
+          happened. Time runs downwards, each fork is a mutation, and a branch takes the colour of
+          the region that lineage really arose in. No real outbreak comes with this panel &mdash;
+          it is here only so you can mark the reconstruction against it.">?</button></h3>
         <button type="button" class="btn ghost" id="reveal-btn" aria-expanded="false"
                 aria-controls="truth-body">Reveal</button>
+        <p class="panel-sub" id="truth-count"></p>
       </div>
       <div class="panel-body" id="truth-body">
         <div class="curtain" id="truth-curtain">
@@ -938,8 +1258,14 @@ input[type="range"]:focus-visible {
 
     <section class="panel" aria-labelledby="inf-h">
       <div class="panel-head">
-        <h2 class="panel-title" id="inf-h">What you would reconstruct</h2>
+        <h3 class="panel-title" id="inf-h">What you would reconstruct<button type="button"
+          class="help" aria-label="The tree you would build from
+          the genomes your testing policy actually collected, by the standard recipe: group
+          genomes by the mutations they share, date each branch by how many mutations it carries,
+          and give it the region that best explains the samples hanging beneath it. It never sees
+          the truth panel &mdash; only the samples you paid for.">?</button></h3>
         <span class="panel-note" id="inf-note">&nbsp;</span>
+        <p class="panel-sub" id="inferred-count"></p>
       </div>
       <div class="panel-body">
         <div id="inferred-tree"></div>
@@ -949,52 +1275,45 @@ input[type="range"]:focus-visible {
 
   </div>
 
+  <section class="panel verdict" aria-labelledby="verdict-h">
+    <div class="panel-head">
+      <h3 class="panel-title" id="verdict-h">What you would have concluded</h3>
+      <span class="panel-note" id="verdict-note">no simulation run</span>
+    </div>
+    <div class="verdict-body">
+      <p class="verdict-line">
+        You would have concluded<span id="v-variant-word"> Variant</span> <span class="variant-picker"><span
+          id="v-variant-select" class="variant-inline-select" aria-hidden="true">Alpha</span><select
+          id="variant-selector" aria-label="Which variant to report on"></select></span> arose in
+        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
+        <span class="slot" id="v-inf-day">&nbsp;</span>.
+      </p>
+      <p class="verdict-line truth">
+        In reality, it arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
+        <span class="slot" id="v-true-day">&nbsp;</span>.
+      </p>
+      <p class="verdict-hint">Click the variant name to change it.</p>
+    </div>
+  </section>
+
+  </div>
+
+  </section>
+
   <!-- SOURCES ------------------------------------------------ -->
   <section class="panel sources">
     <div class="panel-body">
       <h2>Method &amp; sources</h2>
       <ul>
-        <li>Substitution-rate range used for the molecular clock. The <strong>Mutation rate</strong>
-            slider is this parameter &mdash; called the substitution rate, or molecular clock rate, in
-            the literature. RNA viruses evolve at rates of
-            roughly 1–5 × 10<sup>−3</sup> substitutions per site per year, varying by viral family and
-            protein region. The model scales it to generate branch lengths and
-            root-to-tip divergence patterns consistent with typical respiratory-virus evolution.</li>
-        <li>Serial interval and offspring-distribution dispersion. The serial interval (time between
-            successive infections in a transmission chain) is modelled as Gamma(shape=2.5, scale=2.6 days),
-            giving a mean of 6.5 days. Secondary case counts follow a negative-binomial distribution
-            with dispersion k=0.5, capturing the superspreading observed in many respiratory outbreaks.</li>
-        <li>Root-to-tip regression for clock estimation and rooting. The phylogenetic root is inferred
-            by regressing sequence divergence (the number of mutations carried by each sample) against
-            sampling date, following the TempEst method (Rambaut, Lam, Carvalho &amp; Pybus, 2016).
-            The x-intercept estimates the time of the most recent common ancestor.</li>
-        <li>Discrete ancestral-state reconstruction (Fitch parsimony) and its documented sensitivity to
-            sampling bias. Ancestral regions are inferred by parsimony, selecting the region most
-            consistent with the tips that carry each mutation. This method is known to be biased toward
-            the most-sampled region (Lemey, Rambaut, Welch &amp; Suchard, 2010), even when another region
-            held the true ancestor. Production methods like Bayesian discrete-state reconstruction
-            (BEAST, MrBayes) mitigate this by jointly modelling sampling effort.</li>
-        <li>WHO 2021 Greek-letter variant nomenclature. The World Health Organization adopted alphabetic
-            Greek letters (Alpha, Beta, Gamma, …) in May 2021 for epidemiologically significant variants
-            of concern, standardising naming across viruses to avoid geographic stigma and clade-by-discovery
-            ambiguities (WHO, 2021).</li>
-        <li>Test positivity as an indicator of surveillance adequacy. Test positivity indicates whether
-            surveillance is sufficiently broad: high positivity (≥5%) signals overwhelmed testing and
-            undetected cases. Peak per-capita testing during the SARS-CoV-2 pandemic reached 5–10% of
-            the population per week in some developed countries.</li>
-        <li>Testing capacity is modelled as swabs per day per region, expressed as a percentage of
-            population. Community screening swabs random people, so its detection probability equals
-            prevalence—most tests yield no positive. Hospital intake swabs admitted patients (nearly
-            100% detection but only severe/critical cases), and saturates once capacity exceeds occupied
-            beds.</li>
-        <li><strong>A caveat against ourselves.</strong> This world holds under 10,000 people and infects
-            most of them, so prevalence peaks far higher than any real outbreak. Random screening is
-            therefore <em>more</em> efficient here than reality—so the cost of early community screening
-            and the pull toward hospital sampling are understated, not exaggerated.</li>
-        <li>Production phylogeographic methods reduce this bias but do not remove it. The bias shown here
-            is emergent, not hardcoded—it comes from running textbook Fitch parsimony on an unevenly
-            sampled tip set, a real failure mode that methods like Bayesian discrete-state reconstruction
-            address but cannot fully eliminate.</li>
+        <li><strong>Substitution rate.</strong> The <strong>Mutation rate</strong> slider sets the molecular clock, scaled to generate branch lengths consistent with respiratory-virus evolution. RNA viruses typically evolve at 1–5 × 10<sup>−3</sup> substitutions per site per year, depending on family and protein region.</li>
+        <li><strong>Transmission chain.</strong> Serial interval (time between successive infections) is modelled as Gamma(2.5, 2.6 days; mean 6.5 days). Secondary cases follow a negative-binomial distribution with dispersion k=0.5, capturing superspreading common in respiratory outbreaks.</li>
+        <li><strong>Root-to-tip regression.</strong> The phylogenetic root is inferred by regressing sequence divergence against sampling date, following TempEst (Rambaut et al. 2016). The x-intercept estimates the most recent common ancestor.</li>
+        <li><strong>Ancestral-state reconstruction.</strong> Ancestral regions are inferred by Fitch parsimony, which selects the region most consistent with each mutation's tips. This method is biased toward the most-sampled region (Lemey et al. 2010), even when another region held the true ancestor. Bayesian methods (BEAST, MrBayes) mitigate this bias through joint modelling of sampling effort.</li>
+        <li><strong>Variant nomenclature.</strong> The WHO adopted Greek-letter naming (Alpha, Beta, Gamma, …) in May 2021 for epidemiologically significant variants of concern, standardising naming across viruses and avoiding geographic stigma (WHO 2021).</li>
+        <li><strong>Test positivity.</strong> High positivity (≥5%) signals overwhelmed testing capacity and undetected cases. During SARS-CoV-2, peak per-capita testing reached 5–10% of population per week in developed countries, setting a reference for adequate surveillance breadth.</li>
+        <li><strong>Testing channels.</strong> Community screening swabs random people (detection probability = prevalence; unbiased but wasteful). Hospital intake swabs admissions at ~100% detection but captures only severe/critical cases and saturates once capacity exceeds ward census.</li>
+        <li><strong>Model caveat.</strong> This outbreak reaches ~10,000 people with peak prevalence far higher than reality, making random screening <em>more</em> efficient here than in practice. The advantage of hospital sampling is therefore understated.</li>
+        <li><strong>Method caveat.</strong> The bias shown here is emergent, not hardcoded—it arises from running textbook Fitch parsimony on an unevenly sampled tip set. Production methods reduce but cannot fully eliminate this failure mode.</li>
       </ul>
     </div>
   </section>
@@ -2074,26 +2393,61 @@ const SCENARIO_FIELDS = [
      technical name used to. The engine keys stay `r0` and `clockRate`, which are
      what the literature calls these, so the cited sources still line up. */
   { key: "r0",    label: "Transmission rate", min: 1.2, max: 4, step: .1, value: 2.4,
-    fmt: v => v.toFixed(1) + " new infections per case" },
+    fmt: v => v.toFixed(1) + " new infections per case",
+    tip: "How many people each infected person passes the virus to, on average. Above one the "
+       + "outbreak grows \u2014 and the faster it grows, the sooner new lineages appear." },
   { key: "clockRate", label: "Mutation rate", min: 4, max: 16, step: .5, value: 9,
-    fmt: v => v.toFixed(1) + "\u00d710\u207b\u2074 /site/yr" },
+    fmt: v => v.toFixed(1) + "\u00d710\u207b\u2074 /site/yr",
+    tip: "How quickly the genome picks up copying errors. Those errors are the only evidence a "
+       + "family tree has: mutate too slowly and separate lineages look identical." },
   { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 111,
-    fmt: v => "#" + v },
+    fmt: v => "#" + v,
+    tip: "Redeals the outbreak. Same settings, different luck \u2014 who infects whom, and where "
+       + "each variant happens to start. Move it to see whether a pattern holds across "
+       + "epidemics or was a one-off." },
 ];
 
 const POLICY_FIELDS = [
-  { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v },
+  { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v,
+    tip: "The day this region starts testing. Everything before it is invisible: the cases still "
+       + "happen, but none of them are ever sampled." },
   { key: "capacity", label: "Testing capacity", min: 0, max: MAX_CAPACITY, step: .05,
-    fmt: v => v.toFixed(2) + "% of people tested daily" },
+    fmt: v => v.toFixed(2) + "% of people tested daily",
+    tip: "The share of the region swabbed each day \u2014 the size of the budget. More tests find "
+       + "more cases, and reach further down from the sickest." },
   { key: "hospitalMix", label: "Test allocation", min: 0, max: 100, step: 1,
-    fmt: v => v + "% hosp / " + (100 - v) + "% community" },
-  { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%" },
+    fmt: v => v + "% hosp / " + (100 - v) + "% community",
+    tip: "How that budget splits between testing hospital patients and screening the community. "
+       + "Hospitals find severe cases cheaply; only community screening reaches the mild and "
+       + "asymptomatic ones." },
+  { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%",
+    tip: "The share of positive tests that go on to be sequenced. A positive test says someone "
+       + "was infected; only a genome says which lineage they were carrying." },
 ];
+
+/* ============================================================
+   VIRUS NAME GENERATOR — based on seed
+   ============================================================ */
+const VIRUS_NAMES = [
+  { name: "Fictivirus", code: "FIC-1" },
+  { name: "Inferenza A", code: "INF-1" },
+  { name: "Falsifluenza", code: "FLZ-1" },
+  { name: "Lorem ipsum virus", code: "LIV-1" },
+];
+
+function virusNameOf(seed) {
+  const idx = Math.abs(Math.floor(seed)) % VIRUS_NAMES.length;
+  const v = VIRUS_NAMES[idx];
+  return { name: v.name, code: v.code };
+}
 
 const state = {
   scenario: Object.fromEntries(SCENARIO_FIELDS.map(f => [f.key, f.value])),
   selected: "aldane",
-  selectedVariant: "alpha",
+  /* The root is the first question a reader has of any tree — where did THIS
+     thing start — and it is the one lineage the reconstruction always answers
+     for, so the verdict opens on it. */
+  selectedVariant: "wild",
   /* A plausible starting world rather than a uniform one: the populous hub runs a
      real programme, the periphery does not. Uniform sampling -- even sparse and
      late -- reconstructs the origins correctly, so a uniform default would open on
@@ -2119,8 +2473,9 @@ const state = {
    which is why the omniscient control exists separately. */
 const FULL_INFO = { startDay: 0, capacity: MAX_CAPACITY, hospitalMix: 0, depth: 100 };
 
-/* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more
-   coverage both raise it. Provisional until the sampler is real. */
+/* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more coverage
+   both raise it. This is a display summary of a policy, not a sampling quantity:
+   the sampler reads the four fields directly and never consults this. */
 function effort(p) {
   const timeliness = 1 - p.startDay / 90;
   const volume = p.capacity / MAX_CAPACITY;
@@ -2139,9 +2494,6 @@ function effortAlpha(e) {
    ============================================================ */
 const HAS_DOM = typeof document !== "undefined";
 
-/* ============================================================
-   VIEWS
-   ============================================================ */
 const $ = sel => document.querySelector(sel);
 
 function renderMap() {
@@ -2171,7 +2523,10 @@ function slider(f, value) {
   const id = "f-" + f.key;
   return '<div class="field">' +
            '<div class="field-top">' +
-             '<label for="' + id + '">' + f.label + '</label>' +
+             '<span class="field-name">' +
+               '<label for="' + id + '">' + f.label + '</label>' +
+               (f.tip ? '<button type="button" class="help" aria-label="' + esc(f.tip) + '">?</button>' : '') +
+             '</span>' +
              '<output for="' + id + '" id="o-' + f.key + '">' + f.fmt(value) + '</output>' +
            '</div>' +
            '<input type="range" id="' + id + '" data-key="' + f.key + '" min="' + f.min +
@@ -2186,41 +2541,90 @@ function renderScenario() {
 
 function renderPolicy() {
   const p = state.policy[state.selected];
-  $("#sel-region").textContent = REGIONS.find(r => r.id === state.selected).name;
   $("#policy-fields").innerHTML = POLICY_FIELDS.map(f => slider(f, p[f.key])).join("");
+}
+
+/* none wrong -> all wrong. Indexed by fraction, so the ramp survives a change
+   in how many lineages there are. */
+const SCORE_RAMP = ["#198546", "#19851d", "#3d8118", "#617c18", "#817418", "#a76320", "#d23f28"];
+
+/* Wild type carries no marker mutation -- it is defined by carrying none -- so
+   lineageVerdicts() cannot see it and it is absent from the verdict list. Its
+   origin question is the tree's root, which the reconstruction already answers
+   for the root bar; this reads the same two numbers off it so the sentence and
+   the drawing cannot disagree. */
+function rootVerdict(r) {
+  const t = r.truth.lineages.find(L => L.id === "wild") || {};
+  const found = r.tree.roots.length > 0;
+  const region = found ? r.fitch.region.get(r.phylo.root) : null;
+  return {
+    id: "wild", found,
+    region,
+    day: found ? Math.min(...r.tree.roots.map(x => x.tStart)) : null,
+    trueRegion: t.originRegion, trueDay: t.originDay,
+    regionRight: found && region != null && region === t.originRegion,
+  };
 }
 
 function renderVerdict() {
   const r = state.result;
   if (!r) { $("#verdict-note").textContent = "no simulation run"; return; }
   const selectedId = state.selectedVariant;
-  const k = r.verdicts.find(v => v.id === selectedId);
+  const k = selectedId === "wild" ? rootVerdict(r) : r.verdicts.find(v => v.id === selectedId);
   const name = id => (REGIONS.find(x => x.id === id) || {}).name || String(id);
-  const wrong = r.verdicts.filter(v => v.found && !v.regionRight).length;
-  $("#verdict-note").textContent =
-    wrong + " of " + r.verdicts.length + " variant origins misplaced";
+  /* Score what was RECOVERED, not what was misplaced.
+     Counting misplacements made the worst possible run look like the best: with
+     nothing sequenced, nothing is found, so nothing is misplaced, and the badge
+     read "0 misplaced" in green over an empty tree. A lineage that was never
+     sampled is not misplaced — but it is certainly not recovered either, and that
+     is the thing the reader needs to see.
+     The denominator is every lineage that actually arose in THIS outbreak, which
+     is not all of them: a variant only enters truth.lineages with a marker
+     mutation once it establishes, and seeds differ in which ones do. Wild type is
+     in the count too — it has an origin like any other lineage, and the
+     reconstruction answers for it at the root. */
+  const scored = [rootVerdict(r)].concat(r.verdicts).filter(v => v.trueRegion);
+  const right = scored.filter(v => v.found && v.regionRight).length;
+  const note = $("#verdict-note");
+  note.textContent = scored.length
+    ? right + " of " + scored.length + " origins recovered"
+    : "nothing to reconstruct";
+  const missed = scored.length ? 1 - right / scored.length : 1;
+  note.style.setProperty("--score", SCORE_RAMP[Math.round(missed * (SCORE_RAMP.length - 1))]);
 
-  // Update variant name in prose
-  const variantNames = { wild: "Wild-type", alpha: "Alpha", beta: "Beta", gamma: "Gamma", delta: "Delta", epsilon: "Epsilon", zeta: "Zeta" };
-  const variantName = variantNames[selectedId] || LIN[selectedId]?.name || String(selectedId);
-  const variantEl = $("#v-variant-select");
-  if (variantEl) variantEl.textContent = variantName;
+  /* the picker's label reads off LINEAGES, like the tree's tip labels do, so
+     adding a lineage needs no second edit here */
+  $("#v-variant-select").textContent = (LIN[selectedId] || {}).name || String(selectedId);
 
-  const set = (sel, text, filled) => {
+  /* "Variant Wild type" is not a thing anyone says. */
+  const word = $("#v-variant-word");
+  if (word) word.hidden = selectedId === "wild";
+
+  const set = (sel, text, filled, tone) => {
     const el = $(sel);
     el.textContent = text;
     el.classList.toggle("filled", !!filled);
+    el.classList.toggle("ok", tone === "ok");
+    el.classList.toggle("bad", tone === "bad");
   };
+  /* The region slots carry the judgement and the day slots do not: the colour
+     answers exactly the question the badge is counting — was this origin
+     recovered — and nothing else. A lineage that was never sampled reads wrong
+     rather than blank, because that is how the tally scores it. */
   if (!k || !k.found) {
-    set("#v-inf-deme", "not seen", false);
+    set("#v-inf-deme", "not seen", false, "bad");
     set("#v-inf-day", "\u2014", false);
   } else {
-    set("#v-inf-deme", name(k.region), true);
+    set("#v-inf-deme", name(k.region), true, k.regionRight ? "ok" : "bad");
     set("#v-inf-day", k.day == null ? "\u2014" : String(Math.round(k.day)), true);
   }
-  const t = r.verdicts.find(v => v.id === selectedId);
-  set("#v-true-deme", t ? name(t.trueRegion) : "\u2014", false);
-  set("#v-true-day", t && t.trueDay != null ? String(Math.round(t.trueDay)) : "\u2014", false);
+  /* The answer is set as firmly as the claim above it: both lines are readings of
+     the same event, and greying one of them made it look like the footnote. */
+  const t = k;
+  set("#v-true-deme", t && t.trueRegion ? name(t.trueRegion) : "\u2014", !!(t && t.trueRegion),
+      t && t.trueRegion ? "ok" : undefined);
+  set("#v-true-day", t && t.trueDay != null ? String(Math.round(t.trueDay)) : "\u2014",
+      !!(t && t.trueDay != null));
 }
 
 let pending = 0;
@@ -2230,9 +2634,23 @@ function scheduleInfer() {
   pending = requestAnimationFrame(() => { pending = 0; renderInferred(); });
 }
 
+function renderVariantPicker() {
+  const sel = $("#variant-selector");
+  sel.innerHTML = LINEAGES.map(l =>
+    '<option value="' + l.id + '">' + esc(l.name) + '</option>').join("");
+  sel.value = state.selectedVariant;
+}
+
+function renderVirus() {
+  const v = virusNameOf(state.scenario.seed);
+  $("#virus-h").innerHTML = v.name + " &middot; " + v.code;
+}
+
 function render() {
+  renderVirus();
   renderMap();
   renderChips();
+  renderVariantPicker();
   renderPolicy();
   renderRegionKey();
   renderTruthTree();
@@ -2245,19 +2663,54 @@ function render() {
    ============================================================ */
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
+/* Both trees draw onto the width of the panel that holds them, so a sparse tree
+   is not marooned in a wide box with its axis stopping two-thirds of the way
+   across, and a dense one does not have to be scrolled. The two stage columns
+   are equal, so measuring either gives both the same canvas and the trees stay
+   directly comparable. This is the floor for when there is nothing to measure —
+   a headless render, or a panel not yet laid out. */
+const TREE_CANVAS_W = 330;
+
+function treeCanvasW() {
+  if (!HAS_DOM) return TREE_CANVAS_W;
+  const host = document.querySelector("#inferred-tree");
+  const w = host ? Math.floor(host.clientWidth) : 0;
+  return w > TREE_CANVAS_W ? w : TREE_CANVAS_W;
+}
+
+/* The two panels share a SCALE, not a range. Forcing them onto one day range meant
+   the deeper panel set the range for both, which squashed the shallower tree into
+   the top of a mostly empty axis — and, if that range came from the reconstruction,
+   moved the truth panel whenever a slider did. Fixing pixels-per-day instead makes
+   day 30 fall at the same height in both panels while each stays only as tall as
+   its own data, and leaves each panel's geometry a function of its own tree alone. */
+const PX_PER_DAY = 4;
+
 function renderTreeSVG(roots, opts) {
-  const colW = 14, padL = 34, padT = 14, padB = 10, depth = 300;
+  const padL = 34, padT = 14, padB = 10;
+  const canvasW = opts.canvasW || treeCanvasW();
+  /* Spread the columns to fill the canvas. Only the VERTICAL axis carries data
+     here, so tip spacing is free to adapt; holding it fixed is what left the
+     sparser tree drawn small inside a correctly sized panel. The 56 is the label
+     gutter the drawing gets added to it below — divide by the same number the
+     width is built from, or the tree overruns the box it was measured for. */
+  const colW = Math.max(9, Math.min(32,
+    Math.floor((canvasW - padL - 56) / Math.max(1, countTips(roots)))));
+  const depth = Math.round(padT + padB + opts.tMax * PX_PER_DAY);
   const L = layoutTree(roots, { colW, tMax: opts.tMax, depth, padT, padB, padL });
-  const W = Math.max(L.width + 56, 240), H = depth + 6;
+  const W = Math.max(L.width + 56, canvasW), H = depth + 6;
   const out = [];
   const defs = [];
   let gradId = 0;
 
   /* time axis, down the left edge */
-  const step = opts.tMax <= 60 ? 15 : opts.tMax <= 120 ? 30 : 60;
+  /* One interval for every panel: the scale is shared, so the ticks must be too.
+     At PX_PER_DAY = 4 a 15-day step is a line every 60px, which stays legible
+     across the whole range this outbreak can reach. */
+  const step = 15;
   for (let d = 0; d <= opts.tMax; d += step) {
     const y = L.yOf(d);
-    out.push(`<line x1="${padL - 6}" y1="${y.toFixed(1)}" x2="${(L.width + 10).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 3"></line>`);
+    out.push(`<line x1="${padL - 6}" y1="${y.toFixed(1)}" x2="${(W - 10).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 3"></line>`);
     out.push(`<text class="tree-axis" x="${padL - 10}" y="${(y + 3).toFixed(1)}">${d}</text>`);
   }
   out.push(`<text class="tree-axis tree-axis-cap" x="${padL - 10}" y="${(padT - 6).toFixed(1)}">day</text>`);
@@ -2329,16 +2782,14 @@ function renderTreeSVG(roots, opts) {
     out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} \u00b7 ${esc(n.carriers.toLocaleString())} cases \u00b7 ${esc(n.region)} \u00b7 day ${n.tEnd.toFixed(0)}</title></g>`);
   }
   const defsBlock = defs.length ? `<defs>${defs.join("")}</defs>` : "";
-  return `<svg class="tree-svg" viewBox="0 0 ${W.toFixed(0)} ${H}" role="img" aria-label="${esc(opts.aria)}">${defsBlock}${out.join("")}</svg>`;
+  return `<svg class="tree-svg" width="${W.toFixed(0)}" height="${H}" viewBox="0 0 ${W.toFixed(0)} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${esc(opts.aria)}">${defsBlock}${out.join("")}</svg>`;
 }
 
-/* The day scale both panels share. It is read off the TRUTH alone — never off the
-   reconstruction — because the reconstruction depends on policy, and a truth panel
-   that rescaled when you moved a slider would contradict the one thing this page
-   asserts. Every sampled genome is dated on or before the last case, so the truth's
-   own span always contains the reconstruction too. */
-function sharedTMax(truth) {
-  return Math.max(15, Math.ceil((truth.stats.lastDay || 0) / 15) * 15);
+/* Each panel covers its own span. Nothing is shared but PX_PER_DAY, which is what
+   makes the two axes comparable — and which keeps the truth panel a function of the
+   truth alone, so policy cannot move it. */
+function ownTMax(roots) {
+  return Math.max(15, Math.ceil(treeSpan(roots) / 15) * 15);
 }
 
 function renderTruthTree() {
@@ -2347,13 +2798,14 @@ function renderTruthTree() {
   const t = autoTree(truth, 26, 46);
   state.truthTree = t;
   $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
-    tMax: sharedTMax(truth),
+    canvasW: treeCanvasW(),
+    tMax: ownTMax(t.roots),
     rootRegion: truth.cases.length ? truth.cases[0].region : null,
     rootDate: 0,
     aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
   });
   $("#truth-count").textContent =
-    truth.stats.cases.toLocaleString() + " cases \u00b7 " + t.tips + " tips";
+    truth.stats.cases.toLocaleString() + " cases";
 }
 
 /* Remembering the reveal is a per-viewer convenience, so browser storage is the
@@ -2379,7 +2831,9 @@ function setFullInfo(on) {
      ceiling, not the world's. */
   state.omniscient = on;
   const b = $("#fullinfo-btn");
-  b.textContent = on ? "Restore policy" : "Sequence everything";
+  /* "Omniscient" is the word ARCHITECTURE.md and state.omniscient already use;
+     the button says it too so the page, the code and the docs cannot drift. */
+  b.textContent = on ? "Turn off omniscient mode" : "Omniscient mode";
   b.setAttribute("aria-pressed", String(on));
   b.classList.toggle("ghost", !on);
   $("#fullinfo-note").hidden = !on;
@@ -2442,7 +2896,8 @@ function renderInferred() {
   const r = inferNow();
   state.result = r;
   $("#inferred-tree").innerHTML = renderTreeSVG(r.tree.roots, {
-    tMax: sharedTMax(r.truth),
+    canvasW: treeCanvasW(),
+    tMax: ownTMax(r.tree.roots),
     rootRegion: r.fitch.region.get(r.phylo.root),
     rootDate: Math.min(...r.tree.roots.map(x => x.tStart)),
     rootLabel: "inferred common ancestor",
@@ -2463,20 +2918,23 @@ function renderInferred() {
     : "from " + Math.round(tests).toLocaleString() + " tests \u00b7 "
       + (capture * 100).toFixed(0) + "% of infections";
   const ic = $("#inferred-count");
-  if (ic) ic.textContent = r.s.samples.length.toLocaleString() + " genomes \u00b7 " + r.tree.tips + " tips";
+  if (ic) ic.textContent = r.s.samples.length.toLocaleString() + " genomes";
   renderVerdict();
 }
 
-function regionKeyHTML(countId) {
-  return REGIONS.map(r =>
-    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("")
-    + `<span class="key-item key-count" id="${countId}"></span>`;
+/* The legend names the colours and nothing else. The counts belong with the panel
+   title, where they say what the panel is showing before you start reading it —
+   under the axis they read as a footnote to the chart instead. */
+function regionKeyHTML() {
+  return '<span class="key-lede">branch colour = the region a lineage arose in</span>' +
+    REGIONS.map(r =>
+    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("");
 }
 
 function renderRegionKey() {
   if (!HAS_DOM) return;
-  $("#region-key").innerHTML = regionKeyHTML("truth-count");
-  $("#inferred-key").innerHTML = regionKeyHTML("inferred-count");
+  $("#region-key").innerHTML = regionKeyHTML();
+  $("#inferred-key").innerHTML = regionKeyHTML();
 }
 
 /* ============================================================
@@ -2531,11 +2989,6 @@ if (HAS_DOM) document.addEventListener("click", e => {
     setFullInfo($("#fullinfo-btn").getAttribute("aria-pressed") !== "true");
     return;
   }
-  if (e.target.closest("#v-variant-select")) {
-    const selector = $("#variant-selector");
-    if (selector) selector.click();
-    return;
-  }
   const node = e.target.closest("[data-region]");
   if (node) select(node.dataset.region);
 });
@@ -2548,6 +3001,18 @@ if (HAS_DOM) document.addEventListener("keydown", e => {
   select(node.dataset.region);
 });
 
+/* The canvas is measured, so a resize has to redraw or the trees keep the width
+   of the window they were born in. Width only: a change in height moves nothing. */
+if (HAS_DOM) {
+  let lastW = window.innerWidth, resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { renderTruthTree(); renderInferred(); }, 120);
+  });
+}
+
 if (HAS_DOM) document.addEventListener("input", e => {
   const el = e.target;
   if (el.type !== "range") return;
@@ -2558,6 +3023,7 @@ if (HAS_DOM) document.addEventListener("input", e => {
   if (sf) {
     state.scenario[key] = val;
     $("#o-" + key).textContent = sf.fmt(val);
+    if (key === "seed") renderVirus();
     renderTruthTree();
     scheduleInfer();
     return;
@@ -2570,13 +3036,22 @@ if (HAS_DOM) document.addEventListener("input", e => {
       /* the reading no longer holds once a slider is touched */
       state.savedPolicy = null;
       state.omniscient = false;
-      $("#fullinfo-btn").textContent = "Sequence everything";
+      $("#fullinfo-btn").textContent = "Omniscient mode";
       $("#fullinfo-btn").setAttribute("aria-pressed", "false");
       $("#fullinfo-btn").classList.add("ghost");
       $("#fullinfo-note").hidden = true;
     }
     renderMap();
     scheduleInfer();
+  }
+});
+
+if (HAS_DOM) document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.id === "variant-selector") {
+    state.selectedVariant = el.value;
+    renderVerdict();
+    return;
   }
 });
 

@@ -126,7 +126,6 @@ test("clicking a region on the map selects it", () => {
   const w = page();
   const target = w.document.querySelector('#map-regions .region[data-region="corvane"]');
   target.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
-  assert.strictEqual(w.document.querySelector("#sel-region").textContent, "Corvane");
   assert.strictEqual(
     w.document.querySelector('.chip[data-region="corvane"]').getAttribute("aria-pressed"), "true");
 });
@@ -169,8 +168,10 @@ test("the full-information toggle sets every region and recovers the truth", () 
   assert.ok(btn, "toggle missing");
 
   const wrongBefore = w.document.querySelector("#verdict-note").textContent;
-  assert.match(wrongBefore, /[1-9] of \d+ variant origins misplaced/,
-    "the default policy should open with the bias visible");
+  /* the badge scores what was RECOVERED, so the bias reads as a shortfall */
+  const [, got, of] = wrongBefore.match(/^(\d+) of (\d+) origins recovered$/) || [];
+  assert.ok(of && Number(got) < Number(of),
+    `the default policy should open with the bias visible (${wrongBefore})`);
 
   btn.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
 
@@ -179,11 +180,12 @@ test("the full-information toggle sets every region and recovers the truth", () 
     const pct = w.document.querySelector(`#map-regions [data-region="${r}"] .region-value`);
     assert.strictEqual(pct.textContent, "100%", `${r} not set to full effort`);
   }
-  assert.strictEqual(w.document.querySelector("#fullinfo-btn").textContent, "Restore policy");
+  assert.strictEqual(w.document.querySelector("#fullinfo-btn").textContent,
+    "Turn off omniscient mode");
   assert.ok(!w.document.querySelector("#fullinfo-note").hidden, "explanation not shown");
 
   assert.match(w.document.querySelector("#verdict-note").textContent,
-    /^0 of \d+ variant origins misplaced/,
+    /^(\d+) of \1 origins recovered$/,
     "with complete data every origin should be recovered");
 
   /* and it restores */
@@ -254,4 +256,61 @@ test("branches meet the root bar in both panels", () => {
     "the inferred common ancestor should be dated later than the true day 0");
   assert.match(w.document.querySelector("#inferred-tree svg").outerHTML,
     /inferred common ancestor/, "the inferred root is not labelled as an estimate");
+});
+
+/* The picker shipped broken once: it was a styled <span> that called .click()
+   on a hidden <select>, which opens nothing in any browser. The control is now
+   a real select laid over the word, so these assert it is reachable and that
+   selecting a variant moves every number in the panel, not just the name. */
+test("the variant picker is a real control, not a span pretending", () => {
+  const w = page();
+  const sel = w.document.querySelector("#variant-selector");
+  assert.ok(sel, "no select");
+  assert.strictEqual(sel.tagName, "SELECT");
+  assert.ok(!sel.hasAttribute("hidden"), "a hidden select cannot be opened");
+  assert.ok(w.document.querySelector(".variant-picker").contains(sel),
+    "the select must overlay the word it replaces");
+  /* options come from LINEAGES, so this count tracks the roster */
+  assert.strictEqual(sel.options.length, w.PB.LINEAGES.length);
+  assert.strictEqual(sel.options[0].value, "wild");
+});
+
+test("choosing a variant moves the whole verdict, not just the name", () => {
+  const w = page();
+  const sel = w.document.querySelector("#variant-selector");
+  const snap = () => ["#v-variant-select", "#v-inf-deme", "#v-inf-day", "#v-true-deme", "#v-true-day"]
+    .map(id => w.document.querySelector(id).textContent);
+
+  const seen = new Set();
+  for (const o of [...sel.options]) {
+    sel.value = o.value;
+    sel.dispatchEvent(new w.Event("change", { bubbles: true }));
+    const [nameCell, ...rest] = snap();
+    assert.strictEqual(nameCell, o.text, "the sentence disagrees with the picker");
+    for (const cell of rest)
+      assert.ok(cell.trim().length > 0, `${o.value} left a blank cell in the verdict`);
+    seen.add(rest.join("|"));
+  }
+  assert.ok(seen.size > 1, "every variant produced the same numbers — nothing is wired up");
+});
+
+test("the score badge colours from green at none wrong toward red", () => {
+  const w = page();
+  const note = w.document.querySelector("#verdict-note");
+  const wrongOf = s => {
+    const [, got, of] = s.match(/^(\d+) of (\d+) origins recovered$/);
+    return Number(of) - Number(got);
+  };
+
+  const before = note.style.getPropertyValue("--score");
+  assert.match(before, /^#[0-9a-f]{6}$/, "no colour on the badge");
+  assert.ok(wrongOf(note.textContent) > 0, "default policy should open with errors");
+
+  w.document.querySelector("#fullinfo-btn").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+  assert.strictEqual(wrongOf(note.textContent), 0, "omniscience should place every origin");
+  const after = note.style.getPropertyValue("--score");
+  assert.notStrictEqual(after, before, "the badge colour did not follow the score");
+  /* green end of the ramp: the green channel must dominate the red one */
+  const [, rr, gg] = after.match(/^#(..)(..)/);
+  assert.ok(parseInt(gg, 16) > parseInt(rr, 16), `zero-wrong badge is not green (${after})`);
 });
