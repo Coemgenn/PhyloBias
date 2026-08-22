@@ -1,0 +1,3074 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meridian</title>
+<style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Red+Hat+Mono:wght@400;500&family=Red+Hat+Text:wght@400;500&display=swap">
+
+<style>
+/* ============================================================
+   TOKENS
+
+   Light is the bare :root; dark is redefined twice so an explicit
+   choice beats the OS in both directions. The two palettes are not
+   inversions of one another — each region hue was validated on its
+   own ground, because a hue that reads on #ffffff and a hue that
+   reads on near-black are rarely the same hue.
+   ============================================================ */
+:root {
+  color-scheme: light;
+
+  --ground:       #f4f6f6;
+  --surface:      #ffffff;
+  --surface-2:    #eef1f2;
+  --border:       #dbe1e3;
+  --border-firm:  #c3ccd0;
+  --ink:          #10171a;
+  --ink-2:        #46545a;
+  --ink-3:        #5c6a70;   /* was #6d7c82 — 4.32:1, under AA. Now 5.6:1. */
+  --grid-firm:    rgba(16,23,26,.085);   /* page ground texture */
+  --ink-hi:       #000000;
+
+  /* No accent hue: chroma means region and nothing else, so the
+     interactive colour is an ink. */
+  --accent:       #10171a;
+  --accent-ink:   #000000;
+  --on-accent:    #ffffff;
+
+  /* Region identity, used identically by the map and the trees so one hue always
+     means one region. Six hues spread 45deg+ apart (19, 93, 142, 209, 261, 325)
+     with lightness free as a second channel: under protanopia the wheel collapses
+     toward one axis, so hue alone cannot separate six. All-pairs CVD dE 15.0 light
+     / 16.1 dark against a target of 8; normal vision 18.4 / 18.7 against a floor
+     of 15. Every colour clears 2.5:1 on its surface and the region key supplies
+     the relief the 3:1 rule wants. Aldane and Corvane hold the most separated
+     pair; the argument is read off those two. Uniform lightness is traded away
+     knowingly. */
+  --reg-aldane:   #baa047;
+  --reg-brix:     #3062bc;
+  --reg-corvane:  #66056c;
+  --reg-doran:    #094e04;
+  --reg-esker:    #3db1c2;
+  --reg-fenmoor:  #ac5e60;
+
+  /* Right and wrong, the verdict's only chroma outside region. It is the same
+     language the score badge speaks -- its ramp runs between these two ends --
+     so the page carries ONE second colour, not two. Both are pulled away from
+     the region hues they sit near: the green is bluer than Doran's, the red
+     oranger than Fenmoor's rose, and the word inside the slot says which region
+     it is regardless. 4.9:1 and 5.7:1 on this surface. */
+  --ok:           #198546;
+  --bad:          #c2321c;
+
+  --shadow: 0 1px 2px rgba(16,23,26,.05), 0 4px 16px rgba(16,23,26,.05);
+
+  --font-display: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Red Hat Text", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Red Hat Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --r: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ground:       #080c10;
+    --surface:      #0b1116;
+    --surface-2:    #0e161c;
+    --border:       #1b2732;
+    --border-firm:  #2b3d4c;
+    --ink:          #dbe4ea;
+    --ink-2:        #a9bac4;
+    --ink-3:        #8698a4;
+    --ink-hi:       #ffffff;
+    --grid-firm:    rgba(255,255,255,.055);   /* page ground texture */
+
+    --accent:       #dfe9ef;
+    --accent-ink:   #ffffff;
+    --on-accent:    #080c10;
+
+    --reg-aldane:   #f6d464;
+    --reg-brix:     #71a2f9;
+    --reg-corvane:  #7e4481;
+    --reg-doran:    #0d7f01;
+    --reg-esker:    #4de8fe;
+    --reg-fenmoor:  #ec898b;
+
+    /* Not the light pair lightened: on near-black both of those fall under 4.5:1,
+       so each end is picked again on this ground. 9.6:1 and 6.7:1. */
+    --ok:           #5fcf8a;
+    --bad:          #ff6a52;
+
+    /* A drop shadow is invisible on near-black; panels lift with a
+       top highlight instead. */
+    --shadow: inset 0 1px 0 rgba(255,255,255,.045);
+  }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --ground:       #080c10;
+    --surface:      #0b1116;
+    --surface-2:    #0e161c;
+    --border:       #1b2732;
+    --border-firm:  #2b3d4c;
+    --ink:          #dbe4ea;
+    --ink-2:        #a9bac4;
+    --ink-3:        #8698a4;
+    --ink-hi:       #ffffff;
+    --grid-firm:    rgba(255,255,255,.055);   /* page ground texture */
+
+    --accent:       #dfe9ef;
+    --accent-ink:   #ffffff;
+    --on-accent:    #080c10;
+
+    --reg-aldane:   #f6d464;
+    --reg-brix:     #71a2f9;
+    --reg-corvane:  #7e4481;
+    --reg-doran:    #0d7f01;
+    --reg-esker:    #4de8fe;
+    --reg-fenmoor:  #ec898b;
+
+    /* Not the light pair lightened: on near-black both of those fall under 4.5:1,
+       so each end is picked again on this ground. 9.6:1 and 6.7:1. */
+    --ok:           #5fcf8a;
+    --bad:          #ff6a52;
+
+    /* A drop shadow is invisible on near-black; panels lift with a
+       top highlight instead. */
+    --shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; }
+
+/* author display rules outrank the UA sheet's [hidden]{display:none} */
+[hidden] { display: none !important; }
+
+/* Page ground: short reads stacked against a reference — the view the sampler
+   actually produces. An SVG mask over a token-coloured layer rather than a baked
+   fill, so one tile serves both themes. Fixed, so it does not scroll. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--grid-firm);
+  --read-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30'%3E%3Cg fill='%23000'%3E%3Crect x='0' y='3' width='22' height='2.4' rx='1.2'/%3E%3Crect x='26' y='3' width='17' height='2.4' rx='1.2'/%3E%3Crect x='47' y='3' width='13' height='2.4' rx='1.2'/%3E%3Crect x='8' y='12' width='26' height='2.4' rx='1.2'/%3E%3Crect x='38' y='12' width='14' height='2.4' rx='1.2'/%3E%3Crect x='2' y='21' width='15' height='2.4' rx='1.2'/%3E%3Crect x='21' y='21' width='24' height='2.4' rx='1.2'/%3E%3Crect x='49' y='21' width='11' height='2.4' rx='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: var(--read-tile);
+  mask-image: var(--read-tile);
+  -webkit-mask-size: 60px 30px;
+  mask-size: 60px 30px;
+}
+
+/* Every measure on this page is in rem, so the root size is the one knob that
+   scales the whole layout at once. A very large monitor gets a proportionally
+   larger page — bigger type, wider panels, the same design — rather than the
+   same page with its middle stretched. It does not touch tree height, which is
+   pinned to days, so the page cannot grow itself off the bottom of the screen. */
+html { font-size: 16px; }
+@media (min-width: 1900px) { html { font-size: 17px; } }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.55;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  /* Fluid, not a fixed measure: the page fills whatever the monitor gives it up
+     to 1800px, and the rows below decide for themselves which of their columns
+     should absorb the extra — the trees, which read better spread out, rather
+     than the map or the verdict, which do not. Prose blocks carry their own ch
+     caps, so nothing here sets a line longer than it can be read at. */
+  width: 100%;
+  max-width: 112rem;
+  margin: 0 auto;
+  padding: 1.25rem clamp(1.5rem, 2vw, 2.5rem) 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  /* Sized to hold on one line inside the bar, next to the theme switch; the cap
+     keeps it from outgrowing the container on very wide viewports. */
+  font-size: min(2.45vw, 2.6rem);
+  line-height: 1.1;
+  letter-spacing: .015em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin: 0;
+  color: var(--ink-hi);
+}
+/* Below the centred masthead's breakpoint the title shares a row with the switch,
+   and one line of it no longer fits beside one — so it wraps rather than running
+   underneath the buttons. */
+@media (max-width: 899px) {
+  h1 { white-space: normal; font-size: clamp(1.5rem, 3.4vw, 2rem); text-wrap: balance; }
+}
+@media (max-width: 640px) {
+  h1 { font-size: clamp(1.5rem, 6.5vw, 2rem); }
+}
+
+.standfirst {
+  /* This is the argument of the whole page, so it is set to be read, not skimmed
+     past: full ink rather than the secondary grey, and a size up on body copy.
+     One continuous paragraph the width of its box; the extra leading is what
+     keeps the eye on the line at that measure. */
+  color: var(--ink);
+  font-size: clamp(1.0625rem, .6rem + .8vw, 1.375rem);
+  line-height: 1.6;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  align-content: center;
+  justify-content: space-between;
+  /* In a narrow column the title and its note cannot share a line. Let the note
+     drop below the title rather than letting the title break mid-phrase. */
+  flex-wrap: wrap;
+  gap: .3rem 1rem;
+  padding: .875rem 1.125rem;
+  border-bottom: 1px solid var(--border);
+  /* A head holding a button is taller than one holding a line of text. Side by
+     side that pushed one panel's chart down relative to the other's, so their
+     axes no longer lined up. Pin the height instead of hoping the contents match. */
+  min-height: 3.5rem;
+}
+/* The two tree heads hold different furniture — a button on one, a spend note on
+   the other, and at this column width the note takes a line of its own. One
+   height for both, so the two axes still start at the same pixel. */
+.stage .panel-head { min-height: 6.25rem; align-content: flex-start; }
+
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: .875rem;
+  font-weight: 600;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+  white-space: nowrap;
+}
+@media (max-width: 420px) { .panel-title { white-space: normal; } }
+
+.panel-note {
+  font-family: var(--font-mono);
+  font-size: .875rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   HELP MARKS
+
+   A ? beside a control, holding one plain sentence about what the
+   control does. Hover or focus; there is no click state, and nothing
+   on the page is explained ONLY here, so a reader who never opens one
+   loses nothing.
+
+   The bubble's text is the button's own accessible name, read out of
+   `aria-label` by `content: attr(...)`. One string, so the sentence a
+   screen reader gets and the sentence a mouse gets cannot drift apart.
+   ============================================================ */
+.help {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-left: .35rem;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--ink-3);
+  background: transparent;
+  border: 1px solid var(--border-firm);
+  border-radius: 50%;
+  cursor: help;
+}
+.help:hover, .help:focus {
+  color: var(--ink);
+  border-color: var(--ink-3);
+  background: var(--surface-2);
+}
+.help:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* The bubble is anchored to the BOX the mark sits in — a label row, a panel
+   head — and pinned to both its edges. A tooltip that sizes itself around the
+   mark can hang off the side of a narrow column and set the page scrolling
+   sideways; one that spans its container cannot. */
+.help::after {
+  content: attr(aria-label);
+  position: absolute;
+  z-index: 30;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .12s ease;
+  font-family: var(--font-ui);
+  font-size: .8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-firm);
+  border-radius: var(--r);
+  box-shadow: 0 8px 22px rgba(0,0,0,.16);
+  padding: .65rem .8rem;
+  pointer-events: none;
+}
+.help:hover::after, .help:focus::after { opacity: 1; visibility: visible; }
+
+.field-top, .panel-head { position: relative; }
+.field-top .help::after { top: calc(100% + .4rem); left: 0; right: 0; }
+.panel-head .help::after { top: calc(100% + .4rem); left: 1.125rem; right: 1.125rem; }
+
+.field-name { display: inline-flex; align-items: baseline; min-width: 0; }
+
+/* The score, stamped. This is the one place chroma does not mean region: the
+   green-to-red ramp is a second colour language on the page, admitted because
+   the badge is the reader's only running feedback on how badly the current
+   policy is doing. It is redundant with the number printed inside it, so a
+   reader who cannot separate the hues loses nothing -- which is the only
+   footing on which a red/green scale is defensible. Every stop was checked to
+   clear 4.6:1 against the white text. */
+#verdict-note {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--score);
+  color: #ffffff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: inline-block;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+  transition: background-color .25s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #verdict-note { box-shadow: 3px 3px 0 rgba(0,0,0,0.4); }
+}
+
+:root[data-theme="dark"] #verdict-note { box-shadow: 3px 3px 0 rgba(0,0,0,0.4); }
+
+/* Inline variant picker in the verdict sentence.
+
+   A <select> cannot be opened from script -- .click() on one does nothing in
+   every browser -- so the real control is laid over the word at zero opacity
+   and the styled text underneath is what you see. The click lands on the
+   select, the native popup opens at the word, and keyboard and screen readers
+   get an ordinary form control for free. */
+.variant-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.variant-picker select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.variant-inline-select {
+  border-bottom: 1px dashed var(--border-firm);
+  padding-bottom: 1px;
+  transition: border-color .15s, color .15s;
+}
+
+.variant-inline-select::after {
+  content: "\00a0\25BE";
+  font-size: .7em;
+  color: var(--ink-3);
+}
+
+.variant-picker:hover .variant-inline-select {
+  border-bottom-color: var(--ink-2);
+  color: var(--ink-hi);
+}
+
+/* the select carries the real focus, so the ring has to be drawn on its stand-in */
+.variant-picker:focus-within .variant-inline-select {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+.panel-body { padding: 1.125rem; }
+
+/* ============================================================
+   HEADER
+
+   Built out of the same two parts the acts below are: a grey bar,
+   then the box it caps. The page opens in the idiom it goes on to
+   use rather than in a masthead of its own invention, and the title
+   reads as the first tab of three rather than as a poster over them.
+   ============================================================ */
+.masthead { display: flex; flex-direction: column; }
+
+.masthead-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .4rem 1.5rem;
+  background: var(--border-firm);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: .55rem clamp(.9rem, 1.2vw, 1.25rem) .65rem;
+  /* Overlaps the box below by the 1px of its own border, as the act tabs do, so
+     bar and box read as one object. */
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+.masthead-bar h1 { flex: 1 1 18rem; min-width: 0; }
+/* The switch is standing on --border-firm now, which is the colour of its own
+   border: on the page background that outline did the work, here it would
+   vanish into the bar. */
+.masthead-bar .theme-switch { border-color: var(--ink-3); }
+.masthead-bar .theme-btn + .theme-btn { border-left-color: var(--ink-3); }
+
+.masthead-body {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 1.125rem clamp(.9rem, 1.2vw, 1.25rem) 1.25rem;
+}
+
+
+/* ============================================================
+   VERDICT — the thesis in one sentence
+   ============================================================ */
+.verdict { border-left: 3px solid var(--ink); }
+
+/* The head carries two different things — what the panel is, and the running
+   score — so each gets its own band with a rule between them rather than
+   sharing a line and reading as one label. */
+.verdict .panel-head {
+  flex-direction: column;
+  /* Column + wrap + the inherited `align-content: center` would centre the
+     single flex line horizontally and shrink both bands to their content;
+     nowrap keeps each band the full width of the panel. */
+  flex-wrap: nowrap;
+  align-items: stretch;
+  align-content: stretch;
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+}
+/* Same size and ink as every other panel title — it was set larger when it stood
+   alone in a wide banner, and beside the rest it read as a different rank of
+   heading rather than the same one. */
+.verdict .panel-title {
+  white-space: normal;
+  padding: .95rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.verdict #verdict-note { align-self: flex-start; margin: .95rem 1.25rem; }
+
+.verdict-body {
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.verdict-line {
+  font-family: var(--font-ui);
+  /* Smaller than it was as a full-width banner: this now reads as a column of
+     type beside the trees, not a headline spanning the page. */
+  font-size: clamp(1.0625rem, 1.3vw, 1.3125rem);
+  line-height: 1.35;
+  text-wrap: balance;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* Claim and answer are the same sentence twice over, so they are set in the same
+   face, size and ink: the reader compares two readings, not a statement and a
+   footnote. A rule and air carry the turn instead. */
+.verdict-line.truth {
+  border-top: 1px solid var(--border);
+  margin-top: .95rem;
+  padding-top: .95rem;
+}
+
+.verdict-hint {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+  margin: 1rem 0 0;
+}
+
+.slot {
+  display: inline-block;
+  min-width: 5.5ch;
+  border-bottom: 2px solid var(--border-firm);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: .82em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.slot.filled { border-bottom-color: var(--ink); color: var(--ink); }
+/* After .filled on purpose: same specificity, so the verdict's reading of a slot
+   wins over the plain filled ink. */
+.slot.ok  { color: var(--ok);  border-bottom-color: var(--ok); }
+.slot.bad { color: var(--bad); border-bottom-color: var(--bad); }
+
+.theme-switch {
+  display: inline-flex;
+  border: 1px solid var(--border-firm);
+  border-radius: var(--r);
+  overflow: hidden;
+  flex: none;
+}
+.theme-btn {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  color: var(--ink-3);
+  background: transparent;
+  border: 0;
+  padding: .28rem .65rem;
+  cursor: pointer;
+}
+.theme-btn + .theme-btn { border-left: 1px solid var(--border-firm); }
+.theme-btn:hover { color: var(--ink); }
+.theme-btn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.theme-btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+
+/* ============================================================
+   ACT TABS
+
+   The page is a causal chain, not a menu: the virus is set, then the
+   testing programme that observes it, then what that programme lets
+   you conclude. The numbers are earned — they mark a real order, and
+   reading them out of order does not work.
+
+   A tab overlaps the box below it by 1px so it covers that box's top
+   border where they meet, which is what makes the two read as one
+   object rather than a label sitting on a lid.
+   ============================================================ */
+.act { display: flex; flex-direction: column; }
+.act > * + * { margin-top: 1.25rem; }
+.act > .act-tab + * { margin-top: 0; }
+
+.act-tab {
+  align-self: stretch;
+  display: flex;
+  align-items: baseline;
+  gap: .55rem;
+  font-family: var(--font-mono);
+  font-size: .9375rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-hi);
+  background: var(--border-firm);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: .4rem .95rem .5rem;
+  margin: 0 0 -1px;
+  position: relative;
+  z-index: 2;
+}
+.act-n { color: var(--ink-2); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   VIRUS STRIP — the pathogen's identity and the three knobs that
+   regenerate the truth, on one horizontal rail. Separated from
+   surveillance policy because these two do categorically different
+   things: this rail changes what happened, policy only changes
+   what you can see of it.
+   ============================================================ */
+/* Vertical: the rail stands beside the map rather than above it, so the three
+   knobs stack down a narrow column instead of running across a wide one. */
+.virus { display: flex; flex-direction: column; align-items: stretch; }
+
+.virus-id {
+  padding: .8rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.virus-name {
+  font-family: var(--font-mono);
+  font-size: .875rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0 0 .3rem;
+}
+.virus-info {
+  font-size: .875rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+.virus #scenario-fields {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.virus .field {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  gap: .4rem;
+  margin-bottom: 0;
+  padding: .8rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.virus .field:last-child { border-bottom: 0; }
+.virus .field-top { flex-wrap: wrap; gap: .2rem .75rem; }
+
+/* ============================================================
+   MAIN GRID
+   ============================================================ */
+/* Acts 01 and 02 share one row so the whole set-up fits above the fold.
+   They are two separate <section class="act">s, each carrying its own tab,
+   so the tabs sit over their own boxes and never fuse into one lid. */
+.setup {
+  display: grid;
+  /* The virus rail holds three sliders and a paragraph; past ~22rem it is just
+     wider, not better, so it is capped and the testing block takes the rest. */
+  grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+.setup > .act > .panel,
+.setup > .act > .lower { flex: 1; }
+
+/* Trees on the left, the verdict standing beside them on the right. */
+.results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 26rem);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  /* Equal-height boxes, the same way .lower does it. The reconstruction genuinely
+     spans more days than the truth tree, so its chart is taller; the shorter panel
+     absorbs the difference as space under its chart rather than having its axis
+     padded out, which is what made the trees look squashed before. */
+  align-items: stretch;
+}
+.stage > .panel { display: flex; flex-direction: column; }
+.stage > .panel > .panel-body { flex: 1; }
+.lower {
+  display: grid;
+  /* The map is capped in the same spirit — it is a locator, and every pixel of
+     width it takes it also takes in height, which is the one budget this row has
+     to respect. Policy absorbs what is left. */
+  grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+.lower > .panel { display: flex; flex-direction: column; }
+.lower > .panel > .panel-body,
+.lower > .panel > .controls-grid { flex: 1; }
+@media (max-width: 1080px) {
+  .setup, .results { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 940px) {
+  .stage, .lower { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================
+   MAP
+   ============================================================ */
+/* Capped: the map is a locator, not a chart, and letting it soak up the wider
+   measure would have bought nothing but height on the one row that has to stay
+   short. It centres in whatever the column leaves it. */
+.map-svg { display: block; width: 100%; max-width: 24rem; height: auto; margin-inline: auto; }
+
+.region { cursor: pointer; }
+.region-shape {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+  transition: fill .18s ease;
+}
+.region:hover .region-shape { filter: brightness(1.06); }
+.region.selected .region-shape {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.region:focus-visible { outline: none; }
+.region:focus-visible .region-shape {
+  stroke: var(--accent-ink);
+  stroke-width: 3;
+}
+
+.region-label {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--ink);
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  text-anchor: middle;
+}
+.region-value {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  fill: var(--ink-2);
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  color: var(--ink-3);
+}
+.legend-ramp {
+  display: flex;
+  flex: 1;
+  height: 8px;
+  border-radius: 1px;
+  overflow: hidden;
+  gap: 2px;
+}
+.legend-ramp span { flex: 1; background: var(--ink); }
+
+/* ============================================================
+   TREE
+   ============================================================ */
+/* Both trees render at the same pixel height, so one vertical pixel is the same
+   number of days in each panel. Equalising WIDTH instead would have worked too,
+   but only by scaling both down to the wider one — and by making each panel's
+   geometry depend on the other's, which is exactly what must not happen here. */
+.tree-svg { display: block; max-width: none; }
+#truth-tree, #inferred-tree { overflow-x: auto; }
+.tree-svg line { shape-rendering: crispEdges; }
+.tree-label {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  fill: var(--ink);
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.tree-muts {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  fill: var(--ink-3);
+  text-anchor: middle;
+  paint-order: stroke fill;
+  stroke: var(--surface);
+  stroke-width: 2.5px;
+}
+.tree-axis {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--ink-3);
+  text-anchor: end;
+}
+.tree-axis-cap { fill: var(--ink-3); letter-spacing: .05em; }
+.tree-muts { text-anchor: start; }
+.tree-root-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  fill: var(--ink-3);
+  text-anchor: start;
+  letter-spacing: .04em;
+}
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  padding: .25rem .75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+.btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--ink-2); border-color: var(--border-firm); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+.curtain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .875rem;
+  min-height: 320px;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background:
+    repeating-linear-gradient(135deg,
+      transparent 0 7px, var(--border-firm) 7px 8px);
+  border-radius: var(--r);
+}
+.curtain p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 1rem;
+  max-width: 32ch;
+}
+.curtain .curtain-title {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.panel-sub {
+  font-family: var(--font-mono);
+  font-size: .875rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  /* Sits inside the head, on a line of its own under the title: the count is
+     part of what the panel says it is showing, not a footnote to the chart. */
+  flex-basis: 100%;
+  padding: 0;
+}
+.panel-sub:empty { display: none; }
+
+.region-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .875rem;
+  padding: .75rem 1.125rem;
+  border-top: 1px solid var(--border);
+}
+/* The swatches name the regions; this names what a colour MEANS, which is the
+   one thing a reader cannot infer from the swatches themselves. */
+.key-lede {
+  flex-basis: 100%;
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+}
+
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .8125rem;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+}
+.key-item i {
+  width: 10px; height: 10px;
+  border-radius: 1px;
+  flex: none;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  min-height: 300px;
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+.empty p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: .9375rem;
+  max-width: 36ch;
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+.controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (max-width: 880px) {
+  .controls-grid { grid-template-columns: minmax(0, 1fr); }
+  .control-group + .control-group { border-left: none; border-top: 1px solid var(--border); }
+}
+
+.control-group { padding: 1.125rem 1.25rem; }
+.control-group + .control-group { border-left: 1px solid var(--border); }
+
+/* Full width and centred, which is why the left accent rule went: a bar down
+   one edge is the pull-quote idiom and reads as a promise of left-aligned text.
+   Squared off on all four sides, it reads as the banner it is. */
+.group-note {
+  font-size: .875rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .7rem .9rem;
+  margin: 0 0 .875rem;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .875rem; }
+.field:last-child { margin-bottom: 0; }
+
+.field-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.field label { font-size: .9375rem; color: var(--ink-2); }
+.field output {
+  font-family: var(--font-mono);
+  font-size: .9375rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 1px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  margin-top: -5px;
+  box-shadow: 0 0 0 1px var(--border-firm);
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 12px; height: 12px;
+  border-radius: 1px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border-firm);
+}
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.region-chips { display: flex; flex-wrap: wrap; gap: .375rem; margin-bottom: 1rem; }
+.chip {
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  font-weight: 400;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--border-firm);
+  border-radius: var(--r);
+  padding: .22rem .55rem;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.chip:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* ============================================================
+   SOURCES
+   ============================================================ */
+.sources { font-size: .9375rem; color: var(--ink-3); }
+.sources h2 {
+  font-family: var(--font-mono);
+  font-size: .875rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+  margin: 0 0 .75rem;
+}
+.sources ul {
+  margin: 0; padding: 0; list-style: none;
+  /* Two columns once there is room for two readable ones. A citation list set to
+     the full 1452px measure is a line too long to track back to its own start.
+     Flowed rather than gridded, so the entries pack tight instead of each row
+     being padded out to the height of its tallest neighbour. */
+  columns: 34rem;
+  column-gap: 3rem;
+  counter-reset: src;
+}
+.sources li {
+  padding-left: 1.9rem;
+  margin-bottom: .5rem;
+  break-inside: avoid;
+  position: relative;
+  counter-increment: src;
+  text-align: justify;
+  text-align-last: left;
+}
+/* Numbered, not a section mark: these are citations the page owes the
+   reader, so the marker keys to something instead of decorating. */
+.sources li::before {
+  content: counter(src, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+.pending {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid currentColor;
+  border-radius: var(--r);
+  padding: 0 .3rem;
+  margin-left: .4rem;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-bar">
+      <h1>The history you test is the history you get</h1>
+      <div class="theme-switch" role="group" aria-label="Colour theme">
+        <button type="button" class="theme-btn" data-set-theme="light" aria-pressed="false">Light</button>
+        <button type="button" class="theme-btn" data-set-theme="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <div class="masthead-body">
+      <p class="standfirst">
+        A pathogen&rsquo;s phylogenetic tree is built from the samples that happened to get sequenced,
+        which makes it prone to ascertainment and sampling bias. Some regions test early and broadly.
+        Others test late, or only the sickest patients. Cases that were never sampled leave no trace.
+        The result is a tree that can look complete and confident while telling an inaccurate story of
+        how the pathogen evolved and spread. This tool lets you change those testing parameters and
+        watch the reconstructed history diverge from a known truth.
+      </p>
+    </div>
+  </header>
+
+  <!-- ACTS 1 + 2 : the two inputs, side by side. Each keeps its own tab —
+       the tabs are deliberately NOT merged, because the virus rail and the
+       surveillance rail do categorically different things. ---------------- -->
+  <div class="setup">
+
+  <section class="act" aria-labelledby="act-virus">
+  <h2 class="act-tab" id="act-virus"><span class="act-n">01</span>Virus</h2>
+
+  <section class="panel virus" aria-labelledby="virus-h">
+    <div class="virus-id">
+      <p class="virus-name" id="virus-h">Meridian virus &middot; MRV-1</p>
+      <p class="virus-info">
+        Enveloped RNA virus, respiratory.<br>
+        Adjust the sliders to modify the epidemic&rsquo;s characteristics.
+      </p>
+    </div>
+    <div id="scenario-fields"></div>
+  </section>
+
+  </section>
+
+  <section class="act" aria-labelledby="act-testing">
+  <h2 class="act-tab" id="act-testing"><span class="act-n">02</span>Testing</h2>
+
+  <div class="lower">
+
+  <section class="panel" aria-labelledby="map-h">
+      <div class="panel-head">
+        <h3 class="panel-title" id="map-h">Sequencing effort by region<button type="button"
+          class="help" aria-label="How much sequencing each region does: darker fill is more,
+          combining how early testing starts with how much of it there is. Click a region to edit
+          its own policy below.">?</button></h3>
+      </div>
+      <div class="panel-body">
+        <svg class="map-svg" viewBox="0 0 400 320" role="group"
+             aria-label="Map of the six regions. Fill shows sequencing effort.">
+          <g id="map-regions"></g>
+        </svg>
+        <div class="legend">
+          <span>fill&nbsp;=&nbsp;surveillance&nbsp;effort</span>
+          <div class="legend-ramp" aria-hidden="true">
+            <span style="opacity:.12"></span><span style="opacity:.26"></span>
+            <span style="opacity:.40"></span><span style="opacity:.55"></span>
+            <span style="opacity:.70"></span>
+          </div>
+          <span>none&nbsp;&rarr;&nbsp;maximum</span>
+        </div>
+      </div>
+    </section>
+
+  <section class="panel" aria-labelledby="controls-h">
+    <div class="panel-head">
+      <h3 class="panel-title" id="controls-h">Testing policy</h3>
+      <button type="button" class="btn ghost" id="fullinfo-btn" aria-pressed="false">Omniscient mode</button>
+    </div>
+    <div class="controls-grid">
+
+      <div class="control-group">
+        <p class="group-note" id="fullinfo-note" hidden>
+          <strong>Omniscient mode is not a real possibility &mdash; it is a control
+          experiment.</strong> Every infection is sequenced the moment it happens,
+          asymptomatic cases included, so you can see how the tree would be reconstructed
+          under perfect testing. It is still not identical to the known truth, because
+          even a complete set of genomes only records mutations, not movements: two
+          regions holding the same genotype are indistinguishable, parsimony has to break
+          the ties that leaves, and dates come from a clock regression rather than a
+          calendar. Those residual errors are the method&rsquo;s floor &mdash; everything
+          worse than this, elsewhere on the page, came from sampling.
+        </p>
+        <div class="region-chips" id="region-chips" role="group" aria-label="Select a region"></div>
+        <div id="policy-fields"></div>
+      </div>
+
+    </div>
+  </section>
+
+  </div>
+
+  </section>
+
+  </div>
+
+  <!-- ACT 3 : RESULTS ------------------------------------------ -->
+  <section class="act" aria-labelledby="act-results">
+  <h2 class="act-tab" id="act-results"><span class="act-n">03</span>Results</h2>
+
+  <div class="results">
+
+  <!-- STAGE: the two trees, side by side on the left ------ -->
+  <div class="stage">
+
+    <section class="panel" aria-labelledby="truth-h">
+      <div class="panel-head">
+        <h3 class="panel-title" id="truth-h">What actually happened<button type="button"
+          class="help" aria-label="The virus&rsquo;s true family
+          tree, taken straight from the simulation: every infection, every mutation, wherever it
+          happened. Time runs downwards, each fork is a mutation, and a branch takes the colour of
+          the region that lineage really arose in. No real outbreak comes with this panel &mdash;
+          it is here only so you can mark the reconstruction against it.">?</button></h3>
+        <button type="button" class="btn ghost" id="reveal-btn" aria-expanded="false"
+                aria-controls="truth-body">Reveal</button>
+        <p class="panel-sub" id="truth-count"></p>
+      </div>
+      <div class="panel-body" id="truth-body">
+        <div class="curtain" id="truth-curtain">
+          <p class="curtain-title">The answer key</p>
+          <p>The true phylogeny, with every branch coloured by the region the mutation
+             really appeared in. Hidden so you can try reading the reconstruction first.</p>
+          <button type="button" class="btn" id="reveal-btn-2">Reveal the truth</button>
+        </div>
+        <div id="truth-tree" hidden></div>
+      </div>
+      <div class="region-key" id="region-key" hidden></div>
+    </section>
+
+    <section class="panel" aria-labelledby="inf-h">
+      <div class="panel-head">
+        <h3 class="panel-title" id="inf-h">What you would reconstruct<button type="button"
+          class="help" aria-label="The tree you would build from
+          the genomes your testing policy actually collected, by the standard recipe: group
+          genomes by the mutations they share, date each branch by how many mutations it carries,
+          and give it the region that best explains the samples hanging beneath it. It never sees
+          the truth panel &mdash; only the samples you paid for.">?</button></h3>
+        <span class="panel-note" id="inf-note">&nbsp;</span>
+        <p class="panel-sub" id="inferred-count"></p>
+      </div>
+      <div class="panel-body">
+        <div id="inferred-tree"></div>
+      </div>
+      <div class="region-key" id="inferred-key"></div>
+    </section>
+
+  </div>
+
+  <section class="panel verdict" aria-labelledby="verdict-h">
+    <div class="panel-head">
+      <h3 class="panel-title" id="verdict-h">What you would have concluded</h3>
+      <span class="panel-note" id="verdict-note">no simulation run</span>
+    </div>
+    <div class="verdict-body">
+      <p class="verdict-line">
+        You would have concluded<span id="v-variant-word"> Variant</span> <span class="variant-picker"><span
+          id="v-variant-select" class="variant-inline-select" aria-hidden="true">Alpha</span><select
+          id="variant-selector" aria-label="Which variant to report on"></select></span> arose in
+        <span class="slot" id="v-inf-deme">&nbsp;</span> on day
+        <span class="slot" id="v-inf-day">&nbsp;</span>.
+      </p>
+      <p class="verdict-line truth">
+        In reality, it arose in <span class="slot" id="v-true-deme">&nbsp;</span> on day
+        <span class="slot" id="v-true-day">&nbsp;</span>.
+      </p>
+      <p class="verdict-hint">Click the variant name to change it.</p>
+    </div>
+  </section>
+
+  </div>
+
+  </section>
+
+  <!-- SOURCES ------------------------------------------------ -->
+  <section class="panel sources">
+    <div class="panel-body">
+      <h2>Method &amp; sources</h2>
+      <ul>
+        <li><strong>Substitution rate.</strong> The <strong>Mutation rate</strong> slider sets the molecular clock, scaled to generate branch lengths consistent with respiratory-virus evolution. RNA viruses typically evolve at 1–5 × 10<sup>−3</sup> substitutions per site per year, depending on family and protein region.</li>
+        <li><strong>Transmission chain.</strong> Serial interval (time between successive infections) is modelled as Gamma(2.5, 2.6 days; mean 6.5 days). Secondary cases follow a negative-binomial distribution with dispersion k=0.5, capturing superspreading common in respiratory outbreaks.</li>
+        <li><strong>Root-to-tip regression.</strong> The phylogenetic root is inferred by regressing sequence divergence against sampling date, following TempEst (Rambaut et al. 2016). The x-intercept estimates the most recent common ancestor.</li>
+        <li><strong>Ancestral-state reconstruction.</strong> Ancestral regions are inferred by Fitch parsimony, which selects the region most consistent with each mutation's tips. This method is biased toward the most-sampled region (Lemey et al. 2010), even when another region held the true ancestor. Bayesian methods (BEAST, MrBayes) mitigate this bias through joint modelling of sampling effort.</li>
+        <li><strong>Variant nomenclature.</strong> The WHO adopted Greek-letter naming (Alpha, Beta, Gamma, …) in May 2021 for epidemiologically significant variants of concern, standardising naming across viruses and avoiding geographic stigma (WHO 2021).</li>
+        <li><strong>Test positivity.</strong> High positivity (≥5%) signals overwhelmed testing capacity and undetected cases. During SARS-CoV-2, peak per-capita testing reached 5–10% of population per week in developed countries, setting a reference for adequate surveillance breadth.</li>
+        <li><strong>Testing channels.</strong> Community screening swabs random people (detection probability = prevalence; unbiased but wasteful). Hospital intake swabs admissions at ~100% detection but captures only severe/critical cases and saturates once capacity exceeds ward census.</li>
+        <li><strong>Model caveat.</strong> This outbreak reaches ~10,000 people with peak prevalence far higher than reality, making random screening <em>more</em> efficient here than in practice. The advantage of hospital sampling is therefore understated.</li>
+        <li><strong>Method caveat.</strong> The bias shown here is emergent, not hardcoded—it arises from running textbook Fitch parsimony on an unevenly sampled tip set. Production methods reduce but cannot fully eliminate this failure mode.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   PHYLOBIAS ENGINE — pure and DOM-free.
+   Truth never depends on policy. That is the thesis and the
+   performance strategy at once.
+   ============================================================ */
+
+/* ---------- seeded randomness ---------- */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function makeRandom(seed) {
+  const u = mulberry32(seed);
+  let spare = null;
+
+  function normal() {
+    if (spare !== null) { const s = spare; spare = null; return s; }
+    let a = 0, b = 0;
+    while (a === 0) a = u();
+    while (b === 0) b = u();
+    const r = Math.sqrt(-2 * Math.log(a));
+    const th = 2 * Math.PI * b;
+    spare = r * Math.sin(th);
+    return r * Math.cos(th);
+  }
+
+  /* Marsaglia–Tsang */
+  function gamma(shape, scale) {
+    if (shape < 1) return gamma(shape + 1, scale) * Math.pow(u(), 1 / shape);
+    const d = shape - 1 / 3;
+    const c = 1 / Math.sqrt(9 * d);
+    for (;;) {
+      let x, v;
+      do { x = normal(); v = 1 + c * x; } while (v <= 0);
+      v = v * v * v;
+      const uu = u();
+      if (uu < 1 - 0.0331 * x * x * x * x) return d * v * scale;
+      if (Math.log(uu) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v * scale;
+    }
+  }
+
+  function poisson(lambda) {
+    if (lambda <= 0) return 0;
+    if (lambda < 30) {
+      const L = Math.exp(-lambda);
+      let k = 0, p = 1;
+      do { k++; p *= u(); } while (p > L);
+      return k - 1;
+    }
+    return Math.max(0, Math.round(normal() * Math.sqrt(lambda) + lambda));
+  }
+
+  /* Gamma–Poisson mixture: dispersion k captures superspreading */
+  function negBinom(mean, k) {
+    if (mean <= 0) return 0;
+    return poisson(gamma(k, mean / k));
+  }
+
+  return { u, normal, gamma, poisson, negBinom };
+}
+
+/* ---------- min-heap keyed on infection time ---------- */
+class MinHeap {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  push(x) {
+    const a = this.a;
+    a.push(x);
+    let i = a.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (a[p].t <= a[i].t) break;
+      [a[p], a[i]] = [a[i], a[p]];
+      i = p;
+    }
+  }
+  pop() {
+    const a = this.a;
+    const top = a[0];
+    const last = a.pop();
+    if (a.length) {
+      a[0] = last;
+      let i = 0;
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1;
+        let s = i;
+        if (l < a.length && a[l].t < a[s].t) s = l;
+        if (r < a.length && a[r].t < a[s].t) s = r;
+        if (s === i) break;
+        [a[s], a[i]] = [a[i], a[s]];
+        i = s;
+      }
+    }
+    return top;
+  }
+}
+
+/* ---------- world ---------- */
+const REGION_IDS = ["aldane","fenmoor","brix","corvane","doran","esker"];
+const REGIONS = [
+  { id: "aldane",  name: "Aldane",  pop:   900, neighbours: ["fenmoor", "corvane"] ,
+    pts: "170,25 300,45 330,110 185,105", label: [246,  72] },
+  { id: "fenmoor", name: "Fenmoor", pop:  1250, neighbours: ["aldane", "brix"] ,
+    pts: "60,40 170,25 185,105 95,120 45,90", label: [122,  76] },
+  { id: "brix",    name: "Brix",    pop:  1650, neighbours: ["fenmoor", "corvane", "doran"] ,
+    pts: "45,90 95,120 185,105 190,190 80,200 35,150", label: [115, 152] },
+  { id: "corvane", name: "Corvane", pop:  2600, neighbours: ["aldane", "brix", "esker"] ,
+    pts: "185,105 330,110 345,190 190,190", label: [263, 152] },
+  { id: "doran",   name: "Doran",   pop:  1350, neighbours: ["brix", "esker"] ,
+    pts: "80,200 190,190 185,270 110,290 60,240", label: [128, 240] },
+  { id: "esker",   name: "Esker",   pop:  2050, neighbours: ["corvane", "doran"] ,
+    pts: "190,190 345,190 330,255 250,290 185,270", label: [263, 236] },
+];
+const REG = Object.fromEntries(REGIONS.map(r => [r.id, r]));
+
+/* `after` is days since that region's FIRST case, not a calendar day. Regions are
+   seeded at seed-dependent times, so absolute days make emergence brittle: a variant
+   can end up arising into an already-depleted region and never establish. */
+const LINEAGES = [
+  { id: "wild",    name: "Wild type", origin: "brix",    after:  0, trans: 1.0, sev: 1.0 },
+  { id: "alpha",   name: "Alpha",     origin: "aldane",  after:  5, trans: 1.6, sev: 0.5 },
+  { id: "beta",    name: "Beta",      origin: "esker",   after:  8, trans: 1.3, sev: 1.0 },
+  { id: "gamma",   name: "Gamma",     origin: "corvane", after: 10, trans: 1.4, sev: 2.2 },
+  { id: "delta",   name: "Delta",     origin: "doran",   after: 12, trans: 1.5, sev: 1.0 },
+  { id: "epsilon", name: "Epsilon",   origin: "brix",    after: 14, trans: 1.5, sev: 1.0 },
+  { id: "zeta",    name: "Zeta",      origin: "fenmoor", after: 16, trans: 1.6, sev: 1.2 },
+];
+const LIN = Object.fromEntries(LINEAGES.map(l => [l.id, l]));
+
+const TIERS = ["asymptomatic", "mild", "moderate", "severe", "critical"];
+const TIER_CUTS = [0.35, 0.90, 1.70, 2.60];   /* on a wild-type mean-1.0 score */
+
+const GENOME_SITES  = 30000;
+const MAX_DAYS      = 180;
+const CASE_CAP      = 120000;
+const DISPERSION    = 0.5;    /* negative-binomial k — superspreading */
+const SI_SHAPE      = 2.5;    /* serial interval ~ Gamma(2.5, 2.6), mean 6.5 d */
+const SI_SCALE      = 2.6;
+const INC_SHAPE     = 4.0;    /* incubation ~ Gamma(4, 1.2), mean 4.8 d */
+const INC_SCALE     = 1.2;
+const MIGRATION     = 0.06;   /* per transmission event */
+const N_INDEX       = 8;      /* independent introductions — see note below */
+const INDEX_WINDOW  = 5;      /* days over which they arrive */
+const EMERGE_GRACE  = 12;     /* days to wait for a wild-type host before settling */
+const ESTABLISH_MIN = 20;     /* cases before a variant counts as established */
+const FOUNDER_OFFSPRING = 2;  /* a variant only takes hold in a host that transmits */
+
+function tierOf(score) {
+  let t = 0;
+  while (t < TIER_CUTS.length && score >= TIER_CUTS[t]) t++;
+  return t;
+}
+
+/* ---------- the truth layer ---------- */
+function runTruth(scenario) {
+  /* A missing or NaN parameter must not degrade quietly: Math.exp(-NaN) makes the
+     Poisson draw return 0, which yields a near-empty tree that looks plausible. */
+  for (const k of ["seed", "r0", "clockRate"]) {
+    if (!Number.isFinite(scenario[k]))
+      throw new Error(`runTruth: scenario.${k} is ${scenario[k]}`);
+  }
+  const R = makeRandom(scenario.seed);
+  const muPerDay = scenario.clockRate * 1e-4 * GENOME_SITES / 365;
+
+  const S = {};
+  for (const r of REGIONS) S[r.id] = r.pop;
+
+  const cases = [];
+  const mutations = [];
+  const markerOf = {};              /* lineage id -> marker mutation id */
+  const fired = new Set(["wild"]);
+  /* A variant founded on one case usually dies out: with dispersion k the modal
+     offspring count is zero. So variants arise repeatedly and we keep the attempt
+     that establishes — which is what happens in nature. Failed attempts are
+     reverted to their base lineage; their marker stays in the record as an
+     ordinary mutation that went extinct. */
+  const attempts = {};
+  const seeded = {};                /* region -> day of its first case */
+  const attemptLog = {};   /* lineage -> [attempts, reverted] */
+  const heap = new MinHeap();
+
+  function addMutation(c, t) {
+    const m = {
+      id: mutations.length, t, region: c.region, caseId: c.id,
+      parent: c.lastMut, marker: null,
+    };
+    mutations.push(m);
+    c.newMuts.push(m.id);
+    c.lastMut = m.id;
+    return m;
+  }
+
+  /* Promote an attempt that has grown enough, or revert one that has died out
+     so the lineage is free to arise again on a later host. */
+  function reapAttempts() {
+    for (const id of Object.keys(attempts)) {
+      const a = attempts[id];
+      if (a.cases.length >= ESTABLISH_MIN) { delete attempts[id]; continue; }
+      if (a.pending > 0) continue;
+      for (const cid of a.cases) cases[cid].lineage = a.base;
+      mutations[a.marker].marker = null;
+      delete markerOf[id];
+      delete attempts[id];
+      fired.delete(id);
+      (attemptLog[id] ||= [0,0])[1]++;
+    }
+  }
+
+  /* A single index case is not enough. For a branching process with R0 2.4 and
+     dispersion 0.5 the extinction probability is ~0.57, so most seeds would die out
+     before anything interesting happened. Real outbreaks are seeded by repeated
+     introductions; with N_INDEX of them the chance the whole thing fizzles is ~1%.
+     They share the ancestral genotype, so the root is a polytomy — which is also
+     what an early outbreak's phylogeny genuinely looks like. */
+  for (let i = 0; i < N_INDEX; i++) {
+    heap.push({ parent: -1, region: "brix", t: R.u() * INDEX_WINDOW,
+                lineage: "wild", parentLastMut: -1, branch: 0 });
+  }
+
+  while (heap.size && cases.length < CASE_CAP) {
+    const ev = heap.pop();
+    if (ev.t > MAX_DAYS) break;             /* heap is time-ordered */
+    if (ev.lineage in attempts) attempts[ev.lineage].pending--;
+    /* the contact lands on a susceptible with probability S/N; otherwise the
+       transmission simply fails. This is what bounds the final size. */
+    if (R.u() >= S[ev.region] / REG[ev.region].pop) { reapAttempts(); continue; }
+    S[ev.region]--;
+
+    if (seeded[ev.region] === undefined) seeded[ev.region] = ev.t;
+
+    const c = {
+      id: cases.length, parent: ev.parent, region: ev.region, t: ev.t,
+      lineage: ev.lineage, newMuts: [], lastMut: ev.parentLastMut,
+    };
+
+    /* mutations along the branch, times spread across it */
+    const n = R.poisson(muPerDay * ev.branch);
+    for (let i = 0; i < n; i++) {
+      addMutation(c, ev.t - ev.branch + ((i + 1) / (n + 1)) * ev.branch);
+    }
+
+    /* Offspring are drawn from the lineage the host was INFECTED with — a mutation
+       arising in this host cannot retroactively change the contacts it already made. */
+    const lin0 = LIN[c.lineage];
+    const rEff = scenario.r0 * lin0.trans;
+    const nOff = R.negBinom(rEff, DISPERSION);
+
+    /* Variant emergence. Founding on an arbitrary host almost always fails: with
+       dispersion k the modal offspring count is zero. Requiring the founder to
+       transmit is what "establishment" means, and it spends attempts on hosts that
+       can actually carry the lineage rather than burning the region's window. */
+    for (const L of LINEAGES) {
+      if (fired.has(L.id)) continue;
+      if (c.region !== L.origin || c.t < seeded[L.origin] + L.after) continue;
+      if (c.lineage !== "wild" && c.t < seeded[L.origin] + L.after + EMERGE_GRACE) continue;
+      if (nOff < FOUNDER_OFFSPRING) continue;
+      fired.add(L.id);
+      const base = c.lineage;
+      const m = addMutation(c, c.t);
+      m.marker = L.id;
+      markerOf[L.id] = m.id;
+      c.lineage = L.id;
+      attempts[L.id] = { marker: m.id, base, cases: [], pending: 0 };
+      (attemptLog[L.id] ||= [0,0])[0]++;
+      break;
+    }
+
+    const lin = LIN[c.lineage];
+
+    /* severity — latent score, wild-type mean 1.0, scaled by the lineage */
+    c.sevScore = R.gamma(2, 0.5) * lin.sev;
+    c.tier = tierOf(c.sevScore);
+    c.tOnset = c.t + R.gamma(INC_SHAPE, INC_SCALE);
+    const dur = c.tier >= 3 ? R.gamma(4, 2.6) : R.gamma(3, 1.8);
+    c.tRemoved = c.tOnset + dur;
+    /* severe and critical cases pass through a hospital, and only they can be
+       sampled by the hospital channel */
+    if (c.tier >= 3) {
+      c.tAdmit = c.tOnset + R.gamma(2, 1.5);
+      c.tDischarge = c.tRemoved;
+    } else {
+      c.tAdmit = null;
+      c.tDischarge = null;
+    }
+
+    cases.push(c);
+    if (c.lineage in attempts) attempts[c.lineage].cases.push(c.id);
+
+    for (let i = 0; i < nOff; i++) {
+      const gap = R.gamma(SI_SHAPE, SI_SCALE);
+      const tc = c.t + gap;
+      if (tc > MAX_DAYS) continue;
+      let reg = c.region;
+      if (R.u() < MIGRATION) {
+        const nb = REG[c.region].neighbours;
+        reg = nb[Math.floor(R.u() * nb.length)];
+      }
+      if (c.lineage in attempts) attempts[c.lineage].pending++;
+      heap.push({
+        parent: c.id, region: reg, t: tc, lineage: c.lineage,
+        parentLastMut: c.lastMut, branch: gap,
+      });
+    }
+    reapAttempts();
+  }
+
+  /* ---- carrier counts over the mutation tree ----
+     A case carries exactly the mutations on the path root -> case.lastMut, so
+     carriers[m] = sum over m and its descendants of cases ending there.
+     Parent ids are always lower than child ids, so one descending pass does it. */
+  const carriers = new Array(mutations.length).fill(0);
+  for (const c of cases) if (c.lastMut >= 0) carriers[c.lastMut]++;
+  for (let i = mutations.length - 1; i >= 0; i--) {
+    const p = mutations[i].parent;
+    if (p >= 0) carriers[p] += carriers[i];
+  }
+
+  /* ---- per-lineage truth ---- */
+  const lineageTruth = LINEAGES.map(L => {
+    const mine = cases.filter(c => c.lineage === L.id);
+    const first = mine.length ? mine.reduce((a, b) => (a.t <= b.t ? a : b)) : null;
+    return {
+      id: L.id, name: L.name,
+      emerged: fired.has(L.id),
+      originRegion: first ? first.region : null,
+      originDay: first ? first.t : null,
+      markerMutation: markerOf[L.id] ?? null,
+      cases: mine.length,
+      severeShare: mine.length ? mine.filter(c => c.tier >= 3).length / mine.length : 0,
+    };
+  });
+
+  const byRegion = Object.fromEntries(REGIONS.map(r => [r.id, 0]));
+  const byTier = new Array(TIERS.length).fill(0);
+  for (const c of cases) { byRegion[c.region]++; byTier[c.tier]++; }
+
+  /* Daily censuses, per region. The sampler needs these to price a test: a
+     hospital bed can only be swabbed if someone is in it, and a screening
+     programme's hit rate is the prevalence of the population it screens. */
+  const daily = Object.fromEntries(REGIONS.map(r => [r.id, {
+    active: new Array(MAX_DAYS + 1).fill(0),
+    inHospital: new Array(MAX_DAYS + 1).fill(0),
+  }]));
+  const span = (arr, from, to) => {
+    const a = Math.max(0, Math.floor(from)), b = Math.min(MAX_DAYS, Math.ceil(to));
+    for (let d = a; d <= b; d++) arr[d]++;
+  };
+  for (const c of cases) {
+    const d = daily[c.region];
+    span(d.active, c.t, c.tRemoved);
+    if (c.tAdmit != null) span(d.inHospital, c.tAdmit, c.tDischarge);
+  }
+
+  return {
+    scenario, cases, mutations, carriers, markerOf,
+    lineages: lineageTruth,
+    attemptLog, daily,
+    stats: { cases: cases.length, mutations: mutations.length, byRegion, byTier,
+             lastDay: cases.length ? cases[cases.length - 1].t : 0 },
+  };
+}
+
+/* full genotype = every mutation on the ancestral path */
+function genotypeOf(truth, caseId) {
+  const out = [];
+  let c = truth.cases[caseId];
+  while (c) {
+    for (let i = c.newMuts.length - 1; i >= 0; i--) out.push(c.newMuts[i]);
+    c = c.parent >= 0 ? truth.cases[c.parent] : null;
+  }
+  return out;
+}
+
+
+/* ============================================================
+   DISPLAY TREE — prune, collapse unbranched runs, lay out
+   ============================================================ */
+
+/* A run of mutations that nobody branches off carries identical information at
+   every step: same carrier count means they are always inherited together and
+   can never be told apart. Collapsing them into one branch is how phylogenies
+   are normally drawn — branch length IS the mutation count. */
+function buildDisplayTree(truth, minCarriers) {
+  const keep = new Set();
+  for (let i = 0; i < truth.mutations.length; i++)
+    if (truth.carriers[i] >= minCarriers) keep.add(i);
+
+  const kids = new Map([[-1, []]]);
+  for (const id of keep) {
+    let p = truth.mutations[id].parent;
+    while (p >= 0 && !keep.has(p)) p = truth.mutations[p].parent;
+    if (!kids.has(p)) kids.set(p, []);
+    kids.get(p).push(id);
+  }
+  for (const a of kids.values()) a.sort((x, y) => truth.carriers[y] - truth.carriers[x]);
+
+  const lineageOf = id => {
+    let m = truth.mutations[id];
+    while (m) { if (m.marker) return m.marker; if (m.parent < 0) break; m = truth.mutations[m.parent]; }
+    return "wild";
+  };
+
+  /* Where the lineage actually WAS, over the length of the branch. Colouring a
+     whole branch by the region of the mutation that ends it is wrong: a lineage
+     that sat in Brix for 26 days and then migrated to Doran, mutating on arrival,
+     is Brix for almost all of that branch. The transmission path gives the truth. */
+  function occupancy(lastMutId, parentMutId, tStart, tEnd) {
+    const chain = [];
+    const stop = parentMutId >= 0 ? truth.mutations[parentMutId].caseId : -1;
+    let c = truth.cases[truth.mutations[lastMutId].caseId];
+    while (c) {
+      chain.push(c);
+      if (c.id === stop || c.parent < 0) break;
+      c = truth.cases[c.parent];
+    }
+    chain.reverse();
+    const out = [];
+    for (const cs of chain) {
+      const t = Math.max(tStart, Math.min(tEnd, cs.t));
+      if (out.length && out[out.length - 1].region === cs.region) continue;
+      out.push({ t, region: cs.region });
+    }
+    if (!out.length) out.push({ t: tStart, region: truth.mutations[lastMutId].region });
+    out[0].t = tStart;
+    return out.map((seg, i) => ({
+      region: seg.region, t0: seg.t, t1: i + 1 < out.length ? out[i + 1].t : tEnd,
+    })).filter(seg => seg.t1 > seg.t0 - 1e-9);
+  }
+
+  function make(id, parentMutId) {
+    const segs = [{ id, t: truth.mutations[id].t, region: truth.mutations[id].region }];
+    let marker = truth.mutations[id].marker;
+    let ch = kids.get(id) || [];
+    while (ch.length === 1 && truth.carriers[ch[0]] === truth.carriers[id]) {
+      const c = ch[0];
+      segs.push({ id: c, t: truth.mutations[c].t, region: truth.mutations[c].region });
+      marker = marker || truth.mutations[c].marker;
+      ch = kids.get(c) || [];
+    }
+    const last = segs[segs.length - 1];
+    const tStart = parentMutId >= 0 ? truth.mutations[parentMutId].t : 0;
+    return {
+      segs, marker, carriers: truth.carriers[id], tStart, tEnd: last.t, region: last.region,
+      path: occupancy(last.id, parentMutId, tStart, last.t),
+      lineage: lineageOf(last.id), children: ch.map(k => make(k, last.id)),
+    };
+  }
+  return (kids.get(-1) || []).map(r => make(r, -1));
+}
+
+/* Both panels are cut at the same FRACTION of their own total, so they carry
+   comparable resolution. Cutting the truth at 0.66% of cases while the
+   reconstruction was cut at 0.56% of genomes gave 34 tips against 46 and made the
+   two look structurally unalike where they actually agreed. */
+const TREE_TARGET_TIPS = 38;
+
+function countTips(roots) {
+  let tips = 0;
+  (function count(ns) { for (const n of ns) n.children.length ? count(n.children) : tips++; })(roots);
+  return tips;
+}
+
+function autoTree(truth, minTips, maxTips) {
+  const total = truth.stats.cases;
+  let best = null;
+  for (const frac of FRACTIONS) {
+    const th = Math.max(2, Math.round(total * frac));
+    const roots = buildDisplayTree(truth, th);
+    const tips = countTips(roots);
+    if (!best || Math.abs(tips - (minTips || TREE_TARGET_TIPS)) < Math.abs(best.tips - (minTips || TREE_TARGET_TIPS)))
+      best = { roots, threshold: th, tips, frac };
+    if (tips > (maxTips || 60)) break;
+  }
+  return best;
+}
+
+const FRACTIONS = [0.08, 0.05, 0.035, 0.025, 0.018, 0.013, 0.0095, 0.007, 0.005,
+                   0.0037, 0.0027, 0.002, 0.0015, 0.0011, 0.0008, 0.0006];
+
+/* Time runs top to bottom and tips spread left to right. The tree is far wider
+   than deep — mutations that survive pruning all arise early — so this is the
+   orientation that fits the space. */
+function layoutTree(roots, opts) {
+  const { colW, tMax, depth, padT, padB, padL } = opts;
+  const yOf = t => padT + Math.max(0, Math.min(1, t / tMax)) * (depth - padT - padB);
+  const flat = [];
+  let col = 0;
+  (function walk(ns, parentT) {
+    for (const n of ns) {
+      n.y0 = yOf(parentT);
+      n.y1 = yOf(n.tEnd);
+      if (n.children.length) {
+        walk(n.children, n.tEnd);
+        n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
+      } else {
+        n.x = padL + (col++ + 0.5) * colW;
+      }
+      flat.push(n);
+    }
+  })(roots, 0);
+  return { nodes: flat, width: padL + col * colW, yOf, cols: col };
+}
+
+/* the latest mutation actually drawn — not the epidemic's last case, which
+   would leave most of the axis empty */
+function treeSpan(roots) {
+  let t = 0;
+  (function w(ns) { for (const n of ns) { if (n.tEnd > t) t = n.tEnd; w(n.children); } })(roots);
+  return t;
+}
+
+/* ============================================================
+   SAMPLER — truth + policy -> the genomes you actually hold
+   ============================================================ */
+
+/* Every draw is keyed to the thing it decides, not to a running stream. If the
+   sampler pulled from one sequence, moving Corvane's slider would re-randomise
+   Aldane's samples too and every comparison would be noise. It also makes the
+   sliders monotone: raising depth can only ADD mutations, never swap them. */
+function hashU(a, b) {
+  let h = Math.imul((a + 0x9e3779b9) | 0, 0x85ebca6b);
+  h = Math.imul(h ^ (b + 0x165667b1), 0xc2b2ae35);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x27d4eb2f);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+/* A test is a thing you spend, not a case you collect. `capacity` is tests run
+   per day as a percentage of the region's population, and the two channels turn
+   tests into genomes at very different rates:
+
+   COMMUNITY screening swabs people at random, so it reaches every severity tier
+   equally -- but most of the people it swabs are not infected, and those tests
+   return nothing. It is unbiased and wasteful.
+
+   HOSPITAL intake swabs admissions, who selected themselves by being ill enough
+   to be admitted, so almost every test lands on a case. It is efficient and
+   biased -- only severe and critical cases are ever admitted, so a mild lineage
+   is close to invisible to it. It also SATURATES: once capacity exceeds the ward
+   census there is nobody left to swab, and further capacity buys nothing.
+
+   The dilemma is therefore not "which yields more genomes" but "more genomes or
+   less biased genomes", and which one wins changes over the outbreak. */
+const MAX_CAPACITY = 5;      /* % of population tested per day at the slider's top */
+/* A backstop, not a policy. It used to bind at every realistic setting: with the
+   old population the sampler collected 33,865 genomes at full sliders and thinned
+   them to 1,500, which left a 110-case variant represented by THREE genomes and
+   made the reconstruction wrong for reasons that had nothing to do with sampling
+   policy. The world is now sized so a fully funded programme fits under this,
+   meaning 100% on every slider really is full information. */
+const SAMPLE_CAP = 7000;
+
+/* Omniscient sampling: every infection sequenced the moment it happens, including
+   the ones nobody ever knew about. This is NOT a policy -- no programme can reach
+   the asymptomatic case that never presented -- it is the control experiment. It
+   separates "the method is broken" from "your sampling broke it", and without it
+   a reader has no way to tell those two apart. */
+function sampleEverything(truth) {
+  const kept = truth.cases.map(c => ({
+    caseId: c.id, region: c.region, t: c.t, tier: c.tier,
+    observed: new Set(genotypeOf(truth, c.id)),
+  }));
+  return { samples: kept, collected: kept.length, dropped: 0, omniscient: true };
+}
+
+/* Probability a daily swab rate of `r` finds someone over a window of `w` days. */
+function catchProb(r, w) {
+  if (!(r > 0) || !(w > 0)) return 0;
+  return 1 - Math.pow(1 - Math.min(1, r), w);
+}
+
+function sampleGenomes(truth, policy, opts) {
+  if (opts && opts.omniscient) return sampleEverything(truth);
+  const kept = [];
+  const spend = Object.fromEntries(REGIONS.map(r => [r.id, { tests: 0, genomes: 0 }]));
+  for (const r of REGIONS) {
+    const p = policy[r.id];
+    if (!p || p.capacity <= 0) continue;
+    spend[r.id].tests = (p.capacity / 100) * r.pop * Math.max(0, MAX_DAYS - p.startDay);
+  }
+
+  for (const c of truth.cases) {
+    const p = policy[c.region];
+    if (!p || p.capacity <= 0) continue;
+    const pop = REG[c.region].pop;
+    const q = p.capacity / 100;
+    const qHosp = q * (p.hospitalMix / 100);
+    const qComm = q - qHosp;
+
+    /* A sample can only be taken while there is material to take. A case that
+       came and went before the programme started leaves nothing, and no later
+       spending recovers it. This is the irreversibility, implemented. */
+
+    /* HOSPITAL. Swabs go to the ward, so the pool is the ward census, not the
+       population -- which is why this channel is efficient, and why it stops
+       improving once capacity exceeds the number of beds occupied. */
+    let pHosp = 0, hStart = 0;
+    if (c.tAdmit != null) {
+      hStart = Math.max(c.tAdmit, p.startDay);
+      const stay = c.tDischarge - hStart;
+      const census = truth.daily[c.region].inHospital[
+        Math.max(0, Math.min(MAX_DAYS, Math.round(hStart)))] || 0;
+      if (census > 0) pHosp = catchProb((qHosp * pop) / census, stay);
+    }
+
+    /* COMMUNITY. Swabs go to random people, so an infected person's chance of
+       being swabbed is just the testing rate -- the same for every severity tier,
+       which is what makes this channel unbiased. Most swabs land on somebody who
+       is not infected, and those tests return nothing at all. */
+    const cStart = Math.max(c.t, p.startDay);
+    const pComm = catchProb(qComm, c.tRemoved - cStart);
+
+    /* Both channels run at once; one draw decides which, if either, found it. */
+    const u = hashU(c.id, 1);
+    let ts;
+    if (u < pHosp) {
+      ts = hStart;
+    } else if (u < pHosp + (1 - pHosp) * pComm) {
+      /* found at some point during the illness, not the instant it began */
+      ts = cStart + hashU(c.id, 5) * Math.max(0, c.tRemoved - cStart);
+    } else continue;
+
+    spend[c.region].genomes++;
+
+    const observed = new Set();
+    for (const m of genotypeOf(truth, c.id))
+      if (hashU(c.id, m + 977) < p.depth / 100) observed.add(m);
+
+    /* No lineage label travels with the sample. A lab reads lineage off the
+       marker mutation in `observed`, which is exactly what makes it possible to
+       lose the call when coverage drops. Carrying c.lineage here would hand the
+       answer key to everything downstream. */
+    kept.push({ caseId: c.id, region: c.region, t: ts, tier: c.tier, observed });
+  }
+  /* keep the run interactive; thin deterministically and say so */
+  let thinned = kept, dropped = 0;
+  if (kept.length > SAMPLE_CAP) {
+    thinned = kept.filter(s => hashU(s.caseId, 7) < SAMPLE_CAP / kept.length);
+    dropped = kept.length - thinned.length;
+  }
+  return { samples: thinned, collected: kept.length, dropped, spend };
+}
+
+/* INFERENCE */
+/* ============================================================
+   INFERENCE
+   ============================================================ */
+
+/* Under infinite sites with no recombination the genealogy is exactly recoverable
+   from the mutations you can see -- so any difference from the truth is the
+   sampling policy's doing, not the method's. Missing mutations show up honestly:
+   clades collapse, and mutation sets start to CONFLICT (overlapping without
+   nesting), which is the data telling you no tree explains it. */
+function perfectPhylogeny(samples) {
+  const S = new Map();
+  samples.forEach((s, i) => {
+    for (const m of s.observed) {
+      if (!S.has(m)) S.set(m, new Set());
+      S.get(m).add(i);
+    }
+  });
+  const muts = [...S.entries()]
+    .map(([mut, tips]) => ({ mut, tips, n: tips.size }))
+    .filter(x => x.n >= 2)                       /* a singleton resolves nothing */
+    .sort((a, b) => b.n - a.n || a.mut - b.mut);
+
+  const all = new Set(samples.map((_, i) => i));
+  const root = { mut: null, tips: all, n: all.size, children: [], depth: 0 };
+  let conflicts = 0;
+
+  for (const m of muts) {
+    let cur = root, clash = false;
+    for (;;) {
+      let next = null;
+      for (const ch of cur.children) {
+        let inter = 0;
+        for (const t of m.tips) if (ch.tips.has(t)) inter++;
+        if (inter === m.tips.size) { next = ch; break; }
+        if (inter > 0) clash = true;             /* overlaps but does not nest */
+      }
+      if (!next) break;
+      cur = next;
+    }
+    if (clash) conflicts++;
+    cur.children.push({ mut: m.mut, tips: m.tips, n: m.n, children: [], depth: cur.depth + 1 });
+  }
+  return { root, conflicts, informative: muts.length };
+}
+
+/* least squares of divergence against sample date: slope is the clock, the
+   x-intercept is the time of the most recent common ancestor. TempEst's method. */
+function rootToTip(samples, subset) {
+  if (subset) samples = subset.map(i => samples[i]);
+  /* Divergence is how many mutations a genome carries, not its depth in the
+     collapsed tree -- depth counts only mutations shared by two or more tips, so
+     it undercounts badly and the regression collapses (R2 0.02 in testing). */
+  const xs = [], ys = [];
+  for (const s of samples) { xs.push(s.t); ys.push(s.observed.size); }
+  const n = xs.length;
+  if (n < 3) return { slope: 0, tmrca: null, r2: 0, n };
+  const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { sxy += (xs[i]-mx)*(ys[i]-my); sxx += (xs[i]-mx)**2; syy += (ys[i]-my)**2; }
+  const slope = sxx ? sxy / sxx : 0;
+  const tmrca = slope > 1e-9 ? mx - my / slope : null;
+  const r2 = (sxx && syy) ? (sxy*sxy)/(sxx*syy) : 0;
+  return { slope, tmrca, r2, n };
+}
+
+/* Fitch parsimony over the sampled tip regions. Nothing here knows where anything
+   actually arose -- it sees only the tips the policy handed it. */
+function fitchRegions(root, samples, regionIds) {
+  const bit = {}; regionIds.forEach((r, i) => bit[r] = 1 << i);
+  const ALL = (1 << regionIds.length) - 1;
+  const down = new Map(), tally = new Map();
+
+  (function up(n) {
+    const counts = new Array(regionIds.length).fill(0);
+    if (!n.children.length) {
+      let s = 0;
+      for (const i of n.tips) { s |= bit[samples[i].region]; counts[regionIds.indexOf(samples[i].region)]++; }
+      down.set(n, s || ALL); tally.set(n, counts); return;
+    }
+    for (const ch of n.children) up(ch);
+    /* tips sitting directly on an internal node are that node's own evidence */
+    const own = new Set(n.tips);
+    for (const ch of n.children) for (const t of ch.tips) own.delete(t);
+    let acc = 0, inter = ALL, any = false;
+    for (const ch of n.children) { acc |= down.get(ch); inter &= down.get(ch); any = true;
+      const cc = tally.get(ch); for (let i = 0; i < counts.length; i++) counts[i] += cc[i]; }
+    let ownBits = 0;
+    for (const t of own) { ownBits |= bit[samples[t].region]; counts[regionIds.indexOf(samples[t].region)]++; }
+    let s = any ? (inter || acc) : ALL;
+    if (ownBits) s = (s & ownBits) || s;
+    down.set(n, s); tally.set(n, counts);
+  })(root);
+
+  /* Fitch leaves genuine ties. Breaking them by how many descendant tips carry
+     each state is the standard majority convention -- and it is precisely where
+     an unevenly sampled tip set decides the answer. */
+  const state = new Map();
+  function pick(bits, counts, inherited) {
+    if (inherited && (bits & inherited)) return inherited;
+    let best = -1, bestN = -1;
+    for (let i = 0; i < regionIds.length; i++)
+      if ((bits >> i) & 1) { if (counts[i] > bestN) { bestN = counts[i]; best = i; } }
+    return best < 0 ? 0 : 1 << best;
+  }
+  (function downAssign(n, inherited) {
+    const s = pick(down.get(n), tally.get(n), inherited);
+    state.set(n, s);
+    for (const ch of n.children) downAssign(ch, s);
+  })(root, 0);
+
+  const name = new Map();
+  for (const [n, s] of state) name.set(n, regionIds[Math.log2(s) | 0]);
+  const ambiguous = new Map();
+  for (const [n, s] of down) {
+    let c = 0; for (let i = 0; i < regionIds.length; i++) if ((s >> i) & 1) c++;
+    ambiguous.set(n, c > 1);
+  }
+  return { region: name, ambiguous };
+}
+
+/* The inferred tree, in the same shape the renderer already draws. One region per
+   branch and no migration along it: inference cannot see WHEN a lineage moved,
+   only what state best explains the tips. That flatness against the truth panel's
+   multi-coloured branches is itself part of the comparison. */
+function buildInferredTree(samples, phylo, fitch, clock, markerOfMut, minTips, date) {
+  const ancCache = new Map();
+  function ancestral(node) {
+    if (ancCache.has(node)) return ancCache.get(node);
+    const tips = [...node.tips], freq = new Map();
+    for (const i of tips) for (const m of samples[i].observed) freq.set(m, (freq.get(m) || 0) + 1);
+    let k = 0;
+    for (const c of freq.values()) if (c * 2 >= tips.length) k++;
+    ancCache.set(node, k);
+    return k;
+  }
+  function dateOf(node) {
+    const tips = [...node.tips];
+    if (!tips.length || clock.slope <= 1e-9) return 0;
+    const mx = tips.reduce((a, i) => a + samples[i].t, 0) / tips.length;
+    const my = tips.reduce((a, i) => a + samples[i].observed.size, 0) / tips.length;
+    return mx + (ancestral(node) - my) / clock.slope;
+  }
+  function make(n, parentDate, parentRegion) {
+    let node = n, segs = [n.mut], marker = markerOfMut.get(n.mut) || null;
+    let kids = node.children.filter(c => c.n >= minTips);
+    while (kids.length === 1 && kids[0].n === node.n) {
+      node = kids[0];
+      segs.push(node.mut);
+      marker = marker || markerOfMut.get(node.mut) || null;
+      kids = node.children.filter(c => c.n >= minTips);
+    }
+    /* the estimator is noisy enough to invert occasionally; a child cannot
+       predate its parent */
+    const tEnd = Math.max(parentDate + 0.4, Math.max(0, date ? date.get(node) : dateOf(node)));
+    const region = fitch.region.get(node);
+    /* A branch descends from whatever state its ancestor was reconstructed in and
+       arrives in its own. The reconstruction does NOT identify WHEN along the
+       branch the move happened -- only that it happened somewhere on it -- so
+       splitting the branch at a hard midpoint drew a claim we cannot make, and
+       made every transition look like the same arbitrary 50/50 artefact. The
+       branch fades from one region to the other instead: a soft edge for an
+       unknown time, against the truth panel's hard edges, which mark migrations
+       whose timing IS known. */
+    const from = parentRegion && parentRegion !== region ? parentRegion : null;
+    return {
+      segs: segs.map(m => ({ id: m, t: tEnd, region })),
+      marker, carriers: node.n, tStart: parentDate, tEnd, region, from,
+      path: [{ t0: parentDate, t1: tEnd, region, from }],
+      children: kids.map(c => make(c, tEnd, region)),
+    };
+  }
+  const start = Math.max(0, clock.tmrca == null ? 0 : clock.tmrca);
+  const rootRegion = fitch.region.get(phylo.root);
+  return phylo.root.children.filter(c => c.n >= minTips).map(c => make(c, start, rootRegion));
+}
+
+function autoInferredTree(samples, phylo, fitch, clock, markerOfMut, date) {
+  let best = null;
+  for (const frac of FRACTIONS) {
+    const th = Math.max(2, Math.round(samples.length * frac));
+    const roots = buildInferredTree(samples, phylo, fitch, clock, markerOfMut, th, date);
+    const tips = countTips(roots);
+    if (!best || Math.abs(tips - TREE_TARGET_TIPS) < Math.abs(best.tips - TREE_TARGET_TIPS))
+      best = { roots, threshold: th, tips, frac };
+    if (tips > 60) break;
+  }
+  return best;
+}
+
+/* Date every node once, so both the reconstruction and the drawing share them.
+   A node's ancestor carries the mutations a majority of its descendants share;
+   the clock converts that divergence into a date. */
+function datePhylogeny(root, samples, clock) {
+  const date = new Map();
+  (function walk(n, parentDate) {
+    const tips = [...n.tips];
+    let d = parentDate;
+    if (tips.length && clock.slope > 1e-9) {
+      const freq = new Map();
+      for (const i of tips) for (const m of samples[i].observed) freq.set(m, (freq.get(m) || 0) + 1);
+      let anc = 0;
+      for (const c of freq.values()) if (c * 2 >= tips.length) anc++;
+      const mx = tips.reduce((a, i) => a + samples[i].t, 0) / tips.length;
+      const my = tips.reduce((a, i) => a + samples[i].observed.size, 0) / tips.length;
+      d = mx + (anc - my) / clock.slope;
+    }
+    d = Math.max(parentDate + 0.25, d);
+    date.set(n, d);
+    for (const c of n.children) walk(c, d);
+  })(root, Math.max(0, clock.tmrca == null ? 0 : clock.tmrca));
+  return date;
+}
+
+/* Ancestral regions by maximum likelihood under an Mk model with real branch
+   lengths (Lewis 2001), replacing Fitch parsimony.
+
+   Parsimony minimises state changes by construction. On this outbreak it admitted
+   132 migrations where 3,127 happened, so almost every node came out ambiguous and
+   the tie-break handed them all to whichever region held the most tips -- wrong
+   even with every case sequenced at full coverage. A rate model has no such
+   preference: it lets a long branch move and a short one stay, and it estimates
+   how often movement happens instead of assuming as rarely as possible. */
+function mkAncestralStates(root, samples, regionIds, date, muOverride) {
+  const K = regionIds.length;
+  const idx = {}; regionIds.forEach((r, i) => idx[r] = i);
+
+  /* tips hanging directly off each node, with the branch that reaches them */
+  const ownTips = new Map();
+  (function walk(n) {
+    const own = new Set(n.tips);
+    for (const c of n.children) { for (const t of c.tips) own.delete(t); walk(c); }
+    ownTips.set(n, [...own]);
+  })(root);
+
+  const P = (mu, t) => {
+    const e = Math.exp(-K * mu * Math.max(t, 0));
+    return [1 / K + (1 - 1 / K) * e, 1 / K - e / K];      /* [same, different] */
+  };
+
+  /* Felsenstein pruning; conditional likelihoods normalised per node */
+  function prune(mu) {
+    const L = new Map();
+    let logL = 0;
+    (function post(n) {
+      for (const c of n.children) post(c);
+      const v = new Array(K).fill(1);
+      /* Renormalise after EVERY child, not once at the end. A node here can have
+         hundreds of children, and the product underflows to zero long before the
+         end of the loop; logL then came out -Infinity for every candidate rate, no
+         rate ever beat the first one tried, and the model was pinned at
+         mu = 1e-4.2 -- migration effectively forbidden, so every node collapsed
+         to a single region. */
+      const push = (childL, t) => {
+        const [ps, pd] = P(mu, t);
+        let tot = 0;
+        for (let j = 0; j < K; j++) tot += childL[j];
+        let s = 0;
+        for (let i = 0; i < K; i++) { v[i] *= pd * tot + (ps - pd) * childL[i]; s += v[i]; }
+        if (s > 0) { for (let i = 0; i < K; i++) v[i] /= s; logL += Math.log(s); }
+      };
+      for (const c of n.children) push(L.get(c), date.get(c) - date.get(n));
+      for (const ti of ownTips.get(n)) {
+        const leaf = new Array(K).fill(0);
+        leaf[idx[samples[ti].region]] = 1;
+        push(leaf, Math.max(0.25, samples[ti].t - date.get(n)));
+      }
+      L.set(n, v);
+    })(root);
+    let r = 0; for (let i = 0; i < K; i++) r += L.get(root)[i] / K;
+    return { L, logL: logL + Math.log(r) };
+  }
+
+  /* fit the migration rate rather than assuming one */
+  let best = null;
+  if (muOverride) best = { mu: muOverride, ...prune(muOverride) };
+  for (let e = -4.2; !muOverride && e <= -0.4; e += 0.2) {
+    const mu = Math.pow(10, e);
+    const r = prune(mu);
+    if (Number.isFinite(r.logL) && (!best || r.logL > best.logL)) best = { mu, ...r };
+  }
+  /* never silently keep an unfitted rate */
+  if (!best) best = { mu: 0.01, ...prune(0.01) };
+  const { mu, L } = best;
+
+  /* up-pass for marginal posteriors */
+  const Up = new Map();
+  Up.set(root, new Array(K).fill(1 / K));
+  (function down(n) {
+    for (const c of n.children) {
+      const u = new Array(K).fill(0);
+      const sib = new Array(K).fill(1);
+      /* Renormalise after every factor. This product runs over every other child
+         AND every tip hanging off the node -- hundreds of them -- so unnormalised
+         it underflows to all zeros, the posterior becomes all zeros, and argmax
+         silently returns index 0. That is why every failure at full information
+         came back as the first region in the list regardless of the evidence,
+         including a clade whose tips were 100% somewhere else. */
+      const mul = (vec, ps, pd, tot) => {
+        let s = 0;
+        for (let i = 0; i < K; i++) { sib[i] *= pd * tot + (ps - pd) * vec[i]; s += sib[i]; }
+        if (s > 0) for (let i = 0; i < K; i++) sib[i] /= s;
+      };
+      for (const o of n.children) if (o !== c) {
+        const oc = L.get(o), [ps, pd] = P(mu, date.get(o) - date.get(n));
+        let tot = 0; for (let j = 0; j < K; j++) tot += oc[j];
+        mul(oc, ps, pd, tot);
+      }
+      for (const ti of ownTips.get(n)) {
+        const leaf = new Array(K).fill(0); leaf[idx[samples[ti].region]] = 1;
+        const [ps, pd] = P(mu, Math.max(0.25, samples[ti].t - date.get(n)));
+        mul(leaf, ps, pd, 1);
+      }
+      const up = Up.get(n), [ps, pd] = P(mu, date.get(c) - date.get(n));
+      let tot = 0; for (let i = 0; i < K; i++) tot += up[i] * sib[i];
+      for (let j = 0; j < K; j++) {
+        u[j] = pd * tot + (ps - pd) * up[j] * sib[j];
+      }
+      let s = 0; for (let j = 0; j < K; j++) s += u[j];
+      if (s > 0) for (let j = 0; j < K; j++) u[j] /= s;
+      Up.set(c, u);
+      down(c);
+    }
+  })(root);
+
+  const region = new Map(), ambiguous = new Map(), support = new Map();
+  for (const [n, l] of L) {
+    const post = new Array(K);
+    let s = 0;
+    const u = Up.get(n) || new Array(K).fill(1 / K);
+    for (let i = 0; i < K; i++) { post[i] = l[i] * u[i]; s += post[i]; }
+    if (s > 0) { for (let i = 0; i < K; i++) post[i] /= s; }
+    else { for (let i = 0; i < K; i++) post[i] = l[i]; }   /* fall back on the data */
+    let bi = 0; for (let i = 1; i < K; i++) if (post[i] > post[bi]) bi = i;
+    region.set(n, regionIds[bi]);
+    support.set(n, post[bi]);
+    ambiguous.set(n, post[bi] < 0.6);
+  }
+  return { region, ambiguous, support, mu };
+}
+
+/* What you would conclude about each variant, read off the reconstruction alone.
+   Nothing here consults the truth except to name the marker mutation -- which a
+   real lab also knows, once a variant has been designated. */
+function lineageVerdicts(truth, samples, phylo, fitch, clock) {
+  const byMut = new Map();
+  (function walk(n) { if (n.mut !== null) byMut.set(n.mut, n); for (const c of n.children) walk(c); })(phylo.root);
+
+  return truth.lineages.filter(L => L.markerMutation != null).map(L => {
+    const node = byMut.get(L.markerMutation);
+    let seen = 0;
+    for (const s of samples) if (s.observed.has(L.markerMutation)) seen++;
+    if (!node) {
+      return { id: L.id, name: L.name, seen, found: false,
+               trueRegion: L.originRegion, trueDay: L.originDay };
+    }
+    const region = fitch.region.get(node);
+    /* Dating the clade. Depth in the collapsed tree is far too coarse -- every
+       high-frequency marker sits at depth 1 and they all come out on the same day.
+       Regressing inside the clade is worse still: extrapolating to zero divergence
+       lands on the whole tree's root, not this clade's ancestor, which put Kestrel
+       at day -254. The ancestor carries exactly the mutations ALL its descendants
+       share, so that is the divergence to solve the clock for. */
+    const tipIdx = [...node.tips];
+    /* Which mutations did the ancestor carry? A strict intersection is useless
+       here: with 80% coverage a genuinely ancestral mutation survives all 108 tips
+       with probability 0.8^108, so the intersection empties out and every large
+       clade dates to before the outbreak began. A majority rule recovers it --
+       ancestral mutations sit near the coverage rate, everything else well below. */
+    const freq = new Map();
+    for (const i of tipIdx) for (const m of samples[i].observed) freq.set(m, (freq.get(m) || 0) + 1);
+    const shared = new Set();
+    for (const [m, k] of freq) if (k * 2 >= tipIdx.length) shared.add(m);
+    let day = null;
+    if (clock.slope > 1e-9 && tipIdx.length) {
+      const mxL = tipIdx.reduce((a, i) => a + samples[i].t, 0) / tipIdx.length;
+      const myL = tipIdx.reduce((a, i) => a + samples[i].observed.size, 0) / tipIdx.length;
+      day = mxL + (shared.size - myL) / clock.slope;
+    }
+    return {
+      id: L.id, name: L.name, seen, found: true,
+      region, ambiguous: fitch.ambiguous.get(node), day, tips: node.n,
+      sharedMuts: shared ? shared.size : 0,
+      trueRegion: L.originRegion, trueDay: L.originDay,
+      regionRight: region === L.originRegion,
+    };
+  });
+}
+
+/* memoised: truth depends only on the scenario, never on policy */
+let _cache = null;
+function truthFor(scenario) {
+  const key = [scenario.seed, scenario.r0, scenario.clockRate].join("|");
+  if (_cache && _cache.key === key) return _cache.value;
+  _cache = { key, value: runTruth(scenario) };
+  return _cache.value;
+}
+
+const ENGINE = {
+  mulberry32, makeRandom, MinHeap,
+  REGIONS, REG, LINEAGES, LIN, TIERS, TIER_CUTS,
+  GENOME_SITES, MAX_DAYS, DISPERSION, SI_SHAPE, SI_SCALE, MIGRATION, MAX_CAPACITY,
+  runTruth, truthFor, genotypeOf, tierOf,
+  buildDisplayTree, autoTree, layoutTree, renderTreeSVG, treeSpan, countTips,
+  hashU, sampleGenomes, perfectPhylogeny, rootToTip, fitchRegions, lineageVerdicts,
+  datePhylogeny, mkAncestralStates,
+  buildInferredTree, autoInferredTree,
+};
+
+if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
+if (typeof globalThis !== "undefined") globalThis.PB = ENGINE;
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const SCENARIO_FIELDS = [
+  /* Labels are the plain-language name; the readout carries the meaning the
+     technical name used to. The engine keys stay `r0` and `clockRate`, which are
+     what the literature calls these, so the cited sources still line up. */
+  { key: "r0",    label: "Transmission rate", min: 1.2, max: 4, step: .1, value: 2.4,
+    fmt: v => v.toFixed(1) + " new infections per case",
+    tip: "How many people each infected person passes the virus to, on average. Above one the "
+       + "outbreak grows \u2014 and the faster it grows, the sooner new lineages appear." },
+  { key: "clockRate", label: "Mutation rate", min: 4, max: 16, step: .5, value: 9,
+    fmt: v => v.toFixed(1) + "\u00d710\u207b\u2074 /site/yr",
+    tip: "How quickly the genome picks up copying errors. Those errors are the only evidence a "
+       + "family tree has: mutate too slowly and separate lineages look identical." },
+  { key: "seed",  label: "Scenario seed", min: 1, max: 999, step: 1, value: 111,
+    fmt: v => "#" + v,
+    tip: "Redeals the outbreak. Same settings, different luck \u2014 who infects whom, and where "
+       + "each variant happens to start. Move it to see whether a pattern holds across "
+       + "epidemics or was a one-off." },
+];
+
+const POLICY_FIELDS = [
+  { key: "startDay",    label: "Sequencing begins", min: 0,  max: 90,  step: 1, fmt: v => "day " + v,
+    tip: "The day this region starts testing. Everything before it is invisible: the cases still "
+       + "happen, but none of them are ever sampled." },
+  { key: "capacity", label: "Testing capacity", min: 0, max: MAX_CAPACITY, step: .05,
+    fmt: v => v.toFixed(2) + "% of people tested daily",
+    tip: "The share of the region swabbed each day \u2014 the size of the budget. More tests find "
+       + "more cases, and reach further down from the sickest." },
+  { key: "hospitalMix", label: "Test allocation", min: 0, max: 100, step: 1,
+    fmt: v => v + "% hosp / " + (100 - v) + "% community",
+    tip: "How that budget splits between testing hospital patients and screening the community. "
+       + "Hospitals find severe cases cheaply; only community screening reaches the mild and "
+       + "asymptomatic ones." },
+  { key: "depth",       label: "Genome coverage",   min: 20, max: 100, step: 1, fmt: v => v + "%",
+    tip: "The share of positive tests that go on to be sequenced. A positive test says someone "
+       + "was infected; only a genome says which lineage they were carrying." },
+];
+
+/* ============================================================
+   VIRUS NAME GENERATOR — based on seed
+   ============================================================ */
+const VIRUS_NAMES = [
+  { name: "Fictivirus", code: "FIC-1" },
+  { name: "Inferenza A", code: "INF-1" },
+  { name: "Falsifluenza", code: "FLZ-1" },
+  { name: "Lorem ipsum virus", code: "LIV-1" },
+];
+
+function virusNameOf(seed) {
+  const idx = Math.abs(Math.floor(seed)) % VIRUS_NAMES.length;
+  const v = VIRUS_NAMES[idx];
+  return { name: v.name, code: v.code };
+}
+
+const state = {
+  scenario: Object.fromEntries(SCENARIO_FIELDS.map(f => [f.key, f.value])),
+  selected: "aldane",
+  /* The root is the first question a reader has of any tree — where did THIS
+     thing start — and it is the one lineage the reconstruction always answers
+     for, so the verdict opens on it. */
+  selectedVariant: "wild",
+  /* A plausible starting world rather than a uniform one: the populous hub runs a
+     real programme, the periphery does not. Uniform sampling -- even sparse and
+     late -- reconstructs the origins correctly, so a uniform default would open on
+     a tool that appears to do nothing. */
+  policy: Object.fromEntries(REGIONS.map(r => [r.id, {
+    corvane: { startDay: 8,  capacity: 2.50, hospitalMix: 55, depth: 92 },
+    esker:   { startDay: 22, capacity: 1.10, hospitalMix: 65, depth: 85 },
+    brix:    { startDay: 26, capacity: 0.80, hospitalMix: 70, depth: 80 },
+    doran:   { startDay: 40, capacity: 0.35, hospitalMix: 80, depth: 70 },
+    fenmoor: { startDay: 48, capacity: 0.25, hospitalMix: 85, depth: 62 },
+    aldane:  { startDay: 62, capacity: 0.15, hospitalMix: 85, depth: 55 },
+  }[r.id]])),
+  result: null,
+  revealed: false,
+  savedPolicy: null,
+  omniscient: false,
+};
+
+/* The best a real programme could do: every slider at its limit, from day 0, all
+   of it spent on community screening because that arm alone reaches every
+   severity tier. It is still nowhere near everything -- a swab only finds a case
+   if it happens to land on that person during the few days they are infected --
+   which is why the omniscient control exists separately. */
+const FULL_INFO = { startDay: 0, capacity: MAX_CAPACITY, hospitalMix: 0, depth: 100 };
+
+/* Sequencing effort, 0..1 — drives the map ramp. Earlier start and more coverage
+   both raise it. This is a display summary of a policy, not a sampling quantity:
+   the sampler reads the four fields directly and never consults this. */
+function effort(p) {
+  const timeliness = 1 - p.startDay / 90;
+  const volume = p.capacity / MAX_CAPACITY;
+  const raw = (volume * .65 + timeliness * .35) * (0.4 + 0.6 * p.depth / 100);
+  return Math.max(0, Math.min(1, raw));
+}
+
+/* The map and the tree must say the same thing with the same colour, so hue is
+   region identity in both. Sequencing effort rides on fill strength instead. */
+function effortAlpha(e) {
+  return (0.12 + 0.58 * Math.max(0, Math.min(1, e))).toFixed(3);
+}
+
+/* ============================================================
+   VIEW — everything below touches the DOM
+   ============================================================ */
+const HAS_DOM = typeof document !== "undefined";
+
+const $ = sel => document.querySelector(sel);
+
+function renderMap() {
+  $("#map-regions").innerHTML = REGIONS.map(r => {
+    const e = effort(state.policy[r.id]);
+    const on = state.selected === r.id;
+    return '<g class="region' + (on ? " selected" : "") + '" data-region="' + r.id + '"' +
+           ' tabindex="0" role="button" aria-pressed="' + on + '"' +
+           ' aria-label="' + r.name + ', sequencing effort ' + Math.round(e * 100) + ' percent">' +
+           '<polygon class="region-shape" points="' + r.pts + '" fill="var(--reg-' + r.id + ')"' +
+           ' fill-opacity="' + effortAlpha(e) + '"></polygon>' +
+           '<text class="region-label" x="' + r.label[0] + '" y="' + r.label[1] + '">' + r.name + '</text>' +
+           '<text class="region-value" x="' + r.label[0] + '" y="' + (r.label[1] + 14) + '">' +
+           Math.round(e * 100) + '%</text>' +
+           '</g>';
+  }).join("");
+}
+
+function renderChips() {
+  $("#region-chips").innerHTML = REGIONS.map(r =>
+    '<button type="button" class="chip" data-region="' + r.id + '" aria-pressed="' +
+    (state.selected === r.id) + '">' + r.name + '</button>'
+  ).join("");
+}
+
+function slider(f, value) {
+  const id = "f-" + f.key;
+  return '<div class="field">' +
+           '<div class="field-top">' +
+             '<span class="field-name">' +
+               '<label for="' + id + '">' + f.label + '</label>' +
+               (f.tip ? '<button type="button" class="help" aria-label="' + esc(f.tip) + '">?</button>' : '') +
+             '</span>' +
+             '<output for="' + id + '" id="o-' + f.key + '">' + f.fmt(value) + '</output>' +
+           '</div>' +
+           '<input type="range" id="' + id + '" data-key="' + f.key + '" min="' + f.min +
+           '" max="' + f.max + '" step="' + f.step + '" value="' + value + '">' +
+         '</div>';
+}
+
+function renderScenario() {
+  $("#scenario-fields").innerHTML =
+    SCENARIO_FIELDS.map(f => slider(f, state.scenario[f.key])).join("");
+}
+
+function renderPolicy() {
+  const p = state.policy[state.selected];
+  $("#policy-fields").innerHTML = POLICY_FIELDS.map(f => slider(f, p[f.key])).join("");
+}
+
+/* none wrong -> all wrong. Indexed by fraction, so the ramp survives a change
+   in how many lineages there are. */
+const SCORE_RAMP = ["#198546", "#19851d", "#3d8118", "#617c18", "#817418", "#a76320", "#d23f28"];
+
+/* Wild type carries no marker mutation -- it is defined by carrying none -- so
+   lineageVerdicts() cannot see it and it is absent from the verdict list. Its
+   origin question is the tree's root, which the reconstruction already answers
+   for the root bar; this reads the same two numbers off it so the sentence and
+   the drawing cannot disagree. */
+function rootVerdict(r) {
+  const t = r.truth.lineages.find(L => L.id === "wild") || {};
+  const found = r.tree.roots.length > 0;
+  const region = found ? r.fitch.region.get(r.phylo.root) : null;
+  return {
+    id: "wild", found,
+    region,
+    day: found ? Math.min(...r.tree.roots.map(x => x.tStart)) : null,
+    trueRegion: t.originRegion, trueDay: t.originDay,
+    regionRight: found && region != null && region === t.originRegion,
+  };
+}
+
+function renderVerdict() {
+  const r = state.result;
+  if (!r) { $("#verdict-note").textContent = "no simulation run"; return; }
+  const selectedId = state.selectedVariant;
+  const k = selectedId === "wild" ? rootVerdict(r) : r.verdicts.find(v => v.id === selectedId);
+  const name = id => (REGIONS.find(x => x.id === id) || {}).name || String(id);
+  /* Score what was RECOVERED, not what was misplaced.
+     Counting misplacements made the worst possible run look like the best: with
+     nothing sequenced, nothing is found, so nothing is misplaced, and the badge
+     read "0 misplaced" in green over an empty tree. A lineage that was never
+     sampled is not misplaced — but it is certainly not recovered either, and that
+     is the thing the reader needs to see.
+     The denominator is every lineage that actually arose in THIS outbreak, which
+     is not all of them: a variant only enters truth.lineages with a marker
+     mutation once it establishes, and seeds differ in which ones do. Wild type is
+     in the count too — it has an origin like any other lineage, and the
+     reconstruction answers for it at the root. */
+  const scored = [rootVerdict(r)].concat(r.verdicts).filter(v => v.trueRegion);
+  const right = scored.filter(v => v.found && v.regionRight).length;
+  const note = $("#verdict-note");
+  note.textContent = scored.length
+    ? right + " of " + scored.length + " origins recovered"
+    : "nothing to reconstruct";
+  const missed = scored.length ? 1 - right / scored.length : 1;
+  note.style.setProperty("--score", SCORE_RAMP[Math.round(missed * (SCORE_RAMP.length - 1))]);
+
+  /* the picker's label reads off LINEAGES, like the tree's tip labels do, so
+     adding a lineage needs no second edit here */
+  $("#v-variant-select").textContent = (LIN[selectedId] || {}).name || String(selectedId);
+
+  /* "Variant Wild type" is not a thing anyone says. */
+  const word = $("#v-variant-word");
+  if (word) word.hidden = selectedId === "wild";
+
+  const set = (sel, text, filled, tone) => {
+    const el = $(sel);
+    el.textContent = text;
+    el.classList.toggle("filled", !!filled);
+    el.classList.toggle("ok", tone === "ok");
+    el.classList.toggle("bad", tone === "bad");
+  };
+  /* The region slots carry the judgement and the day slots do not: the colour
+     answers exactly the question the badge is counting — was this origin
+     recovered — and nothing else. A lineage that was never sampled reads wrong
+     rather than blank, because that is how the tally scores it. */
+  if (!k || !k.found) {
+    set("#v-inf-deme", "not seen", false, "bad");
+    set("#v-inf-day", "\u2014", false);
+  } else {
+    set("#v-inf-deme", name(k.region), true, k.regionRight ? "ok" : "bad");
+    set("#v-inf-day", k.day == null ? "\u2014" : String(Math.round(k.day)), true);
+  }
+  /* The answer is set as firmly as the claim above it: both lines are readings of
+     the same event, and greying one of them made it look like the footnote. */
+  const t = k;
+  set("#v-true-deme", t && t.trueRegion ? name(t.trueRegion) : "\u2014", !!(t && t.trueRegion),
+      t && t.trueRegion ? "ok" : undefined);
+  set("#v-true-day", t && t.trueDay != null ? String(Math.round(t.trueDay)) : "\u2014",
+      !!(t && t.trueDay != null));
+}
+
+let pending = 0;
+function scheduleInfer() {
+  if (!HAS_DOM) return;
+  if (pending) return;
+  pending = requestAnimationFrame(() => { pending = 0; renderInferred(); });
+}
+
+function renderVariantPicker() {
+  const sel = $("#variant-selector");
+  sel.innerHTML = LINEAGES.map(l =>
+    '<option value="' + l.id + '">' + esc(l.name) + '</option>').join("");
+  sel.value = state.selectedVariant;
+}
+
+function renderVirus() {
+  const v = virusNameOf(state.scenario.seed);
+  $("#virus-h").innerHTML = v.name + " &middot; " + v.code;
+}
+
+function render() {
+  renderVirus();
+  renderMap();
+  renderChips();
+  renderVariantPicker();
+  renderPolicy();
+  renderRegionKey();
+  renderTruthTree();
+  renderInferred();
+}
+
+
+/* ============================================================
+   TREE RENDERING
+   ============================================================ */
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+/* Both trees draw onto the width of the panel that holds them, so a sparse tree
+   is not marooned in a wide box with its axis stopping two-thirds of the way
+   across, and a dense one does not have to be scrolled. The two stage columns
+   are equal, so measuring either gives both the same canvas and the trees stay
+   directly comparable. This is the floor for when there is nothing to measure —
+   a headless render, or a panel not yet laid out. */
+const TREE_CANVAS_W = 330;
+
+function treeCanvasW() {
+  if (!HAS_DOM) return TREE_CANVAS_W;
+  const host = document.querySelector("#inferred-tree");
+  const w = host ? Math.floor(host.clientWidth) : 0;
+  return w > TREE_CANVAS_W ? w : TREE_CANVAS_W;
+}
+
+/* The two panels share a SCALE, not a range. Forcing them onto one day range meant
+   the deeper panel set the range for both, which squashed the shallower tree into
+   the top of a mostly empty axis — and, if that range came from the reconstruction,
+   moved the truth panel whenever a slider did. Fixing pixels-per-day instead makes
+   day 30 fall at the same height in both panels while each stays only as tall as
+   its own data, and leaves each panel's geometry a function of its own tree alone. */
+const PX_PER_DAY = 4;
+
+function renderTreeSVG(roots, opts) {
+  const padL = 34, padT = 14, padB = 10;
+  const canvasW = opts.canvasW || treeCanvasW();
+  /* Spread the columns to fill the canvas. Only the VERTICAL axis carries data
+     here, so tip spacing is free to adapt; holding it fixed is what left the
+     sparser tree drawn small inside a correctly sized panel. The 56 is the label
+     gutter the drawing gets added to it below — divide by the same number the
+     width is built from, or the tree overruns the box it was measured for. */
+  const colW = Math.max(9, Math.min(32,
+    Math.floor((canvasW - padL - 56) / Math.max(1, countTips(roots)))));
+  const depth = Math.round(padT + padB + opts.tMax * PX_PER_DAY);
+  const L = layoutTree(roots, { colW, tMax: opts.tMax, depth, padT, padB, padL });
+  const W = Math.max(L.width + 56, canvasW), H = depth + 6;
+  const out = [];
+  const defs = [];
+  let gradId = 0;
+
+  /* time axis, down the left edge */
+  /* One interval for every panel: the scale is shared, so the ticks must be too.
+     At PX_PER_DAY = 4 a 15-day step is a line every 60px, which stays legible
+     across the whole range this outbreak can reach. */
+  const step = 15;
+  for (let d = 0; d <= opts.tMax; d += step) {
+    const y = L.yOf(d);
+    out.push(`<line x1="${padL - 6}" y1="${y.toFixed(1)}" x2="${(W - 10).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 3"></line>`);
+    out.push(`<text class="tree-axis" x="${padL - 10}" y="${(y + 3).toFixed(1)}">${d}</text>`);
+  }
+  out.push(`<text class="tree-axis tree-axis-cap" x="${padL - 10}" y="${(padT - 6).toFixed(1)}">day</text>`);
+
+  /* The root is virtual — the ancestral genotype, carried by every introduction.
+     Without this bar the root lineages read as unrelated stubs. It is deliberately
+     flat and wide: an early outbreak's root is a polytomy, and drawing it as a
+     resolved fork would invent structure the data does not contain. */
+  if (roots.length > 1) {
+    const rx = roots.map(r => r.x);
+    /* At the root's OWN date. The truth's root is day 0; the reconstruction's is
+       wherever root-to-tip put the common ancestor, which is later. Pinning both
+       to day 0 left the reconstruction's branches starting in mid-air with a gap
+       above them. The bar's position is itself the date estimate. */
+    const rootDate = opts.rootDate != null ? opts.rootDate
+                   : Math.min(...roots.map(r => r.tStart));
+    const y0 = L.yOf(rootDate);
+    /* The root's own state, passed in. Reading it off the first child painted a
+       correct inference as wrong -- the reconstruction put the root in Brix with
+       support 1.00 while the bar showed Fenmoor, because Fenmoor happened to sort
+       first among the children. */
+    const rootRegion = opts.rootRegion || roots[0].path[0].region;
+    out.push(`<g class="branch">`
+      + `<line x1="${Math.min(...rx).toFixed(1)}" y1="${y0.toFixed(1)}" x2="${Math.max(...rx).toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--reg-${rootRegion})" stroke-width="1.6" stroke-linecap="round"></line>`
+      + `<circle cx="${((Math.min(...rx) + Math.max(...rx)) / 2).toFixed(1)}" cy="${y0.toFixed(1)}" r="3.4" fill="var(--reg-${rootRegion})" stroke="var(--surface)" stroke-width="1.2"></circle>`
+      + `<text class="tree-root-label" x="${(Math.min(...rx) - 4).toFixed(1)}" y="${(y0 - 5).toFixed(1)}">`
+      + `${esc(opts.rootLabel || "ancestral genotype")}</text>`
+      + `<title>${esc(opts.rootLabel || "Ancestral genotype")} \u00b7 day ${rootDate.toFixed(0)} \u00b7 `
+      + `${roots.length} lineages descend from it, in no resolved order`
+      + `${opts.rootEvidence ? " \u00b7 " + esc(opts.rootEvidence) : ""}</title></g>`);
+  }
+
+  for (const n of L.nodes) {
+    const g = [];
+    /* one segment per mutation, coloured by the region it first appeared in,
+       so migration along an unbranched run stays visible */
+    const k = n.segs.length;
+    for (const seg of n.path) {
+      const a = L.yOf(seg.t0), b = L.yOf(seg.t1);
+      if (b - a < 0.05) continue;
+      let stroke = `var(--reg-${seg.region})`;
+      if (seg.from) {
+        /* the move is somewhere on this branch; a gradient says so without
+           pretending to know where */
+        const id = `mv${gradId++}`;
+        defs.push(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" `
+          + `x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}">`
+          + `<stop offset="0" stop-color="var(--reg-${seg.from})"></stop>`
+          + `<stop offset="0.28" stop-color="var(--reg-${seg.from})"></stop>`
+          + `<stop offset="0.72" stop-color="var(--reg-${seg.region})"></stop>`
+          + `<stop offset="1" stop-color="var(--reg-${seg.region})"></stop></linearGradient>`);
+        stroke = `url(#${id})`;
+      }
+      g.push(`<line x1="${n.x.toFixed(1)}" y1="${a.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${b.toFixed(1)}" stroke="${stroke}" stroke-width="2.5"></line>`);
+    }
+    if (n.children.length) {
+      const xs = n.children.map(c => c.x);
+      g.push(`<line x1="${Math.min(...xs).toFixed(1)}" y1="${n.y1.toFixed(1)}" x2="${Math.max(...xs).toFixed(1)}" y2="${n.y1.toFixed(1)}" stroke="var(--reg-${n.region})" stroke-width="1.6" stroke-linecap="round"></line>`);
+    }
+    /* The mutation happens at the far END of a branch; the near end is only
+       where its ancestor sat. Without a node mark the eye reads the start of a
+       long stem as the event, which puts a day-34 mutation at day 0. */
+    g.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y1.toFixed(1)}" r="2.2" fill="var(--reg-${n.region})"></circle>`);
+    if (k > 1) g.push(`<text class="tree-muts" x="${(n.x + 4.5).toFixed(1)}" y="${((n.y0 + n.y1) / 2 + 2.5).toFixed(1)}">${k}</text>`);
+    if (n.marker) {
+      g.push(`<circle cx="${n.x.toFixed(1)}" cy="${n.y1.toFixed(1)}" r="4" fill="var(--surface)" stroke="var(--reg-${n.region})" stroke-width="2.5"></circle>`);
+      g.push(`<text class="tree-label" x="${(n.x + 7).toFixed(1)}" y="${(n.y1 + 3.5).toFixed(1)}">${esc(LIN[n.marker]?.name || n.marker)}</text>`);
+    }
+    out.push(`<g class="branch">${g.join("")}<title>${esc(n.segs.length)} mutation${n.segs.length > 1 ? "s" : ""} \u00b7 ${esc(n.carriers.toLocaleString())} cases \u00b7 ${esc(n.region)} \u00b7 day ${n.tEnd.toFixed(0)}</title></g>`);
+  }
+  const defsBlock = defs.length ? `<defs>${defs.join("")}</defs>` : "";
+  return `<svg class="tree-svg" width="${W.toFixed(0)}" height="${H}" viewBox="0 0 ${W.toFixed(0)} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${esc(opts.aria)}">${defsBlock}${out.join("")}</svg>`;
+}
+
+/* Each panel covers its own span. Nothing is shared but PX_PER_DAY, which is what
+   makes the two axes comparable — and which keeps the truth panel a function of the
+   truth alone, so policy cannot move it. */
+function ownTMax(roots) {
+  return Math.max(15, Math.ceil(treeSpan(roots) / 15) * 15);
+}
+
+function renderTruthTree() {
+  if (!HAS_DOM || !state.revealed) return;
+  const truth = truthFor(state.scenario);
+  const t = autoTree(truth, 26, 46);
+  state.truthTree = t;
+  $("#truth-tree").innerHTML = renderTreeSVG(t.roots, {
+    canvasW: treeCanvasW(),
+    tMax: ownTMax(t.roots),
+    rootRegion: truth.cases.length ? truth.cases[0].region : null,
+    rootDate: 0,
+    aria: "Ground-truth phylogeny of Meridian virus. Branches are coloured by the region each mutation first appeared in.",
+  });
+  $("#truth-count").textContent =
+    truth.stats.cases.toLocaleString() + " cases";
+}
+
+/* Remembering the reveal is a per-viewer convenience, so browser storage is the
+   right home for it. It can throw outright in a private window or a thumbnail
+   context, hence the guards. */
+const REVEAL_KEY = "phylobias.revealed";
+function readRevealed() {
+  try { return localStorage.getItem(REVEAL_KEY) === "1"; } catch (e) { return false; }
+}
+
+function setFullInfo(on) {
+  if (on) {
+    if (!state.savedPolicy)
+      state.savedPolicy = JSON.parse(JSON.stringify(state.policy));
+    for (const r of REGIONS) state.policy[r.id] = { ...FULL_INFO };
+  } else if (state.savedPolicy) {
+    state.policy = state.savedPolicy;
+    state.savedPolicy = null;
+  }
+  /* The sliders go to their maximum AND the sampler drops the detection floor.
+     Maxed sliders alone reach about 63% of infections, because most asymptomatic
+     cases are never found -- so the maxed-slider run is a real programme's
+     ceiling, not the world's. */
+  state.omniscient = on;
+  const b = $("#fullinfo-btn");
+  /* "Omniscient" is the word ARCHITECTURE.md and state.omniscient already use;
+     the button says it too so the page, the code and the docs cannot drift. */
+  b.textContent = on ? "Turn off omniscient mode" : "Omniscient mode";
+  b.setAttribute("aria-pressed", String(on));
+  b.classList.toggle("ghost", !on);
+  $("#fullinfo-note").hidden = !on;
+  renderMap();
+  renderPolicy();
+  renderInferred();
+}
+
+function setRevealed(on) {
+  state.revealed = on;
+  try { localStorage.setItem(REVEAL_KEY, on ? "1" : "0"); } catch (e) { /* storage unavailable */ }
+  $("#truth-curtain").hidden = on;
+  $("#truth-tree").hidden = !on;
+  $("#region-key").hidden = !on;
+  const b = $("#reveal-btn");
+  b.textContent = on ? "Hide" : "Reveal";
+  b.setAttribute("aria-expanded", String(on));
+  if (on) renderTruthTree();
+}
+
+function inferNow() {
+  const truth = truthFor(state.scenario);
+  const s = sampleGenomes(truth, state.policy, { omniscient: state.omniscient });
+  const phylo = perfectPhylogeny(s.samples);
+  const clock = rootToTip(s.samples);
+  const date = datePhylogeny(phylo.root, s.samples, clock);
+  const fitch = mkAncestralStates(phylo.root, s.samples, REGION_IDS, date);
+  const markerOfMut = new Map();
+  for (const k of Object.keys(truth.markerOf)) markerOfMut.set(truth.markerOf[k], k);
+  const tree = autoInferredTree(s.samples, phylo, fitch, clock, markerOfMut, date);
+  const verdicts = lineageVerdicts(truth, s.samples, phylo, fitch, clock);
+  return { truth, s, phylo, clock, fitch, tree, verdicts, date };
+}
+
+/* What the root's region is actually resting on. The reconstruction reports a
+   posterior of 1.000 for almost every root it has ever been wrong about: that
+   number is a product over every tip below the node, so a slight consistent lean
+   across hundreds of tips compounds into false certainty. The tips that decide a
+   root are the ones carrying no informative mutations at all -- the least
+   informative genomes in the set -- so the honest thing to show is how few they
+   are and how they split, not a probability. */
+function rootEvidence(r) {
+  const root = r.phylo.root;
+  const own = new Set(root.tips);
+  for (const c of root.children) for (const t of c.tips) own.delete(t);
+  if (!own.size) return "";
+  const by = {};
+  for (const i of own) {
+    const g = r.s.samples[i].region;
+    by[g] = (by[g] || 0) + 1;
+  }
+  const parts = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([g, n]) => n + " " + ((REGIONS.find(x => x.id === g) || {}).name || g));
+  return "rests on " + own.size + " genome" + (own.size > 1 ? "s" : "")
+    + " with no informative mutations (" + parts.join(", ") + ")";
+}
+
+function renderInferred() {
+  if (!HAS_DOM) return;
+  const r = inferNow();
+  state.result = r;
+  $("#inferred-tree").innerHTML = renderTreeSVG(r.tree.roots, {
+    canvasW: treeCanvasW(),
+    tMax: ownTMax(r.tree.roots),
+    rootRegion: r.fitch.region.get(r.phylo.root),
+    rootDate: Math.min(...r.tree.roots.map(x => x.tStart)),
+    rootLabel: "inferred common ancestor",
+    rootEvidence: rootEvidence(r),
+    aria: "Phylogeny reconstructed from the sampled genomes. Branches are coloured by the region inferred for them, which need not be the region they came from.",
+  });
+  /* Say what the programme spent, not just what it got. A genome is the end of a
+     long chain of tests that mostly returned nothing, and the ratio between the
+     two is the whole argument for where to point a testing programme. */
+  const tests = Object.values(r.s.spend || {}).reduce((a, x) => a + x.tests, 0);
+  const capture = r.s.samples.length / Math.max(1, r.truth.cases.length);
+  /* The head says what the programme SPENT; the key under the legend says what it
+     GOT, in the same shape and the same slot as the truth panel's. Printing the
+     genome and tip counts in both places is what made the two panels read as
+     differently built. */
+  $("#inf-note").textContent = r.s.omniscient
+    ? "every infection sequenced"
+    : "from " + Math.round(tests).toLocaleString() + " tests \u00b7 "
+      + (capture * 100).toFixed(0) + "% of infections";
+  const ic = $("#inferred-count");
+  if (ic) ic.textContent = r.s.samples.length.toLocaleString() + " genomes";
+  renderVerdict();
+}
+
+/* The legend names the colours and nothing else. The counts belong with the panel
+   title, where they say what the panel is showing before you start reading it —
+   under the axis they read as a footnote to the chart instead. */
+function regionKeyHTML() {
+  return '<span class="key-lede">branch colour = the region a lineage arose in</span>' +
+    REGIONS.map(r =>
+    `<span class="key-item"><i style="background:var(--reg-${r.id})"></i>${esc(r.name)}</span>`).join("");
+}
+
+function renderRegionKey() {
+  if (!HAS_DOM) return;
+  $("#region-key").innerHTML = regionKeyHTML();
+  $("#inferred-key").innerHTML = regionKeyHTML();
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function select(id) {
+  if (!id || id === state.selected) return;
+  state.selected = id;
+  renderMap();
+  renderChips();
+  renderPolicy();
+}
+
+/* Theme: an unstamped root means "follow the OS". A click stamps an
+   explicit choice, which the guarded CSS lets win in either direction. */
+const THEME_KEY = "meridian-theme";
+
+function markThemeButtons() {
+  if (!HAS_DOM) return;
+  const stamped = document.documentElement.getAttribute("data-theme");
+  const effective = stamped ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.querySelectorAll(".theme-btn").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.setTheme === effective));
+  });
+}
+
+function setTheme(next) {
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* blocked storage is fine */ }
+  markThemeButtons();
+}
+
+if (HAS_DOM) {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") {
+      document.documentElement.setAttribute("data-theme", saved);
+    }
+  } catch (_) { /* nothing stored is a valid state: follow the OS */ }
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", markThemeButtons);
+  }
+}
+
+if (HAS_DOM) document.addEventListener("click", e => {
+  const themeBtn = e.target.closest("[data-set-theme]");
+  if (themeBtn) { setTheme(themeBtn.dataset.setTheme); return; }
+  if (e.target.closest("#reveal-btn")) { setRevealed(!state.revealed); return; }
+  if (e.target.closest("#reveal-btn-2")) { setRevealed(true); return; }
+  if (e.target.closest("#fullinfo-btn")) {
+    setFullInfo($("#fullinfo-btn").getAttribute("aria-pressed") !== "true");
+    return;
+  }
+  const node = e.target.closest("[data-region]");
+  if (node) select(node.dataset.region);
+});
+
+if (HAS_DOM) document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const node = e.target.closest(".region[data-region]");
+  if (!node) return;
+  e.preventDefault();
+  select(node.dataset.region);
+});
+
+/* The canvas is measured, so a resize has to redraw or the trees keep the width
+   of the window they were born in. Width only: a change in height moves nothing. */
+if (HAS_DOM) {
+  let lastW = window.innerWidth, resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { renderTruthTree(); renderInferred(); }, 120);
+  });
+}
+
+if (HAS_DOM) document.addEventListener("input", e => {
+  const el = e.target;
+  if (el.type !== "range") return;
+  const key = el.dataset.key;
+  const val = Number(el.value);
+
+  const sf = SCENARIO_FIELDS.find(f => f.key === key);
+  if (sf) {
+    state.scenario[key] = val;
+    $("#o-" + key).textContent = sf.fmt(val);
+    if (key === "seed") renderVirus();
+    renderTruthTree();
+    scheduleInfer();
+    return;
+  }
+  const pf = POLICY_FIELDS.find(f => f.key === key);
+  if (pf) {
+    state.policy[state.selected][key] = val;
+    $("#o-" + key).textContent = pf.fmt(val);
+    if ($("#fullinfo-btn").getAttribute("aria-pressed") === "true") {
+      /* the reading no longer holds once a slider is touched */
+      state.savedPolicy = null;
+      state.omniscient = false;
+      $("#fullinfo-btn").textContent = "Omniscient mode";
+      $("#fullinfo-btn").setAttribute("aria-pressed", "false");
+      $("#fullinfo-btn").classList.add("ghost");
+      $("#fullinfo-note").hidden = true;
+    }
+    renderMap();
+    scheduleInfer();
+  }
+});
+
+if (HAS_DOM) document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.id === "variant-selector") {
+    state.selectedVariant = el.value;
+    renderVerdict();
+    return;
+  }
+});
+
+if (HAS_DOM) {
+  renderScenario();
+  render();
+  markThemeButtons();
+  if (readRevealed()) setRevealed(true);
+}
+</script>
+</body>
+</html>
